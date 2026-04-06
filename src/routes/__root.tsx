@@ -1,14 +1,16 @@
-import * as React from "react"
-import { Outlet, createRootRoute } from "@tanstack/react-router"
+import { Outlet, createRootRouteWithContext } from "@tanstack/react-router"
 
-export const Route = createRootRoute({
+import { ThemeProvider } from "@/components/theme-provider"
+import type { RouterContext } from "@/types/router"
+
+export const Route = createRootRouteWithContext<RouterContext>()({
   component: RootComponent,
 })
 
 function RootComponent() {
   return (
-    <React.Fragment>
+    <ThemeProvider>
       <Outlet />
-    </React.Fragment>
+    </ThemeProvider>
   )
 }
