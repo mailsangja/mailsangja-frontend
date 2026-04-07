@@ -1,6 +1,6 @@
 import { useMemo, useState } from "react"
 import { createFileRoute, Link } from "@tanstack/react-router"
-import { ArrowLeft, Home, Trash2, LogOut, Plus } from "lucide-react"
+import { Home, Trash2, LogOut, Plus } from "lucide-react"
 
 import { Button, buttonVariants } from "@/components/ui/button"
 import {
@@ -54,12 +54,7 @@ function SettingsAccountPage() {
   }
 
   return (
-      <main className="flex-1 overflow-y-auto p-8">
-        <div>
-          <Link to="/settings" className={cn(buttonVariants({ variant: "ghost", size: "icon" }))}>
-            <ArrowLeft className="size-5" />
-          </Link>
-        </div>
+      <div className="flex-1 overflow-y-auto p-8">
         <div className="mx-auto max-w-5xl space-y-8">
           <Breadcrumb>
             <BreadcrumbList>
@@ -87,8 +82,8 @@ function SettingsAccountPage() {
             <div className="flex items-center justify-between rounded-lg border border-border bg-background p-5">
               <div className="space-y-1">
                 <p className="font-medium">{isUserPending ? "불러오는 중..." : (user?.name ?? "-")}</p>
-                <p className="text-sm text-muted-foreground">{user?.username ?? "-"}</p>
-                <p className="text-sm text-muted-foreground">{user?.plan ?? "-"}</p>
+                <p className="text-sm text-muted-foreground">아이디: {user?.username ?? "-"}</p>
+                <p className="text-sm text-muted-foreground">플랜: {user?.plan ?? "-"}</p>
               </div>
               {/* TODO: 회원 탈퇴 API 연동 */}
               <Link to="/" className={cn(buttonVariants({ variant: "outline", size: "default" }), "ml-2 px-8")}>
@@ -122,6 +117,13 @@ function SettingsAccountPage() {
                     <TableRow>
                       <TableCell colSpan={4} className="text-center text-sm text-destructive">
                         계정 목록을 불러오지 못했습니다.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  {!isAccountsPending && !isAccountsError && accounts.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={4} className="text-center text-sm text-muted-foreground">
+                        등록된 계정이 없습니다.
                       </TableCell>
                     </TableRow>
                   )}
@@ -187,6 +189,6 @@ function SettingsAccountPage() {
             </Link>
           </div>
         </div>
-      </main>
+      </div>
   )
 }
