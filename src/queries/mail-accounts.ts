@@ -20,6 +20,6 @@ export function useMailAccounts() {
 
   return useQuery({
     ...mailAccountQueries.list(),
-    enabled: user !== null,
+    enabled: user != null,
   })
 }
