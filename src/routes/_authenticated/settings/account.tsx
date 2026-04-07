@@ -2,7 +2,9 @@ import { useMemo, useState } from "react"
 import { createFileRoute, Link } from "@tanstack/react-router"
 import { Home, Trash2, LogOut, Plus } from "lucide-react"
 
+import { AddAccountDialog } from "@/components/add-account-dialog"
 import { Button, buttonVariants } from "@/components/ui/button"
+import { AccountIcon } from "@/lib/icon-map"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -23,7 +25,7 @@ import {
 import { cn } from "@/lib/utils"
 import { useMailAccounts } from "@/queries/mail-accounts"
 import { useUser } from "@/queries/user"
-
+import { useLogout } from "@/mutations/auth"
 
 export const Route = createFileRoute("/_authenticated/settings/account")({
   component: SettingsAccountPage,
@@ -33,6 +35,7 @@ function SettingsAccountPage() {
   const { data: user, isPending: isUserPending } = useUser()
   const { data: fetchedAccounts, isPending: isAccountsPending, isError: isAccountsError } = useMailAccounts()
   const [toggledIds, setToggledIds] = useState<Set<string>>(new Set())
+  const logout = useLogout()
 
   const accounts = useMemo(() => {
     if (!fetchedAccounts) return []
@@ -129,8 +132,15 @@ function SettingsAccountPage() {
                   )}
                   {accounts.map((MailAccount) => (
                     <TableRow key={MailAccount.id}>
-                      <TableCell className="text-center text-lg">
-                        {MailAccount.icon || "-"}
+                      <TableCell className="text-center">
+                        {MailAccount.icon ? (
+                          <div
+                            className="mx-auto flex size-8 items-center justify-center rounded-full"
+                            style={{ backgroundColor: MailAccount.color || "#6B7280" }}
+                          >
+                            <AccountIcon name={MailAccount.icon} className="size-4 text-white" />
+                          </div>
+                        ) : "-"}
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-col">
@@ -173,17 +183,18 @@ function SettingsAccountPage() {
               아래 버튼을 눌러 계정의 별칭, 아이콘, 색상을 선택한 후 계정에 로그인하여 계정을 추가해보세요.
             </p>
             <div>
-              {/* TODO: 링크 수정 */}
-              <Link to="/settings" className={cn(buttonVariants({ variant: "outline", size: "default" }), "px-8")}>
-                <Plus className="size-4" />
-                계정 추가
-              </Link>
+              <AddAccountDialog>
+                <Button variant="outline" className="px-8">
+                  <Plus className="size-4" />
+                  계정 추가
+                </Button>
+              </AddAccountDialog>
             </div>
           </section>
 
           {/* 로그아웃 버튼 */}
           <div className="flex justify-end pt-8">
-            <Link to="/login" className={cn(buttonVariants({ variant: "default" }), "ml-2")}>
+            <Link to="/login" className={cn(buttonVariants({ variant: "default" }), "ml-2")} onClick={logout}>
               로그아웃
               <LogOut className="size-4" />
             </Link>
