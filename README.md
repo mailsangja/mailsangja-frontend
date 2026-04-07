@@ -55,7 +55,7 @@
 - `TanStack React Query`
 - `Tailwind CSS v4`
 - `shadcn/ui`
-- `Axios`
+- `Fetch API`
 
 ## 시작하기
 
