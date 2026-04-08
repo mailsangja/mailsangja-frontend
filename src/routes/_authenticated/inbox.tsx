@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router"
-import { LogOut, Mail } from "lucide-react"
+import { LogOut } from "lucide-react"
 
 import { MainContent } from "@/components/layout/main-content"
 import { Button } from "@/components/ui/button"
@@ -15,13 +15,8 @@ function InboxPage() {
   const logout = useLogout()
 
   return (
-    <div className="flex h-svh">
+    <div className="flex min-h-0 flex-1">
       <aside className="flex w-64 shrink-0 flex-col overflow-y-auto">
-        <div className="flex items-center gap-2 p-4">
-          <Mail className="size-5" />
-          <span className="font-bold">메일상자</span>
-        </div>
-
         <nav className="flex flex-1 flex-col gap-1 p-2">
           <Link
             to="/inbox"
