@@ -39,7 +39,16 @@ function SettingsAccountPage() {
     )
   }, [mailAccounts, toggledIds])
 
-  const selectedDefaultAccount = defaultAccount ?? user?.defaultMailAccountId ?? accounts[0]?.id ?? null
+  const defaultAccountItems = useMemo(
+    () =>
+      accounts.map((mailAccount) => ({
+        value: mailAccount.id,
+        label: mailAccount.emailAddress,
+      })),
+    [accounts]
+  )
+
+  const selectedDefaultAccount = defaultAccount ?? user?.defaultMailAccountId ?? null
 
   const handleSaveDefaultAccount = () => {
     if (!selectedDefaultAccount) return
@@ -97,24 +106,24 @@ function SettingsAccountPage() {
 
         {/* Default 계정 */}
         <section className="space-y-3">
-          <h2 className="text-lg font-semibold">Default 계정</h2>
+          <h2 className="text-lg font-semibold">기본 메일 계정</h2>
           <p className="text-sm text-muted-foreground">계정 중 하나를 기본 발신 계정으로 선택할 수 있습니다.</p>
           <div className="flex items-center gap-3">
             <Select
-              value={selectedDefaultAccount ?? ""}
-              onValueChange={(id) => setDefaultAccount(id)}
+              value={selectedDefaultAccount}
+              onValueChange={setDefaultAccount}
+              items={defaultAccountItems}
+              disabled={isAccountsPending || accounts.length === 0}
             >
-              <SelectTrigger className="w-72">
-                <SelectValue>
-                  {(value: string) =>
-                    accounts.find((mailAccount) => mailAccount.id === value)?.emailAddress ?? ""
-                  }
-                </SelectValue>
+              <SelectTrigger className="w-72" aria-label="기본 발신 계정 선택">
+                <SelectValue
+                  placeholder={isAccountsPending ? "계정 목록을 불러오는 중..." : "기본 메일 계정을 선택하세요"}
+                />
               </SelectTrigger>
               <SelectContent align="start" alignItemWithTrigger={false}>
-                {accounts.map((mailAccount) => (
-                  <SelectItem key={mailAccount.id} value={mailAccount.id} className="px-3 py-2">
-                    {mailAccount.emailAddress}
+                {defaultAccountItems.map((item) => (
+                  <SelectItem key={item.value} value={item.value} className="px-3 py-2">
+                    {item.label}
                   </SelectItem>
                 ))}
               </SelectContent>
