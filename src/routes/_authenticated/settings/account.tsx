@@ -4,7 +4,7 @@ import { Home, Trash2, LogOut, Plus } from "lucide-react"
 
 import { AddAccountDialog } from "@/components/add-account-dialog"
 import { Button, buttonVariants } from "@/components/ui/button"
-import { AccountIcon } from "@/lib/icon-map"
+import { AccountIcon } from "@/lib/icon-entries"
 import {
   Breadcrumb,
   BreadcrumbItem,

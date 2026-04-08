@@ -10,8 +10,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { AccountIcon } from "@/lib/icon-map"
-import { ICON_ENTRIES, type AccountIconName } from "@/lib/icon-entries"
+import { AccountIcon, ICON_ENTRIES, type AccountIconName } from "@/lib/icon-entries"
 import { cn } from "@/lib/utils"
 
 const COLORS = [

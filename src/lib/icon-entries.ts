@@ -1,4 +1,5 @@
-import type { LucideIcon } from "lucide-react"
+import { createElement } from "react"
+import type { LucideIcon, LucideProps } from "lucide-react"
 import {
   Bell,
   Briefcase,
@@ -26,3 +27,15 @@ export const ICON_ENTRIES = [
 }[]
 
 export type AccountIconName = (typeof ICON_ENTRIES)[number]["name"]
+
+const iconMap = new Map(
+  ICON_ENTRIES.map(({ name, Icon }) => [name as string, Icon]),
+)
+
+export function AccountIcon({
+  name,
+  ...props
+}: { name: string } & LucideProps) {
+  const Icon = iconMap.get(name) ?? iconMap.get(ICON_ENTRIES[0].name)!
+  return createElement(Icon, props)
+}
