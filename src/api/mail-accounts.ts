@@ -1,5 +1,6 @@
 import type { MailAccountAuthorizeResponse } from "@/types/mail-account"
 import type { MailAccount } from "@/types/mail-account"
+import type { AccountIconName } from "@/lib/icon-entries"
 
 import { apiClient } from "@/lib/api-client"
 
@@ -9,7 +10,7 @@ export async function getMailAccounts(): Promise<MailAccount[]> {
 
 export async function authorizeGoogle(params?: {
   alias?: string
-  icon?: string
+  icon?: AccountIconName
   color?: string
 }): Promise<MailAccountAuthorizeResponse> {
   return apiClient.get<MailAccountAuthorizeResponse>("/api/v1/mail-accounts/google/authorize", { params })

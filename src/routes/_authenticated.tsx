@@ -1,9 +1,9 @@
-import { createFileRoute, Link, Outlet, redirect } from "@tanstack/react-router"
-import { LogOut, Mail, Settings, Loader2 } from "lucide-react"
+import { Link, createFileRoute, Outlet, redirect } from "@tanstack/react-router"
+import { Bell, Loader2, Mail, Search, Settings } from "lucide-react"
 
 import { LoadingLayout } from "@/components/layout/loading-layout"
-import { Button } from "@/components/ui/button"
-import { useLogout } from "@/mutations/auth"
+import { Button, buttonVariants } from "@/components/ui/button"
+import { cn } from "@/lib/utils"
 import { useUser, userQueries } from "@/queries/user"
 
 export const Route = createFileRoute("/_authenticated")({
@@ -20,7 +20,6 @@ export const Route = createFileRoute("/_authenticated")({
 
 function AuthenticatedRouteLayout() {
   const { data: user } = useUser()
-  const logout = useLogout()
 
   if (!user) {
     return (
@@ -31,38 +30,36 @@ function AuthenticatedRouteLayout() {
   }
 
   return (
-    <div className="flex min-h-svh">
-      <aside className="flex w-64 flex-col border-r bg-card">
-        <div className="flex items-center gap-2 border-b p-4">
+    <div className="flex h-svh flex-col bg-background">
+      <header className="flex items-center gap-4 px-4 pt-3 pb-2">
+        <div className="flex shrink-0 items-center gap-2">
           <Mail className="size-5" />
           <span className="font-bold">메일상자</span>
         </div>
 
-        <nav className="flex flex-1 flex-col gap-1 p-2">
-          <Link to="/inbox" className="flex items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-accent">
-            인박스
-          </Link>
-          <Link to="/settings" className="flex items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-accent">
-            <Settings className="size-4" />
-            설정
-          </Link>
-        </nav>
-
-        <div className="border-t p-4">
-          <div className="mb-2 text-sm">
-            <p className="font-medium">{user.name}</p>
-            <p className="text-muted-foreground">{user.username}</p>
-          </div>
-          <Button variant="ghost" size="sm" className="w-full justify-start" onClick={logout}>
-            <LogOut className="size-4" />
-            로그아웃
-          </Button>
+        <div className="relative mx-auto w-full max-w-xl">
+          <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+          <input
+            type="text"
+            aria-label="메일 검색"
+            placeholder="메일 검색"
+            className="h-9 w-full rounded-md bg-muted/50 pr-3 pl-9 text-sm outline-none placeholder:text-muted-foreground focus:ring-1 focus:ring-ring"
+          />
         </div>
-      </aside>
 
-      <main className="flex-1 overflow-auto">
+        <div className="flex shrink-0 items-center gap-1">
+          <Button variant="ghost" size="icon">
+            <Bell className="size-5" />
+          </Button>
+          <Link to="/settings" className={cn(buttonVariants({ variant: "ghost", size: "icon" }), "ml-1")}>
+            <Settings className="size-5" />
+          </Link>
+        </div>
+      </header>
+
+      <div className="flex min-h-0 flex-1 overflow-hidden">
         <Outlet />
-      </main>
+      </div>
     </div>
   )
 }
