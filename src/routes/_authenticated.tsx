@@ -41,6 +41,7 @@ function AuthenticatedRouteLayout() {
           <Search className="absolute left-3 top-1/2 size-4 -translate-y-1/2 text-muted-foreground" />
           <input
             type="text"
+            aria-label="메일 검색"
             placeholder="메일 검색"
             className="h-9 w-full rounded-md bg-muted/50 pl-9 pr-3 text-sm outline-none placeholder:text-muted-foreground focus:ring-1 focus:ring-ring"
           />

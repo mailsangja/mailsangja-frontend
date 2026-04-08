@@ -37,6 +37,7 @@ function SettingsAccountPage() {
   const [toggledIds, setToggledIds] = useState<Set<string>>(new Set())
   const logout = useLogout()
 
+  // 추후 API 구현 후, 연동 예정
   const accounts = useMemo(() => {
     if (!fetchedAccounts) return []
     return fetchedAccounts.map((acc) =>
@@ -130,30 +131,30 @@ function SettingsAccountPage() {
                       </TableCell>
                     </TableRow>
                   )}
-                  {accounts.map((MailAccount) => (
-                    <TableRow key={MailAccount.id}>
+                  {accounts.map((mailAccount) => (
+                    <TableRow key={mailAccount.id}>
                       <TableCell className="text-center">
-                        {MailAccount.icon ? (
+                        {mailAccount.icon ? (
                           <div
                             className="mx-auto flex size-8 items-center justify-center rounded-full"
-                            style={{ backgroundColor: MailAccount.color || "#6B7280" }}
+                            style={{ backgroundColor: mailAccount.color || "#6B7280" }}
                           >
-                            <AccountIcon name={MailAccount.icon} className="size-4 text-white" />
+                            <AccountIcon name={mailAccount.icon} className="size-4 text-white" />
                           </div>
                         ) : "-"}
                       </TableCell>
                       <TableCell>
                         <div className="flex flex-col">
-                          <span className="text-sm">{MailAccount.emailAddress}</span>
-                          <span className="text-xs text-muted-foreground">{MailAccount.alias}</span>
+                          <span className="text-sm">{mailAccount.emailAddress}</span>
+                          <span className="text-xs text-muted-foreground">{mailAccount.alias}</span>
                         </div>
                       </TableCell>
                       <TableCell className="text-center">
                         <div className="flex justify-center">
                           <Switch
-                            checked={MailAccount.isActive}
+                            checked={mailAccount.isActive}
                             onCheckedChange={() =>
-                              handleToggleActive(MailAccount.id)
+                              handleToggleActive(mailAccount.id)
                             }
                           />
                         </div>
@@ -192,12 +193,11 @@ function SettingsAccountPage() {
             </div>
           </section>
 
-          {/* 로그아웃 버튼 */}
           <div className="flex justify-end pt-8">
-            <Link to="/login" className={cn(buttonVariants({ variant: "default" }), "ml-2")} onClick={logout}>
+            <Button className="ml-2" onClick={logout}>
               로그아웃
               <LogOut className="size-4" />
-            </Link>
+            </Button>
           </div>
         </div>
       </div>

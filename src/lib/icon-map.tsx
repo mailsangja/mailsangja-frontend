@@ -24,7 +24,7 @@ const iconMap: Record<AccountIconName, LucideIcon> = {
 }
 
 function isAccountIconName(name: string): name is AccountIconName {
-  return name in iconMap
+  return Object.hasOwn(iconMap, name)
 }
 
 export function AccountIcon({
