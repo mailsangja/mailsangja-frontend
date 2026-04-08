@@ -3,20 +3,11 @@ import { Check } from "lucide-react"
 
 import { authorizeGoogle } from "@/api/mail-accounts"
 import { Button } from "@/components/ui/button"
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { AccountIcon, ICON_ENTRIES, type AccountIconName } from "@/lib/icon-entries"
 import { cn } from "@/lib/utils"
 
-const COLORS = [
-  "#EF4444", "#F97316", "#EAB308", "#22C55E",
-  "#3B82F6", "#8B5CF6", "#EC4899", "#6B7280",
-]
+const COLORS = ["#EF4444", "#F97316", "#EAB308", "#22C55E", "#3B82F6", "#8B5CF6", "#EC4899", "#6B7280"]
 
 export function AddAccountDialog({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false)
@@ -88,9 +79,7 @@ export function AddAccountDialog({ children }: { children: React.ReactNode }) {
                       onClick={() => setSelectedIcon(name)}
                       className={cn(
                         "flex size-10 items-center justify-center rounded-lg border transition-colors",
-                        selectedIcon === name
-                          ? "border-primary bg-primary/10"
-                          : "border-border hover:bg-accent"
+                        selectedIcon === name ? "border-primary bg-primary/10" : "border-border hover:bg-accent"
                       )}
                     >
                       <Icon className="size-5" />
@@ -110,9 +99,7 @@ export function AddAccountDialog({ children }: { children: React.ReactNode }) {
                       className="flex size-10 items-center justify-center rounded-full border border-border transition-transform hover:scale-110"
                       style={{ backgroundColor: color }}
                     >
-                      {selectedColor === color && (
-                        <Check className="size-5 text-white" />
-                      )}
+                      {selectedColor === color && <Check className="size-5 text-white" />}
                     </button>
                   ))}
                 </div>
@@ -120,7 +107,7 @@ export function AddAccountDialog({ children }: { children: React.ReactNode }) {
             </div>
 
             <div className="flex justify-end">
-              <Button onClick={() => setStep("login")} className="hover:bg-primary/80 cursor-pointer">
+              <Button onClick={() => setStep("login")} className="cursor-pointer hover:bg-primary/80">
                 다음
               </Button>
             </div>
@@ -140,15 +127,9 @@ export function AddAccountDialog({ children }: { children: React.ReactNode }) {
                 <AccountIcon name={selectedIcon} className="size-6 text-white" />
               </div>
 
-              <p className="text-sm text-muted-foreground">
-                아래 버튼을 눌러 Google 계정을 연결하세요.
-              </p>
+              <p className="text-sm text-muted-foreground">아래 버튼을 눌러 Google 계정을 연결하세요.</p>
 
-              <Button
-                className="w-full"
-                onClick={handleGoogleLogin}
-                disabled={isLoading}
-              >
+              <Button className="w-full" onClick={handleGoogleLogin} disabled={isLoading}>
                 {isLoading ? "연결 중..." : "Google 계정으로 로그인"}
               </Button>
             </div>

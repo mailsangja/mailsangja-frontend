@@ -29,7 +29,7 @@ function SettingsLayout() {
           </Link>
           <Link
             to="/settings/account"
-            className="flex items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-accent pl-7"
+            className="flex items-center gap-2 rounded-md px-3 py-2 pl-7 text-sm hover:bg-accent"
             activeProps={{ className: "flex items-center gap-2 rounded-md bg-accent px-3 py-2 text-sm pl-7" }}
           >
             <User className="size-4" />

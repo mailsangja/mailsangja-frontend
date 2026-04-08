@@ -18,10 +18,7 @@ function InboxPage() {
     <div className="flex min-h-0 flex-1">
       <aside className="flex w-64 shrink-0 flex-col overflow-y-auto">
         <nav className="flex flex-1 flex-col gap-1 p-2">
-          <Link
-            to="/inbox"
-            className="flex items-center gap-2 rounded-md bg-accent px-3 py-2 text-sm"
-          >
+          <Link to="/inbox" className="flex items-center gap-2 rounded-md bg-accent px-3 py-2 text-sm">
             인박스
           </Link>
         </nav>
