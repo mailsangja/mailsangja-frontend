@@ -1,10 +1,8 @@
 import { useMemo, useState } from "react"
 import { createFileRoute, Link } from "@tanstack/react-router"
-import { Home, Trash2, LogOut, Plus } from "lucide-react"
+import { Home, Trash2, Plus } from "lucide-react"
 
 import { AddAccountDialog } from "@/components/add-account-dialog"
-import { Button, buttonVariants } from "@/components/ui/button"
-import { AccountIcon } from "@/lib/icon-entries"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -13,12 +11,14 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
+import { Button } from "@/components/ui/button"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { cn } from "@/lib/utils"
+import { AccountIcon } from "@/lib/icon-entries"
 import { useMailAccounts } from "@/queries/mail-accounts"
 import { useUser } from "@/queries/user"
-import { useLogout } from "@/mutations/auth"
+import { useUpdateDefaultAccount } from "@/mutations/user"
 
 export const Route = createFileRoute("/_authenticated/settings/account")({
   component: SettingsAccountPage,
@@ -26,15 +26,25 @@ export const Route = createFileRoute("/_authenticated/settings/account")({
 
 function SettingsAccountPage() {
   const { data: user, isPending: isUserPending } = useUser()
-  const { data: fetchedAccounts, isPending: isAccountsPending, isError: isAccountsError } = useMailAccounts()
+  const { data: mailAccounts, isPending: isAccountsPending, isError: isAccountsError } = useMailAccounts()
   const [toggledIds, setToggledIds] = useState<Set<string>>(new Set())
-  const logout = useLogout()
+  const [defaultAccount, setDefaultAccount] = useState<string | null>(null)
+  const updateDefaultAccountMutation = useUpdateDefaultAccount()
 
   // 추후 API 구현 후, 연동 예정
   const accounts = useMemo(() => {
-    if (!fetchedAccounts) return []
-    return fetchedAccounts.map((acc) => (toggledIds.has(acc.id) ? { ...acc, isActive: !acc.isActive } : acc))
-  }, [fetchedAccounts, toggledIds])
+    if (!mailAccounts) return []
+    return mailAccounts.map((mailAccount) =>
+      toggledIds.has(mailAccount.id) ? { ...mailAccount, isActive: !mailAccount.isActive } : mailAccount
+    )
+  }, [mailAccounts, toggledIds])
+
+  const selectedDefaultAccount = defaultAccount ?? user?.defaultMailAccountId ?? accounts[0]?.id ?? null
+
+  const handleSaveDefaultAccount = () => {
+    if (!selectedDefaultAccount) return
+    updateDefaultAccountMutation.mutate({ mailAccountId: selectedDefaultAccount })
+  }
 
   const handleToggleActive = (id: string) => {
     setToggledIds((prev) => {
@@ -79,9 +89,48 @@ function SettingsAccountPage() {
               <p className="text-sm text-muted-foreground">플랜: {user?.plan ?? "-"}</p>
             </div>
             {/* TODO: 회원 탈퇴 API 연동 */}
-            <Link to="/" className={cn(buttonVariants({ variant: "outline", size: "default" }), "ml-2 px-8")}>
+            <Button variant="outline" className="ml-2 px-8" disabled>
               회원 탈퇴
-            </Link>
+            </Button>
+          </div>
+        </section>
+
+        {/* Default 계정 */}
+        <section className="space-y-3">
+          <h2 className="text-lg font-semibold">Default 계정</h2>
+          <p className="text-sm text-muted-foreground">계정 중 하나를 기본 발신 계정으로 선택할 수 있습니다.</p>
+          <div className="flex items-center gap-3">
+            <Select
+              value={selectedDefaultAccount ?? ""}
+              onValueChange={(id) => setDefaultAccount(id)}
+            >
+              <SelectTrigger className="w-72">
+                <SelectValue>
+                  {(value: string) =>
+                    accounts.find((mailAccount) => mailAccount.id === value)?.emailAddress ?? ""
+                  }
+                </SelectValue>
+              </SelectTrigger>
+              <SelectContent align="start" alignItemWithTrigger={false}>
+                {accounts.map((mailAccount) => (
+                  <SelectItem key={mailAccount.id} value={mailAccount.id} className="px-3 py-2">
+                    {mailAccount.emailAddress}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+            <Button
+              variant="outline"
+              className="px-4"
+              onClick={handleSaveDefaultAccount}
+              disabled={
+                !selectedDefaultAccount ||
+                selectedDefaultAccount === user?.defaultMailAccountId ||
+                updateDefaultAccountMutation.isPending
+              }
+            >
+              {updateDefaultAccountMutation.isPending ? "저장 중..." : "저장"}
+            </Button>
           </div>
         </section>
 
@@ -106,7 +155,7 @@ function SettingsAccountPage() {
                     </TableCell>
                   </TableRow>
                 )}
-                {isAccountsError && !isAccountsPending && (
+                {isAccountsError && (
                   <TableRow>
                     <TableCell colSpan={4} className="text-center text-sm text-destructive">
                       계정 목록을 불러오지 못했습니다.
@@ -177,13 +226,6 @@ function SettingsAccountPage() {
             </AddAccountDialog>
           </div>
         </section>
-
-        <div className="flex justify-end pt-8">
-          <Button className="ml-2" onClick={logout}>
-            로그아웃
-            <LogOut className="size-4" />
-          </Button>
-        </div>
       </div>
     </div>
   )
