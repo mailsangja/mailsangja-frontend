@@ -1,10 +1,16 @@
+import { useState } from "react"
 import { Link, createFileRoute, Outlet, redirect } from "@tanstack/react-router"
-import { Bell, Loader2, Mail, Search, Settings } from "lucide-react"
+import { Bell, Mail, Search } from "lucide-react"
 
+import { AppSidebar } from "@/components/app-sidebar"
 import { LoadingLayout } from "@/components/layout/loading-layout"
-import { Button, buttonVariants } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
-import { useUser, userQueries } from "@/queries/user"
+import { Button } from "@/components/ui/button"
+import { Input } from "@/components/ui/input"
+import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
+import { InboxContext } from "@/contexts/inbox-context"
+import { useIsMobile } from "@/hooks/use-mobile"
+import { userQueries } from "@/queries/user"
+import type { PrimaryMailboxId } from "@/types/email"
 
 export const Route = createFileRoute("/_authenticated")({
   beforeLoad: async ({ context }) => {
@@ -19,47 +25,54 @@ export const Route = createFileRoute("/_authenticated")({
 })
 
 function AuthenticatedRouteLayout() {
-  const { data: user } = useUser()
-
-  if (!user) {
-    return (
-      <div className="flex min-h-svh items-center justify-center">
-        <Loader2 className="animate-spin" />
-      </div>
-    )
-  }
+  const [activeMailbox, setActiveMailbox] = useState<PrimaryMailboxId>("INBOX")
+  const [searchQuery, setSearchQuery] = useState("")
+  const isMobile = useIsMobile()
 
   return (
-    <div className="flex h-svh flex-col bg-background">
-      <header className="flex items-center gap-4 px-4 pt-3 pb-2">
-        <div className="flex shrink-0 items-center gap-2">
-          <Mail className="size-5" />
-          <span className="font-bold">메일상자</span>
-        </div>
+    <InboxContext.Provider value={{ activeMailbox, setActiveMailbox, searchQuery, setSearchQuery }}>
+      <SidebarProvider className="flex-col bg-background">
+        <header className="flex h-14 shrink-0 items-center gap-4 px-4">
+          {isMobile ? (
+            <SidebarTrigger className="shrink-0" />
+          ) : (
+            <Link to="/inbox" className="flex shrink-0 items-center gap-2">
+              <Mail className="size-5" />
+              <span className="font-bold">메일상자</span>
+            </Link>
+          )}
 
-        <div className="relative mx-auto w-full max-w-xl">
-          <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-          <input
-            type="text"
-            aria-label="메일 검색"
-            placeholder="메일 검색"
-            className="h-9 w-full rounded-md bg-muted/50 pr-3 pl-9 text-sm outline-none placeholder:text-muted-foreground focus:ring-1 focus:ring-ring"
+          <div className="relative mx-auto w-full max-w-xl">
+            <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              aria-label="메일 검색"
+              placeholder="메일 검색"
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="h-9 rounded-md bg-muted/50 pl-9 shadow-none"
+            />
+          </div>
+
+          <div className="flex shrink-0 items-center gap-1">
+            <Button variant="ghost" size="icon" aria-label="알림">
+              <Bell className="size-5" />
+            </Button>
+          </div>
+        </header>
+
+        <div className="flex min-h-0 flex-1 bg-sidebar">
+          <AppSidebar
+            activeMailbox={activeMailbox}
+            onMailboxChange={setActiveMailbox}
+            className="top-14 h-[calc(100svh-3.5rem)]"
           />
+          <div className="flex min-w-0 flex-1 flex-col">
+            <div className="relative m-2 mt-0 flex min-w-0 flex-1 flex-col rounded-xl bg-background shadow-sm md:ml-0">
+              <Outlet />
+            </div>
+          </div>
         </div>
-
-        <div className="flex shrink-0 items-center gap-1">
-          <Button variant="ghost" size="icon">
-            <Bell className="size-5" />
-          </Button>
-          <Link to="/settings" className={cn(buttonVariants({ variant: "ghost", size: "icon" }), "ml-1")}>
-            <Settings className="size-5" />
-          </Link>
-        </div>
-      </header>
-
-      <div className="flex min-h-0 flex-1 overflow-hidden">
-        <Outlet />
-      </div>
-    </div>
+      </SidebarProvider>
+    </InboxContext.Provider>
   )
 }
