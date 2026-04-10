@@ -1,57 +1,56 @@
-import { createFileRoute, Link, Outlet } from "@tanstack/react-router"
-import { LogOut, Settings, User } from "lucide-react"
+import { createFileRoute, Outlet, useLocation, useNavigate } from "@tanstack/react-router"
+import { Settings, User } from "lucide-react"
 
-import { MainContent } from "@/components/layout/main-content"
-import { Button } from "@/components/ui/button"
-import { useLogout } from "@/mutations/auth"
-import { useUser } from "@/queries/user"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 
 export const Route = createFileRoute("/_authenticated/settings")({
   component: SettingsLayout,
 })
 
+const settingsTabRoutes = {
+  general: "/settings",
+  account: "/settings/account",
+} as const
+
 function SettingsLayout() {
-  const { data: user } = useUser()
-  const logout = useLogout()
+  const pathname = useLocation({ select: (location) => location.pathname })
+  const navigate = useNavigate()
+  const activeTab = pathname.startsWith(settingsTabRoutes.account) ? "account" : "general"
 
   return (
-    <div className="flex min-h-0 flex-1">
-      <aside className="flex w-64 shrink-0 flex-col overflow-y-auto">
-        <nav className="flex flex-1 flex-col gap-1 p-2">
-          <Link
-            to="/settings"
-            activeOptions={{ exact: true }}
-            className="flex items-center gap-2 rounded-md px-3 py-2 text-sm hover:bg-accent"
-            activeProps={{ className: "flex items-center gap-2 rounded-md bg-accent px-3 py-2 text-sm" }}
-          >
-            <Settings className="size-4" />
-            설정
-          </Link>
-          <Link
-            to="/settings/account"
-            className="flex items-center gap-2 rounded-md px-3 py-2 pl-7 text-sm hover:bg-accent"
-            activeProps={{ className: "flex items-center gap-2 rounded-md bg-accent px-3 py-2 text-sm pl-7" }}
-          >
-            <User className="size-4" />
-            계정
-          </Link>
-        </nav>
-
-        <div className="border-t p-4">
-          <div className="mb-2 text-sm">
-            <p className="font-medium">{user?.name}</p>
-            <p className="text-muted-foreground">{user?.username}</p>
-          </div>
-          <Button variant="ghost" size="sm" className="w-full justify-start" onClick={logout}>
-            <LogOut className="size-4" />
-            로그아웃
-          </Button>
+    <div className="flex min-h-0 flex-1 overflow-y-auto p-6">
+      <div className="mx-auto flex w-full max-w-5xl flex-col gap-6">
+        <div className="flex flex-col gap-1">
+          <h1 className="text-2xl font-semibold">설정</h1>
+          <p className="text-sm text-muted-foreground">메일상자 계정 및 메일 환경을 한 곳에서 관리합니다.</p>
         </div>
-      </aside>
 
-      <MainContent>
-        <Outlet />
-      </MainContent>
+        <Tabs
+          value={activeTab}
+          onValueChange={(value) => {
+            if (value === activeTab) {
+              return
+            }
+
+            void navigate({ to: settingsTabRoutes[value as keyof typeof settingsTabRoutes] })
+          }}
+          className="gap-6"
+        >
+          <TabsList variant="line" className="w-full justify-start border-b">
+            <TabsTrigger value="general" className="min-w-24 rounded-none px-4">
+              <Settings data-icon="inline-start" />
+              일반
+            </TabsTrigger>
+            <TabsTrigger value="account" className="min-w-24 rounded-none px-4">
+              <User data-icon="inline-start" />
+              계정
+            </TabsTrigger>
+          </TabsList>
+          <TabsContent value={activeTab}>
+            <Outlet />
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
   )
 }
