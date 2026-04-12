@@ -1,14 +1,17 @@
-import { useEffect, useRef } from "react"
+import { useEffect, useRef, useState } from "react"
 import { InboxIcon } from "lucide-react"
+import { toast } from "sonner"
 
 import { EmailErrorState } from "@/components/inbox/email-error-state"
 import { EmailListHeader } from "@/components/inbox/email-list-header"
 import type { EmailFilter } from "@/components/inbox/email-list-header"
 import { EmailListItem } from "@/components/inbox/email-list-item"
+import { useDeleteThread, useRestoreTrashThread } from "@/mutations/trash"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Skeleton } from "@/components/ui/skeleton"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table"
 import type { InboxThreadSummary } from "@/types/email"
+import type { MailAccount } from "@/types/mail-account"
 
 interface EmailListProps {
   mailboxName: string
@@ -21,7 +24,7 @@ interface EmailListProps {
   onFilterChange: (filter: EmailFilter) => void
   onSelectThread: (id: string) => void
   onLoadMore: () => void
-  getAccountColor: (accountId: string) => string | undefined
+  getAccount: (accountId: string) => MailAccount | undefined
   emptyTitle?: string
   emptyDescription?: string
   errorTitle?: string
@@ -35,6 +38,9 @@ interface EmailListProps {
 function LoadingRows() {
   return Array.from({ length: 10 }).map((_, index) => (
     <TableRow key={index}>
+      <TableCell className="w-10">
+        <Skeleton className="size-2.5 rounded-full" />
+      </TableCell>
       <TableCell className="w-10">
         <Skeleton className="size-2.5 rounded-full" />
       </TableCell>
@@ -65,7 +71,7 @@ export function EmailList({
   onFilterChange,
   onSelectThread,
   onLoadMore,
-  getAccountColor,
+  getAccount,
   emptyTitle = "메일이 없습니다",
   emptyDescription,
   errorTitle,
@@ -76,6 +82,21 @@ export function EmailList({
   onRetryLoadMore,
 }: EmailListProps) {
   const loadMoreRef = useRef<HTMLDivElement | null>(null)
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+  const { mutate: deleteThread } = useDeleteThread()
+  const { mutate: restoreThread } = useRestoreTrashThread()
+
+  const toggleSelected = (id: string) => {
+    setSelectedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) {
+        next.delete(id)
+      } else {
+        next.add(id)
+      }
+      return next
+    })
+  }
 
   useEffect(() => {
     const node = loadMoreRef.current
@@ -105,20 +126,31 @@ export function EmailList({
         threadCount={threads?.length ?? 0}
         filter={filter}
         onFilterChange={onFilterChange}
+        selectedCount={selectedIds.size}
+        onClearSelection={() => setSelectedIds(new Set())}
+        onDeleteSelected={() => {
+          const ids = Array.from(selectedIds)
+          if (ids.length === 0) return
+          setSelectedIds(new Set())
+          ids.forEach((id) => deleteThread(id))
+          toast(`${ids.length}개 메일을 휴지통으로 옮겼습니다`, {
+            action: {
+              label: "실행 취소",
+              onClick: () => {
+                ids.forEach((id) => restoreThread(id))
+                toast.success("삭제가 취소되었습니다")
+              },
+            },
+          })
+        }}
+        onLabelSelected={() => {
+          toast.info("라벨 기능은 준비 중입니다")
+        }}
       />
 
       <ScrollArea className="min-h-0 flex-1">
         {isLoading ? (
           <Table className="table-fixed">
-            <TableHeader className="sticky top-0 z-10 bg-background">
-              <TableRow>
-                <TableHead className="w-10">상태</TableHead>
-                <TableHead className="w-[22%]">보낸 사람</TableHead>
-                <TableHead className="w-[58%]">제목</TableHead>
-                <TableHead className="hidden w-14 text-center md:table-cell">첨부</TableHead>
-                <TableHead className="w-24 text-right">시간</TableHead>
-              </TableRow>
-            </TableHeader>
             <TableBody>
               <LoadingRows />
             </TableBody>
@@ -128,15 +160,14 @@ export function EmailList({
         ) : threads && threads.length > 0 ? (
           <>
             <Table className="table-fixed">
-              <TableHeader className="sticky top-0 z-10 bg-background">
-                <TableRow>
-                  <TableHead className="w-10">상태</TableHead>
-                  <TableHead className="w-[28%] md:w-[22%]">보낸 사람</TableHead>
-                  <TableHead className="w-[52%] md:w-[58%]">제목</TableHead>
-                  <TableHead className="hidden w-14 text-center md:table-cell">첨부</TableHead>
-                  <TableHead className="w-24 text-right">시간</TableHead>
-                </TableRow>
-              </TableHeader>
+              <colgroup>
+                <col className="w-10" />
+                <col className="w-10" />
+                <col className="w-[28%] md:w-[22%]" />
+                <col className="w-[52%] md:w-[58%]" />
+                <col className="hidden w-14 md:table-column" />
+                <col className="w-24" />
+              </colgroup>
               <TableBody>
                 {threads.map((thread) => {
                   return (
@@ -144,8 +175,10 @@ export function EmailList({
                       key={thread.threadId}
                       thread={thread}
                       isSelected={selectedThreadId === thread.threadId}
-                      accountColor={getAccountColor(thread.accountId)}
+                      isChecked={selectedIds.has(thread.threadId)}
+                      account={getAccount(thread.accountId)}
                       onSelect={() => onSelectThread(thread.threadId)}
+                      onToggleCheck={() => toggleSelected(thread.threadId)}
                     />
                   )
                 })}

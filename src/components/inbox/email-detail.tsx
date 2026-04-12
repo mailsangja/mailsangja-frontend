@@ -1,4 +1,4 @@
-import { Archive, Forward, MailOpen, Paperclip, Reply, Trash2, X } from "lucide-react"
+import { Archive, ArrowLeft, Forward, MailOpen, Paperclip, Reply, Trash2} from "lucide-react"
 
 import { EmailErrorState } from "@/components/inbox/email-error-state"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -141,24 +141,26 @@ export function EmailDetail({ threadId, onClose }: EmailDetailProps) {
     <div className="flex h-full flex-col">
       <div className="flex h-11 shrink-0 items-center gap-2 border-b px-4">
         {/*<span className="min-w-0 truncate text-sm font-medium">대화 상세</span>*/}
-        <div className="ml-auto flex items-center gap-1">
-          <Button variant="ghost" size="icon-sm" disabled title="답장 기능은 아직 지원되지 않습니다.">
-            <Reply className="size-4" />
-          </Button>
-          <Button variant="ghost" size="icon-sm" disabled title="전달 기능은 아직 지원되지 않습니다.">
-            <Forward className="size-4" />
-          </Button>
-          <Button variant="ghost" size="icon-sm" disabled title="보관 기능은 아직 지원되지 않습니다.">
-            <Archive className="size-4" />
-          </Button>
-          <Button variant="ghost" size="icon-sm" disabled title="삭제 기능은 아직 지원되지 않습니다.">
-            <Trash2 className="size-4" />
-          </Button>
+        <div className="flex w-full justify-between">
           {onClose ? (
             <Button variant="ghost" size="icon-sm" onClick={onClose} aria-label="상세보기 닫기" className="-mr-2">
-              <X className="size-4" />
+              <ArrowLeft className="size-4" />
             </Button>
           ) : null}
+          <div className="ml-auto flex items-center gap-1">
+            <Button variant="ghost" size="icon-sm" disabled title="답장 기능은 아직 지원되지 않습니다.">
+              <Reply className="size-4" />
+            </Button>
+            <Button variant="ghost" size="icon-sm" disabled title="전달 기능은 아직 지원되지 않습니다.">
+              <Forward className="size-4" />
+            </Button>
+            <Button variant="ghost" size="icon-sm" disabled title="보관 기능은 아직 지원되지 않습니다.">
+              <Archive className="size-4" />
+            </Button>
+            <Button variant="ghost" size="icon-sm" disabled title="삭제 기능은 아직 지원되지 않습니다.">
+              <Trash2 className="size-4" />
+            </Button>
+          </div>
         </div>
       </div>
 
