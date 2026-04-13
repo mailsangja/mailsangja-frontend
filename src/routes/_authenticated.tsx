@@ -31,8 +31,8 @@ function AuthenticatedRouteLayout() {
 
   return (
     <InboxContext.Provider value={{ activeMailbox, setActiveMailbox, searchQuery, setSearchQuery }}>
-      <SidebarProvider className="flex-col bg-background">
-        <header className="flex h-14 shrink-0 items-center gap-4 px-4">
+      <SidebarProvider className="h-svh flex-col overflow-hidden bg-background">
+        <header className="flex h-14 shrink-0 items-center gap-4 bg-sidebar px-4">
           {isMobile ? (
             <SidebarTrigger className="shrink-0" />
           ) : (
@@ -60,14 +60,14 @@ function AuthenticatedRouteLayout() {
           </div>
         </header>
 
-        <div className="flex min-h-0 flex-1 bg-sidebar">
+        <div className="flex min-h-0 flex-1 overflow-hidden bg-sidebar">
           <AppSidebar
             activeMailbox={activeMailbox}
             onMailboxChange={setActiveMailbox}
             className="top-14 h-[calc(100svh-3.5rem)]"
           />
-          <div className="flex min-w-0 flex-1 flex-col">
-            <div className="relative m-2 mt-0 flex min-w-0 flex-1 flex-col rounded-xl bg-background shadow-sm md:ml-0">
+          <div className="flex min-h-0 min-w-0 flex-1 flex-col">
+            <div className="relative m-2 mt-0 flex min-h-0 min-w-0 flex-1 flex-col overflow-hidden rounded-xl bg-background shadow-sm md:ml-0">
               <Outlet />
             </div>
           </div>
