@@ -3,6 +3,7 @@ import type {
   InboxMessage,
   InboxThreadDetail,
   InboxThreadSummary,
+  MailAddress,
   MarkerSliceResponse,
   SupportedMailboxId,
 } from "@/types/email"
@@ -19,6 +20,13 @@ function attachment(id: string, filename: string, mimeType: string, size: number
     filename,
     mimeType,
     size,
+  }
+}
+
+function address(email: string, name?: string): MailAddress {
+  return {
+    email,
+    name,
   }
 }
 
@@ -44,9 +52,9 @@ const inboxDetails: InboxThreadDetail[] = [
         gmailMessageId: "gmail-message-001-1",
         subject: "프로젝트 킥오프 일정 확정",
         direction: "INBOUND",
-        fromAddress: "pm@company.com",
-        toAddresses: ["mailsangja@gmail.com"],
-        ccAddresses: ["design@company.com"],
+        from: address("pm@company.com", "프로젝트 PM"),
+        to: [address("mailsangja@gmail.com", "메일상자")],
+        cc: [address("design@company.com", "디자인팀")],
         snippet: "다음 주 월요일 오전 10시로 킥오프 미팅을 확정했습니다.",
         isRead: false,
         sentAt: "2026-04-10T08:40:00+09:00",
@@ -70,9 +78,9 @@ const inboxDetails: InboxThreadDetail[] = [
         gmailMessageId: "gmail-message-002-1",
         subject: "견적서 검토 부탁드립니다",
         direction: "INBOUND",
-        fromAddress: "sales@vendor.io",
-        toAddresses: ["mailsangja@naver.com"],
-        ccAddresses: [],
+        from: address("sales@vendor.io", "Vendor Sales"),
+        to: [address("mailsangja@naver.com", "메일상자 네이버")],
+        cc: [],
         snippet: "첨부드린 2분기 제안 견적서를 확인 부탁드립니다.",
         isRead: true,
         sentAt: "2026-04-09T17:15:00+09:00",
@@ -95,9 +103,9 @@ const inboxDetails: InboxThreadDetail[] = [
         gmailMessageId: "gmail-message-003-1",
         subject: "디자인 시안 피드백 요청",
         direction: "INBOUND",
-        fromAddress: "designer@studio.kr",
-        toAddresses: ["mailsangja@gmail.com"],
-        ccAddresses: [],
+        from: address("designer@studio.kr", "스튜디오 디자이너"),
+        to: [address("mailsangja@gmail.com", "메일상자")],
+        cc: [],
         snippet: "랜딩 페이지 시안을 공유드립니다. 확인 후 코멘트 부탁드립니다.",
         isRead: true,
         sentAt: "2026-04-09T10:05:00+09:00",
@@ -120,9 +128,9 @@ const inboxDetails: InboxThreadDetail[] = [
         gmailMessageId: "gmail-message-004-1",
         subject: "주간 리포트 공유",
         direction: "INBOUND",
-        fromAddress: "ops@company.com",
-        toAddresses: ["mailsangja@naver.com"],
-        ccAddresses: ["team@company.com"],
+        from: address("ops@company.com", "운영팀"),
+        to: [address("mailsangja@naver.com", "메일상자 네이버")],
+        cc: [address("team@company.com", "팀 공용")],
         snippet: "이번 주 운영 지표와 주요 이슈를 정리했습니다.",
         isRead: false,
         sentAt: "2026-04-08T18:20:00+09:00",
@@ -148,9 +156,9 @@ const sentDetails: InboxThreadDetail[] = [
         gmailMessageId: "gmail-message-101-1",
         subject: "Re: 프로젝트 킥오프 일정 확정",
         direction: "OUTBOUND",
-        fromAddress: "mailsangja@gmail.com",
-        toAddresses: ["pm@company.com"],
-        ccAddresses: ["design@company.com"],
+        from: address("mailsangja@gmail.com", "메일상자"),
+        to: [address("pm@company.com", "프로젝트 PM")],
+        cc: [address("design@company.com", "디자인팀")],
         snippet: "월요일 오전 10시 확인했습니다. 자료 준비해서 참석하겠습니다.",
         isRead: true,
         sentAt: "2026-04-10T09:05:00+09:00",
@@ -173,9 +181,9 @@ const sentDetails: InboxThreadDetail[] = [
         gmailMessageId: "gmail-message-102-1",
         subject: "회의록 전달드립니다",
         direction: "OUTBOUND",
-        fromAddress: "mailsangja@naver.com",
-        toAddresses: ["lead@company.com", "team@company.com"],
-        ccAddresses: [],
+        from: address("mailsangja@naver.com", "메일상자 네이버"),
+        to: [address("lead@company.com", "팀 리드"), address("team@company.com", "팀 공용")],
+        cc: [],
         snippet: "오늘 회의에서 논의한 사항을 정리해 공유드립니다.",
         isRead: true,
         sentAt: "2026-04-09T19:45:00+09:00",
@@ -205,9 +213,9 @@ const sentDetails: InboxThreadDetail[] = [
         gmailMessageId: "gmail-message-103-1",
         subject: "계약서 초안 전달",
         direction: "OUTBOUND",
-        fromAddress: "mailsangja@gmail.com",
-        toAddresses: ["legal@partner.com"],
-        ccAddresses: ["ceo@partner.com"],
+        from: address("mailsangja@gmail.com", "메일상자"),
+        to: [address("legal@partner.com", "파트너 법무")],
+        cc: [address("ceo@partner.com", "파트너 대표")],
         snippet: "검토 부탁드리며 수정 의견 주시면 반영하겠습니다.",
         isRead: true,
         sentAt: "2026-04-08T11:10:00+09:00",
@@ -225,14 +233,15 @@ const allDetails = [...inboxDetails, ...sentDetails]
 
 function toSummary(detail: InboxThreadDetail): InboxThreadSummary {
   const lastMessage = detail.messages.at(-1)
+  const participant =
+    lastMessage?.direction === "OUTBOUND" ? (lastMessage.to[0] ?? address("")) : (lastMessage?.from ?? address(""))
 
   return {
     threadId: detail.threadId,
     gmailThreadId: detail.gmailThreadId,
     accountId: detail.accountId,
     latestSubject: detail.latestSubject,
-    participantAddress:
-      lastMessage?.direction === "OUTBOUND" ? (lastMessage.toAddresses[0] ?? "") : (lastMessage?.fromAddress ?? ""),
+    participant,
     snippet: lastMessage?.snippet ?? "",
     isRead: detail.isRead,
     lastMessageAt: detail.lastMessageAt,

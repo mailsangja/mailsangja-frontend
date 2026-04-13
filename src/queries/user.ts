@@ -1,7 +1,7 @@
 import { queryOptions, useQuery } from "@tanstack/react-query"
 
 import { getUserInfo } from "@/api/users"
-import { HttpError } from "@/lib/api-client"
+import { getHttpStatus } from "@/lib/http-error"
 import type { User } from "@/types/user"
 
 export const userKeys = {
@@ -17,7 +17,7 @@ export const userQueries = {
         try {
           return await getUserInfo()
         } catch (error) {
-          if (error instanceof HttpError && error.status === 401) {
+          if (getHttpStatus(error) === 401) {
             return null
           }
 
