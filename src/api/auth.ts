@@ -11,3 +11,7 @@ export async function login(data: LoginPayload): Promise<User> {
 export async function register(data: RegisterPayload): Promise<User> {
   return apiClient.post<User>("/api/v1/auth/register", data)
 }
+
+export async function logout(): Promise<void> {
+  await apiClient.post<void>("/api/v1/auth/logout")
+}

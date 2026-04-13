@@ -17,7 +17,7 @@ import { ChevronsUpDown, LogOut, Settings, UserIcon } from "lucide-react"
 
 export function NavUser() {
   const { data: user } = useUser()
-  const logout = useLogout()
+  const logoutMutation = useLogout()
   const { isMobile } = useSidebar()
 
   if (!user) return null
@@ -72,7 +72,7 @@ export function NavUser() {
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={logout}>
+            <DropdownMenuItem onClick={() => logoutMutation.mutate()} disabled={logoutMutation.isPending}>
               <LogOut />
               <span>로그아웃</span>
             </DropdownMenuItem>
