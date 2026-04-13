@@ -24,14 +24,19 @@ export interface Attachment {
   size: number
 }
 
+export interface MailAddress {
+  name?: string
+  email: string
+}
+
 export interface InboxMessage {
   id: string
   gmailMessageId: string
   subject: string
   direction: "INBOUND" | "OUTBOUND"
-  fromAddress: string
-  toAddresses: string[]
-  ccAddresses: string[]
+  from: MailAddress
+  to: MailAddress[]
+  cc: MailAddress[]
   snippet: string
   isRead: boolean
   sentAt: string
@@ -45,7 +50,7 @@ export interface InboxThreadSummary {
   gmailThreadId: string
   accountId: string
   latestSubject: string
-  participantAddress: string
+  participant: MailAddress
   snippet: string
   isRead: boolean
   lastMessageAt: string
@@ -71,4 +76,8 @@ export interface MarkerSliceResponse<T> {
 export interface ListThreadsParams {
   marker?: string
   size?: number
+}
+
+export interface UnreadCountResponse {
+  unreadCount: number
 }

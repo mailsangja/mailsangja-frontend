@@ -1,8 +1,10 @@
 import { useEffect, useRef } from "react"
 import { InboxIcon, Paperclip } from "lucide-react"
 
+import { EmailErrorState } from "@/components/inbox/email-error-state"
 import { EmailListHeader } from "@/components/inbox/email-list-header"
 import type { EmailFilter } from "@/components/inbox/email-list-header"
+import { getMailAddressLabel } from "@/lib/mail-address"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -23,6 +25,12 @@ interface EmailListProps {
   getAccountColor: (accountId: string) => string | undefined
   emptyTitle?: string
   emptyDescription?: string
+  errorTitle?: string
+  errorDescription?: string
+  onRetry?: () => void
+  loadMoreErrorTitle?: string
+  loadMoreErrorDescription?: string
+  onRetryLoadMore?: () => void
 }
 
 function formatRelativeDate(dateStr: string): string {
@@ -75,6 +83,12 @@ export function EmailList({
   getAccountColor,
   emptyTitle = "메일이 없습니다",
   emptyDescription,
+  errorTitle,
+  errorDescription,
+  onRetry,
+  loadMoreErrorTitle,
+  loadMoreErrorDescription,
+  onRetryLoadMore,
 }: EmailListProps) {
   const loadMoreRef = useRef<HTMLDivElement | null>(null)
 
@@ -124,6 +138,8 @@ export function EmailList({
               <LoadingRows />
             </TableBody>
           </Table>
+        ) : errorTitle && errorDescription ? (
+          <EmailErrorState title={errorTitle} description={errorDescription} onRetry={onRetry} />
         ) : threads && threads.length > 0 ? (
           <>
             <Table className="table-fixed">
@@ -142,6 +158,7 @@ export function EmailList({
                   const isUnread = !thread.isRead
                   const accountColor = getAccountColor(thread.accountId)
                   const hasAttachments = thread.attachments.length > 0
+                  const participantLabel = getMailAddressLabel(thread.participant)
 
                   return (
                     <TableRow
@@ -167,7 +184,7 @@ export function EmailList({
                       </TableCell>
                       <TableCell className="truncate">
                         <span className={cn("truncate", isUnread ? "text-foreground" : "text-muted-foreground")}>
-                          {thread.participantAddress || "알 수 없음"}
+                          {participantLabel}
                         </span>
                       </TableCell>
                       <TableCell className="min-w-0">
@@ -190,6 +207,16 @@ export function EmailList({
                 {isFetchingNextPage ? <LoadingRows /> : null}
               </TableBody>
             </Table>
+            {loadMoreErrorTitle && loadMoreErrorDescription ? (
+              <div className="border-t px-4 py-3">
+                <EmailErrorState
+                  title={loadMoreErrorTitle}
+                  description={loadMoreErrorDescription}
+                  retryLabel="추가 메일 다시 불러오기"
+                  onRetry={onRetryLoadMore}
+                />
+              </div>
+            ) : null}
             <div ref={loadMoreRef} className="h-1" />
           </>
         ) : (

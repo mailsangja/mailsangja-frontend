@@ -1,12 +1,15 @@
 import { Archive, Forward, MailOpen, Paperclip, Reply, Trash2, X } from "lucide-react"
 
+import { EmailErrorState } from "@/components/inbox/email-error-state"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
+import { getErrorMessage, getHttpStatus } from "@/lib/http-error"
+import { formatMailAddressList, getMailAddressFullLabel, getMailAddressLabel } from "@/lib/mail-address"
 import { useThread } from "@/queries/emails"
-import type { InboxMessage } from "@/types/email"
+import type { InboxMessage, MailAddress } from "@/types/email"
 
 function formatDate(value: string) {
   const date = new Date(value)
@@ -30,8 +33,8 @@ function getInitials(value: string) {
 function getMessageParticipants(message: InboxMessage) {
   const seen = new Set<string>()
 
-  return [message.fromAddress, ...message.toAddresses, ...message.ccAddresses].filter((address) => {
-    const normalized = address.trim()
+  return [message.from, ...message.to, ...message.cc].filter((address) => {
+    const normalized = address.email.trim()
 
     if (!normalized || seen.has(normalized)) {
       return false
@@ -40,6 +43,35 @@ function getMessageParticipants(message: InboxMessage) {
     seen.add(normalized)
     return true
   })
+}
+
+function getParticipantKey(address: MailAddress) {
+  return address.email || address.name || "unknown"
+}
+
+function getThreadDetailErrorCopy(error: unknown) {
+  switch (getHttpStatus(error)) {
+    case 401:
+      return {
+        title: "로그인이 필요합니다",
+        description: "세션이 만료되었거나 인증 정보가 없습니다. 다시 로그인한 뒤 스레드를 열어주세요.",
+      }
+    case 403:
+      return {
+        title: "이 스레드에 접근할 수 없습니다",
+        description: "현재 로그인한 사용자에게 이 스레드를 볼 권한이 없습니다.",
+      }
+    case 404:
+      return {
+        title: "스레드를 찾을 수 없습니다",
+        description: "삭제되었거나 더 이상 접근할 수 없는 메일 스레드입니다.",
+      }
+    default:
+      return {
+        title: "스레드 내용을 불러오지 못했습니다",
+        description: getErrorMessage(error, "네트워크 상태를 확인한 뒤 다시 시도해주세요."),
+      }
+  }
 }
 
 function EmptyState() {
@@ -89,10 +121,17 @@ interface EmailDetailProps {
 }
 
 export function EmailDetail({ threadId, onClose }: EmailDetailProps) {
-  const { data: thread, isLoading } = useThread(threadId)
+  const { data: thread, isLoading, isError, error, refetch } = useThread(threadId)
 
   if (!threadId) return <EmptyState />
   if (isLoading) return <LoadingState />
+  if (isError) {
+    const errorCopy = getThreadDetailErrorCopy(error)
+
+    return (
+      <EmailErrorState title={errorCopy.title} description={errorCopy.description} onRetry={() => void refetch()} />
+    )
+  }
   if (!thread) return <EmptyState />
 
   const messages = thread.messages
@@ -134,8 +173,8 @@ export function EmailDetail({ threadId, onClose }: EmailDetailProps) {
         {lastMessage ? (
           <div className="mt-4 flex flex-wrap items-center gap-2">
             {getMessageParticipants(lastMessage).map((participant) => (
-              <Badge key={participant} variant="secondary" className="font-normal">
-                {participant}
+              <Badge key={getParticipantKey(participant)} variant="secondary" className="font-normal">
+                {getMailAddressFullLabel(participant)}
               </Badge>
             ))}
           </div>
@@ -148,13 +187,13 @@ export function EmailDetail({ threadId, onClose }: EmailDetailProps) {
             <section key={message.id} className="rounded-2xl border bg-card p-5 shadow-sm">
               <div className="flex items-start gap-3">
                 <Avatar>
-                  <AvatarFallback>{getInitials(message.fromAddress)}</AvatarFallback>
+                  <AvatarFallback>{getInitials(getMailAddressLabel(message.from))}</AvatarFallback>
                 </Avatar>
                 <div className="min-w-0 flex-1">
                   <div className="flex flex-wrap items-center justify-between gap-2">
                     <div>
                       <div className="flex items-center gap-2">
-                        <p className="text-sm font-medium">{message.fromAddress || "알 수 없음"}</p>
+                        <p className="text-sm font-medium">{getMailAddressFullLabel(message.from)}</p>
                         <Badge variant="outline">{message.direction === "INBOUND" ? "수신" : "발신"}</Badge>
                       </div>
                       <p className="truncate text-xs text-muted-foreground">{message.subject}</p>
@@ -162,10 +201,10 @@ export function EmailDetail({ threadId, onClose }: EmailDetailProps) {
                     <span className="shrink-0 text-xs text-muted-foreground">{formatDate(message.sentAt)}</span>
                   </div>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    받는 사람: {message.toAddresses.length > 0 ? message.toAddresses.join(", ") : "-"}
+                    받는 사람: {message.to.length > 0 ? formatMailAddressList(message.to) : "-"}
                   </p>
-                  {message.ccAddresses.length > 0 ? (
-                    <p className="mt-1 text-xs text-muted-foreground">참조: {message.ccAddresses.join(", ")}</p>
+                  {message.cc.length > 0 ? (
+                    <p className="mt-1 text-xs text-muted-foreground">참조: {formatMailAddressList(message.cc)}</p>
                   ) : null}
                 </div>
               </div>
