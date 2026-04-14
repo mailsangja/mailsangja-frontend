@@ -1,13 +1,16 @@
-import { Archive, Forward, MailOpen, Paperclip, Reply, Trash2, X } from "lucide-react"
+import { Archive, ArrowLeft, Forward, MailOpen, MoreVertical, Paperclip, Reply, Trash2 } from "lucide-react"
+import { toast } from "sonner"
 
 import { EmailErrorState } from "@/components/inbox/email-error-state"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
 import { getErrorMessage, getHttpStatus } from "@/lib/http-error"
 import { formatMailAddressList, getMailAddressFullLabel, getMailAddressLabel } from "@/lib/mail-address"
+import { useDeleteMessage, useDeleteThread, useRestoreTrashMessage, useRestoreTrashThread } from "@/mutations/trash"
 import { useThread } from "@/queries/emails"
 import type { InboxMessage, MailAddress } from "@/types/email"
 
@@ -91,7 +94,7 @@ function EmptyState() {
 function LoadingState() {
   return (
     <div className="flex h-full flex-col">
-      <div className="flex h-11 shrink-0 items-center justify-between gap-2 border-b px-4">
+      <div className="flex h-11 shrink-0 items-center justify-between gap-2 px-4">
         <Skeleton className="h-4 w-24" />
         <div className="flex items-center gap-1">
           {Array.from({ length: 4 }).map((_, index) => (
@@ -122,6 +125,71 @@ interface EmailDetailProps {
 
 export function EmailDetail({ threadId, onClose }: EmailDetailProps) {
   const { data: thread, isLoading, isError, error, refetch } = useThread(threadId)
+  const { mutate: deleteThread, isPending: isDeleting } = useDeleteThread()
+  const { mutate: restoreThread } = useRestoreTrashThread()
+  const { mutate: deleteMessage } = useDeleteMessage()
+  const { mutate: restoreMessage } = useRestoreTrashMessage()
+
+  const handleDeleteMessage = (messageId: string, isLast: boolean) => {
+    deleteMessage(messageId, {
+      onSuccess: () => {
+        if (isLast) onClose?.()
+        toast("메시지를 휴지통으로 옮겼습니다", {
+          action: {
+            label: "실행 취소",
+            onClick: () => {
+              restoreMessage(messageId, {
+                onSuccess: () => {
+                  toast.success("삭제가 취소되었습니다")
+                },
+                onError: (err) => {
+                  toast.error("삭제 취소에 실패했습니다", {
+                    description: getErrorMessage(err, "잠시 후 다시 시도해주세요."),
+                  })
+                },
+              })
+            },
+          },
+        })
+      },
+      onError: (err) => {
+        toast.error("메시지 삭제에 실패했습니다", {
+          description: getErrorMessage(err, "잠시 후 다시 시도해주세요."),
+        })
+      },
+    })
+  }
+
+  const handleDelete = () => {
+    if (!threadId) return
+    deleteThread(threadId, {
+      onSuccess: () => {
+        onClose?.()
+        toast("메일을 휴지통으로 옮겼습니다", {
+          action: {
+            label: "실행 취소",
+            onClick: () => {
+              restoreThread(threadId, {
+                onSuccess: () => {
+                  toast.success("삭제가 취소되었습니다")
+                },
+                onError: (err) => {
+                  toast.error("삭제 취소에 실패했습니다", {
+                    description: getErrorMessage(err, "잠시 후 다시 시도해주세요."),
+                  })
+                },
+              })
+            },
+          },
+        })
+      },
+      onError: (err) => {
+        toast.error("메일 삭제에 실패했습니다", {
+          description: getErrorMessage(err, "잠시 후 다시 시도해주세요."),
+        })
+      },
+    })
+  }
 
   if (!threadId) return <EmptyState />
   if (isLoading) return <LoadingState />
@@ -139,26 +207,35 @@ export function EmailDetail({ threadId, onClose }: EmailDetailProps) {
 
   return (
     <div className="flex h-full flex-col">
-      <div className="flex h-11 shrink-0 items-center gap-2 border-b px-4">
+      <div className="flex h-11 shrink-0 items-center gap-2 px-4">
         {/*<span className="min-w-0 truncate text-sm font-medium">대화 상세</span>*/}
-        <div className="ml-auto flex items-center gap-1">
-          <Button variant="ghost" size="icon-sm" disabled title="답장 기능은 아직 지원되지 않습니다.">
-            <Reply className="size-4" />
-          </Button>
-          <Button variant="ghost" size="icon-sm" disabled title="전달 기능은 아직 지원되지 않습니다.">
-            <Forward className="size-4" />
-          </Button>
-          <Button variant="ghost" size="icon-sm" disabled title="보관 기능은 아직 지원되지 않습니다.">
-            <Archive className="size-4" />
-          </Button>
-          <Button variant="ghost" size="icon-sm" disabled title="삭제 기능은 아직 지원되지 않습니다.">
-            <Trash2 className="size-4" />
-          </Button>
+        <div className="flex w-full justify-between">
           {onClose ? (
             <Button variant="ghost" size="icon-sm" onClick={onClose} aria-label="상세보기 닫기" className="-mr-2">
-              <X className="size-4" />
+              <ArrowLeft className="size-4" />
             </Button>
           ) : null}
+          <div className="ml-auto flex items-center gap-1">
+            <Button variant="ghost" size="icon-sm" disabled title="답장 기능은 아직 지원되지 않습니다.">
+              <Reply className="size-4" />
+            </Button>
+            <Button variant="ghost" size="icon-sm" disabled title="전달 기능은 아직 지원되지 않습니다.">
+              <Forward className="size-4" />
+            </Button>
+            <Button variant="ghost" size="icon-sm" disabled title="보관 기능은 아직 지원되지 않습니다.">
+              <Archive className="size-4" />
+            </Button>
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={handleDelete}
+              disabled={isDeleting}
+              title="삭제"
+              aria-label="메일 삭제"
+            >
+              <Trash2 className="size-4" />
+            </Button>
+          </div>
         </div>
       </div>
 
@@ -190,19 +267,34 @@ export function EmailDetail({ threadId, onClose }: EmailDetailProps) {
                   <AvatarFallback>{getInitials(getMailAddressLabel(message.from))}</AvatarFallback>
                 </Avatar>
                 <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
                         <p className="text-sm font-medium">{getMailAddressFullLabel(message.from)}</p>
                         <Badge variant="outline">{message.direction === "INBOUND" ? "수신" : "발신"}</Badge>
                       </div>
                       <p className="truncate text-xs text-muted-foreground">{message.subject}</p>
                     </div>
-                    <span className="shrink-0 text-xs text-muted-foreground">{formatDate(message.sentAt)}</span>
+                    <div className="flex shrink-0 items-start">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger
+                          render={<Button variant="ghost" size="icon-sm" aria-label="메시지 더보기" />}
+                        >
+                          <MoreVertical className="size-4" />
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleDeleteMessage(message.id, messages.length === 1)}>
+                            <Trash2 className="size-4" />
+                            삭제
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   </div>
                   <p className="mt-1 text-xs text-muted-foreground">
                     받는 사람: {message.to.length > 0 ? formatMailAddressList(message.to) : "-"}
                   </p>
+                  <p className="mt-1 text-xs text-muted-foreground">{formatDate(message.sentAt)}</p>
                   {message.cc.length > 0 ? (
                     <p className="mt-1 text-xs text-muted-foreground">참조: {formatMailAddressList(message.cc)}</p>
                   ) : null}

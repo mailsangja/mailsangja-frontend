@@ -3,27 +3,34 @@ import { Paperclip } from "lucide-react"
 import { Popover as PopoverPrimitive } from "@base-ui/react/popover"
 
 import { Badge } from "@/components/ui/badge"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Separator } from "@/components/ui/separator"
 import { TableCell, TableRow } from "@/components/ui/table"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { formatFullDateTime, formatRelativeDate } from "@/lib/date"
+import { AccountIcon } from "@/lib/icon-entries"
 import { getMailAddressLabel } from "@/lib/mail-address"
 import { cn } from "@/lib/utils"
 import type { InboxThreadSummary } from "@/types/email"
+import type { MailAccount } from "@/types/mail-account"
 
 interface EmailListItemProps {
   thread: InboxThreadSummary
   isSelected: boolean
-  accountColor?: string
+  isChecked: boolean
+  account?: MailAccount
   onSelect: () => void
+  onToggleCheck: () => void
 }
 
 interface EmailListItemCellsProps {
   thread: InboxThreadSummary
   isUnread: boolean
-  accountColor?: string
+  isChecked: boolean
+  account?: MailAccount
   participantLabel: string
+  onToggleCheck: () => void
 }
 
 interface EmailListItemPreviewProps {
@@ -42,17 +49,35 @@ function createCursorAnchor(
   }
 }
 
-function EmailListItemCells({ thread, isUnread, accountColor, participantLabel }: EmailListItemCellsProps) {
+function EmailListItemCells({
+  thread,
+  isUnread,
+  isChecked,
+  account,
+  participantLabel,
+  onToggleCheck,
+}: EmailListItemCellsProps) {
   const hasAttachments = thread.attachments.length > 0
 
   return (
     <>
+      <TableCell onClick={(event) => event.stopPropagation()}>
+        <div className="flex justify-center">
+          <Checkbox checked={isChecked} onCheckedChange={onToggleCheck} aria-label="메일 선택" />
+        </div>
+      </TableCell>
       <TableCell>
-        <div className="flex items-center gap-2">
-          <span className={cn("size-2.5 rounded-full", isUnread ? "bg-primary" : "bg-transparent")} />
-          {accountColor ? (
-            <span className="hidden size-2 rounded-full md:inline-flex" style={{ backgroundColor: accountColor }} />
-          ) : null}
+        <div className="flex justify-center">
+          {account?.icon ? (
+            <div
+              className="flex size-7 items-center justify-center rounded-full"
+              style={{ backgroundColor: account.color || "#6B7280" }}
+            >
+              <AccountIcon name={account.icon} className="size-3.5 text-white" />
+            </div>
+          ) : (
+            <span className={cn("size-2.5 rounded-full", isUnread ? "bg-primary" : "bg-transparent")} />
+          )}
         </div>
       </TableCell>
       <TableCell className="truncate">
@@ -104,7 +129,7 @@ function EmailListItemPreview({ thread, participantLabel }: EmailListItemPreview
   )
 }
 
-export function EmailListItem({ thread, isSelected, accountColor, onSelect }: EmailListItemProps) {
+export function EmailListItem({ thread, isSelected, isChecked, account, onSelect, onToggleCheck }: EmailListItemProps) {
   const isMobile = useIsMobile()
   const [open, setOpen] = useState(false)
   const [anchor, setAnchor] = useState<PopoverPrimitive.Positioner.Props["anchor"]>(null)
@@ -146,8 +171,10 @@ export function EmailListItem({ thread, isSelected, accountColor, onSelect }: Em
         <EmailListItemCells
           thread={thread}
           isUnread={isUnread}
-          accountColor={accountColor}
+          isChecked={isChecked}
+          account={account}
           participantLabel={participantLabel}
+          onToggleCheck={onToggleCheck}
         />
       </TableRow>
     )

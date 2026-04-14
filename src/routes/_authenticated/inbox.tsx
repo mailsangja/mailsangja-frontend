@@ -85,8 +85,8 @@ function InboxPage() {
   const mailboxErrorCopy = isError ? getMailboxThreadsErrorCopy(error) : null
   const loadMoreErrorCopy = isFetchNextPageError ? getMailboxThreadsErrorCopy(error) : null
 
-  const getAccountColor = (accountId: string) => {
-    return accounts?.find((account) => account.id === accountId)?.color
+  const getAccount = (accountId: string) => {
+    return accounts?.find((account) => account.id === accountId)
   }
 
   const visibleSelectedThreadId = threads.some((thread) => thread.threadId === selectedThreadId)
@@ -124,7 +124,7 @@ function InboxPage() {
           void fetchNextPage()
         }
       }}
-      getAccountColor={getAccountColor}
+      getAccount={getAccount}
       emptyTitle={emptyTitle}
       emptyDescription={emptyDescription}
       errorTitle={supportedMailbox && isError && threads.length === 0 ? mailboxErrorCopy?.title : undefined}

@@ -72,7 +72,7 @@
   --foreground: oklch(0.3438 0.0269 95.7226);
   --card: oklch(0.997 0.0041 91.4451);
   --card-foreground: oklch(0.1908 0.002 106.5859);
-  --popover: oklch(1 0 0);
+  --popover: oklch(0.997 0.0041 91.4451);
   --popover-foreground: oklch(0.2671 0.0196 98.939);
   --primary: oklch(0.6171 0.1375 39.0427);
   --primary-foreground: oklch(1 0 0);
@@ -234,6 +234,8 @@
   }
   body {
     @apply bg-background text-foreground;
+
+    font-family: var(--font-sans);
   }
   html {
     scrollbar-gutter: stable;
