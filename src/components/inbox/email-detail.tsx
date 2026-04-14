@@ -1,4 +1,5 @@
-import { Archive, ArrowLeft, Forward, MailOpen, Paperclip, Reply, Trash2} from "lucide-react"
+import { Archive, ArrowLeft, Forward, MailOpen, Paperclip, Reply, Trash2 } from "lucide-react"
+import { toast } from "sonner"
 
 import { EmailErrorState } from "@/components/inbox/email-error-state"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
@@ -8,6 +9,7 @@ import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
 import { getErrorMessage, getHttpStatus } from "@/lib/http-error"
 import { formatMailAddressList, getMailAddressFullLabel, getMailAddressLabel } from "@/lib/mail-address"
+import { useDeleteThread, useRestoreTrashThread } from "@/mutations/trash"
 import { useThread } from "@/queries/emails"
 import type { InboxMessage, MailAddress } from "@/types/email"
 
@@ -122,6 +124,31 @@ interface EmailDetailProps {
 
 export function EmailDetail({ threadId, onClose }: EmailDetailProps) {
   const { data: thread, isLoading, isError, error, refetch } = useThread(threadId)
+  const { mutate: deleteThread, isPending: isDeleting } = useDeleteThread()
+  const { mutate: restoreThread } = useRestoreTrashThread()
+
+  const handleDelete = () => {
+    if (!threadId) return
+    deleteThread(threadId, {
+      onSuccess: () => {
+        onClose?.()
+        toast("메일을 휴지통으로 옮겼습니다", {
+          action: {
+            label: "실행 취소",
+            onClick: () => {
+              restoreThread(threadId)
+              toast.success("삭제가 취소되었습니다")
+            },
+          },
+        })
+      },
+      onError: (err) => {
+        toast.error("메일 삭제에 실패했습니다", {
+          description: getErrorMessage(err, "잠시 후 다시 시도해주세요."),
+        })
+      },
+    })
+  }
 
   if (!threadId) return <EmptyState />
   if (isLoading) return <LoadingState />
@@ -157,7 +184,14 @@ export function EmailDetail({ threadId, onClose }: EmailDetailProps) {
             <Button variant="ghost" size="icon-sm" disabled title="보관 기능은 아직 지원되지 않습니다.">
               <Archive className="size-4" />
             </Button>
-            <Button variant="ghost" size="icon-sm" disabled title="삭제 기능은 아직 지원되지 않습니다.">
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={handleDelete}
+              disabled={isDeleting}
+              title="삭제"
+              aria-label="메일 삭제"
+            >
               <Trash2 className="size-4" />
             </Button>
           </div>
