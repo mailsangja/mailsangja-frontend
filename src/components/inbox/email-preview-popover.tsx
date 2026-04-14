@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Separator } from "@/components/ui/separator"
 import { useIsMobile } from "@/hooks/use-mobile"
-import { normalizeSnippetText } from "@/lib/html-entities"
 import { getMailAddressLabel } from "@/lib/mail-address"
 import type { InboxThreadSummary } from "@/types/email"
 
@@ -47,7 +46,6 @@ export function EmailPreviewPopover({ thread, children }: EmailPreviewPopoverPro
   const isMobile = useIsMobile()
   const [open, setOpen] = useState(false)
   const [anchor, setAnchor] = useState<PopoverPrimitive.Positioner.Props["anchor"]>(null)
-  const snippet = normalizeSnippetText(thread.snippet)
 
   if (isMobile) return children
 
@@ -76,7 +74,7 @@ export function EmailPreviewPopover({ thread, children }: EmailPreviewPopoverPro
       <PopoverContent anchor={anchor} side="bottom" align="start" sideOffset={20} className="w-80 p-4">
         <div className="space-y-2.5">
           <p className="text-sm leading-snug font-semibold">{thread.latestSubject || "(제목 없음)"}</p>
-          <p className="line-clamp-3 text-sm leading-relaxed text-muted-foreground">{snippet}</p>
+          <p className="line-clamp-3 text-sm leading-relaxed text-muted-foreground">{thread.snippet}</p>
           <Separator />
           <div className="flex flex-wrap items-center gap-1.5">
             <Badge variant="secondary" className="font-normal">

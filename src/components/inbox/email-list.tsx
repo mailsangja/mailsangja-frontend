@@ -6,7 +6,6 @@ import { EmailListHeader } from "@/components/inbox/email-list-header"
 import type { EmailFilter } from "@/components/inbox/email-list-header"
 import { EmailPreviewPopover } from "@/components/inbox/email-preview-popover"
 import { getMailAddressLabel } from "@/lib/mail-address"
-import { normalizeSnippetText } from "@/lib/html-entities"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -161,7 +160,6 @@ export function EmailList({
                   const accountColor = getAccountColor(thread.accountId)
                   const hasAttachments = thread.attachments.length > 0
                   const participantLabel = getMailAddressLabel(thread.participant)
-                  const snippet = normalizeSnippetText(thread.snippet)
 
                   return (
                     <EmailPreviewPopover key={thread.threadId} thread={thread}>
@@ -195,7 +193,7 @@ export function EmailList({
                             <span className={cn("truncate", isUnread ? "text-foreground" : "text-muted-foreground")}>
                               {thread.latestSubject || "(제목 없음)"}
                             </span>
-                            <span className="truncate text-muted-foreground">- {snippet}</span>
+                            <span className="truncate text-muted-foreground">- {thread.snippet}</span>
                           </div>
                         </TableCell>
                         <TableCell className="hidden text-center md:table-cell">

@@ -8,7 +8,6 @@ import { getErrorMessage, getHttpStatus } from "@/lib/http-error"
 import { Separator } from "@/components/ui/separator"
 import { useInboxContext } from "@/contexts/inbox-context"
 import { useIsMobile } from "@/hooks/use-mobile"
-import { normalizeSnippetText } from "@/lib/html-entities"
 import { getMailAddressSearchText } from "@/lib/mail-address"
 import { cn } from "@/lib/utils"
 import { useMailAccounts } from "@/queries/mail-accounts"
@@ -78,11 +77,7 @@ function InboxPage() {
         }
 
         return matchesSearch(
-          [
-            thread.latestSubject,
-            getMailAddressSearchText(thread.participant),
-            normalizeSnippetText(thread.snippet),
-          ].join(" "),
+          [thread.latestSubject, getMailAddressSearchText(thread.participant), thread.snippet].join(" "),
           searchTerms
         )
       })
