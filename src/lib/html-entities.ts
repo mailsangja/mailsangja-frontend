@@ -7,11 +7,15 @@ const NAMED_HTML_ENTITIES: Record<string, string> = {
   quot: '"',
 }
 
+function isValidCodePoint(codePoint: number): boolean {
+  return Number.isInteger(codePoint) && codePoint >= 0 && codePoint <= 0x10ffff
+}
+
 function decodeHtmlEntity(entity: string): string | null {
   if (entity.startsWith("#x") || entity.startsWith("#X")) {
     const codePoint = Number.parseInt(entity.slice(2), 16)
 
-    if (Number.isNaN(codePoint)) {
+    if (!isValidCodePoint(codePoint)) {
       return null
     }
 
@@ -21,7 +25,7 @@ function decodeHtmlEntity(entity: string): string | null {
   if (entity.startsWith("#")) {
     const codePoint = Number.parseInt(entity.slice(1), 10)
 
-    if (Number.isNaN(codePoint)) {
+    if (!isValidCodePoint(codePoint)) {
       return null
     }
 
