@@ -129,14 +129,7 @@ function EmailListItemPreview({ thread, participantLabel }: EmailListItemPreview
   )
 }
 
-export function EmailListItem({
-  thread,
-  isSelected,
-  isChecked,
-  account,
-  onSelect,
-  onToggleCheck,
-}: EmailListItemProps) {
+export function EmailListItem({ thread, isSelected, isChecked, account, onSelect, onToggleCheck }: EmailListItemProps) {
   const isMobile = useIsMobile()
   const [open, setOpen] = useState(false)
   const [anchor, setAnchor] = useState<PopoverPrimitive.Positioner.Props["anchor"]>(null)

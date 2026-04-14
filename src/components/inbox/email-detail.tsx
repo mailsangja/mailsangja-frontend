@@ -1,15 +1,16 @@
-import { Archive, ArrowLeft, Forward, MailOpen, Paperclip, Reply, Trash2 } from "lucide-react"
+import { Archive, ArrowLeft, Forward, MailOpen, MoreVertical, Paperclip, Reply, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 
 import { EmailErrorState } from "@/components/inbox/email-error-state"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
 import { getErrorMessage, getHttpStatus } from "@/lib/http-error"
 import { formatMailAddressList, getMailAddressFullLabel, getMailAddressLabel } from "@/lib/mail-address"
-import { useDeleteThread, useRestoreTrashThread } from "@/mutations/trash"
+import { useDeleteMessage, useDeleteThread, useRestoreTrashMessage, useRestoreTrashThread } from "@/mutations/trash"
 import { useThread } from "@/queries/emails"
 import type { InboxMessage, MailAddress } from "@/types/email"
 
@@ -126,6 +127,38 @@ export function EmailDetail({ threadId, onClose }: EmailDetailProps) {
   const { data: thread, isLoading, isError, error, refetch } = useThread(threadId)
   const { mutate: deleteThread, isPending: isDeleting } = useDeleteThread()
   const { mutate: restoreThread } = useRestoreTrashThread()
+  const { mutate: deleteMessage } = useDeleteMessage()
+  const { mutate: restoreMessage } = useRestoreTrashMessage()
+
+  const handleDeleteMessage = (messageId: string, isLast: boolean) => {
+    deleteMessage(messageId, {
+      onSuccess: () => {
+        if (isLast) onClose?.()
+        toast("메시지를 휴지통으로 옮겼습니다", {
+          action: {
+            label: "실행 취소",
+            onClick: () => {
+              restoreMessage(messageId, {
+                onSuccess: () => {
+                  toast.success("삭제가 취소되었습니다")
+                },
+                onError: (err) => {
+                  toast.error("삭제 취소에 실패했습니다", {
+                    description: getErrorMessage(err, "잠시 후 다시 시도해주세요."),
+                  })
+                },
+              })
+            },
+          },
+        })
+      },
+      onError: (err) => {
+        toast.error("메시지 삭제에 실패했습니다", {
+          description: getErrorMessage(err, "잠시 후 다시 시도해주세요."),
+        })
+      },
+    })
+  }
 
   const handleDelete = () => {
     if (!threadId) return
@@ -136,8 +169,16 @@ export function EmailDetail({ threadId, onClose }: EmailDetailProps) {
           action: {
             label: "실행 취소",
             onClick: () => {
-              restoreThread(threadId)
-              toast.success("삭제가 취소되었습니다")
+              restoreThread(threadId, {
+                onSuccess: () => {
+                  toast.success("삭제가 취소되었습니다")
+                },
+                onError: (err) => {
+                  toast.error("삭제 취소에 실패했습니다", {
+                    description: getErrorMessage(err, "잠시 후 다시 시도해주세요."),
+                  })
+                },
+              })
             },
           },
         })
@@ -226,19 +267,34 @@ export function EmailDetail({ threadId, onClose }: EmailDetailProps) {
                   <AvatarFallback>{getInitials(getMailAddressLabel(message.from))}</AvatarFallback>
                 </Avatar>
                 <div className="min-w-0 flex-1">
-                  <div className="flex flex-wrap items-center justify-between gap-2">
-                    <div>
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="min-w-0 flex-1">
                       <div className="flex items-center gap-2">
                         <p className="text-sm font-medium">{getMailAddressFullLabel(message.from)}</p>
                         <Badge variant="outline">{message.direction === "INBOUND" ? "수신" : "발신"}</Badge>
                       </div>
                       <p className="truncate text-xs text-muted-foreground">{message.subject}</p>
                     </div>
-                    <span className="shrink-0 text-xs text-muted-foreground">{formatDate(message.sentAt)}</span>
+                    <div className="flex shrink-0 items-start">
+                      <DropdownMenu>
+                        <DropdownMenuTrigger
+                          render={<Button variant="ghost" size="icon-sm" aria-label="메시지 더보기" />}
+                        >
+                          <MoreVertical className="size-4" />
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end">
+                          <DropdownMenuItem onClick={() => handleDeleteMessage(message.id, messages.length === 1)}>
+                            <Trash2 className="size-4" />
+                            삭제
+                          </DropdownMenuItem>
+                        </DropdownMenuContent>
+                      </DropdownMenu>
+                    </div>
                   </div>
                   <p className="mt-1 text-xs text-muted-foreground">
                     받는 사람: {message.to.length > 0 ? formatMailAddressList(message.to) : "-"}
                   </p>
+                  <p className="mt-1 text-xs text-muted-foreground">{formatDate(message.sentAt)}</p>
                   {message.cc.length > 0 ? (
                     <p className="mt-1 text-xs text-muted-foreground">참조: {formatMailAddressList(message.cc)}</p>
                   ) : null}
