@@ -1,15 +1,13 @@
 import { useEffect, useRef } from "react"
-import { InboxIcon, Paperclip } from "lucide-react"
+import { InboxIcon } from "lucide-react"
 
 import { EmailErrorState } from "@/components/inbox/email-error-state"
 import { EmailListHeader } from "@/components/inbox/email-list-header"
 import type { EmailFilter } from "@/components/inbox/email-list-header"
-import { EmailPreviewPopover } from "@/components/inbox/email-preview-popover"
-import { getMailAddressLabel } from "@/lib/mail-address"
+import { EmailListItem } from "@/components/inbox/email-list-item"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { cn } from "@/lib/utils"
 import type { InboxThreadSummary } from "@/types/email"
 
 interface EmailListProps {
@@ -32,20 +30,6 @@ interface EmailListProps {
   loadMoreErrorTitle?: string
   loadMoreErrorDescription?: string
   onRetryLoadMore?: () => void
-}
-
-function formatRelativeDate(dateStr: string): string {
-  const date = new Date(dateStr)
-  const now = new Date()
-  const diffMs = now.getTime() - date.getTime()
-  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24))
-
-  if (diffDays === 0) {
-    return date.toLocaleTimeString("ko-KR", { hour: "numeric", minute: "2-digit", hour12: true })
-  }
-  if (diffDays === 1) return "어제"
-  if (diffDays < 7) return `${diffDays}일 전`
-  return date.toLocaleDateString("ko-KR", { month: "short", day: "numeric" })
 }
 
 function LoadingRows() {
@@ -155,55 +139,14 @@ export function EmailList({
               </TableHeader>
               <TableBody>
                 {threads.map((thread) => {
-                  const isSelected = selectedThreadId === thread.threadId
-                  const isUnread = !thread.isRead
-                  const accountColor = getAccountColor(thread.accountId)
-                  const hasAttachments = thread.attachments.length > 0
-                  const participantLabel = getMailAddressLabel(thread.participant)
-
                   return (
-                    <EmailPreviewPopover key={thread.threadId} thread={thread}>
-                      <TableRow
-                        data-state={isSelected ? "selected" : undefined}
-                        onClick={() => onSelectThread(thread.threadId)}
-                        className={cn(
-                          "cursor-pointer",
-                          isUnread && "bg-accent/20 font-medium",
-                          isSelected && "bg-accent hover:bg-accent"
-                        )}
-                      >
-                        <TableCell>
-                          <div className="flex items-center gap-2">
-                            <span className={cn("size-2.5 rounded-full", isUnread ? "bg-primary" : "bg-transparent")} />
-                            {accountColor ? (
-                              <span
-                                className="hidden size-2 rounded-full md:inline-flex"
-                                style={{ backgroundColor: accountColor }}
-                              />
-                            ) : null}
-                          </div>
-                        </TableCell>
-                        <TableCell className="truncate">
-                          <span className={cn("truncate", isUnread ? "text-foreground" : "text-muted-foreground")}>
-                            {participantLabel}
-                          </span>
-                        </TableCell>
-                        <TableCell className="min-w-0">
-                          <div className="flex min-w-0 items-center gap-2">
-                            <span className={cn("truncate", isUnread ? "text-foreground" : "text-muted-foreground")}>
-                              {thread.latestSubject || "(제목 없음)"}
-                            </span>
-                            <span className="truncate text-muted-foreground">- {thread.snippet}</span>
-                          </div>
-                        </TableCell>
-                        <TableCell className="hidden text-center md:table-cell">
-                          {hasAttachments ? <Paperclip className="mx-auto size-4 text-muted-foreground" /> : null}
-                        </TableCell>
-                        <TableCell className="text-right text-xs text-muted-foreground">
-                          {formatRelativeDate(thread.lastMessageAt)}
-                        </TableCell>
-                      </TableRow>
-                    </EmailPreviewPopover>
+                    <EmailListItem
+                      key={thread.threadId}
+                      thread={thread}
+                      isSelected={selectedThreadId === thread.threadId}
+                      accountColor={getAccountColor(thread.accountId)}
+                      onSelect={() => onSelectThread(thread.threadId)}
+                    />
                   )
                 })}
                 {isFetchingNextPage ? <LoadingRows /> : null}
