@@ -4,7 +4,9 @@ import { InboxIcon, Paperclip } from "lucide-react"
 import { EmailErrorState } from "@/components/inbox/email-error-state"
 import { EmailListHeader } from "@/components/inbox/email-list-header"
 import type { EmailFilter } from "@/components/inbox/email-list-header"
+import { EmailPreviewPopover } from "@/components/inbox/email-preview-popover"
 import { getMailAddressLabel } from "@/lib/mail-address"
+import { normalizeSnippetText } from "@/lib/html-entities"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
@@ -159,49 +161,51 @@ export function EmailList({
                   const accountColor = getAccountColor(thread.accountId)
                   const hasAttachments = thread.attachments.length > 0
                   const participantLabel = getMailAddressLabel(thread.participant)
+                  const snippet = normalizeSnippetText(thread.snippet)
 
                   return (
-                    <TableRow
-                      key={thread.threadId}
-                      data-state={isSelected ? "selected" : undefined}
-                      onClick={() => onSelectThread(thread.threadId)}
-                      className={cn(
-                        "cursor-pointer",
-                        isUnread && "bg-accent/20 font-medium",
-                        isSelected && "bg-accent hover:bg-accent"
-                      )}
-                    >
-                      <TableCell>
-                        <div className="flex items-center gap-2">
-                          <span className={cn("size-2.5 rounded-full", isUnread ? "bg-primary" : "bg-transparent")} />
-                          {accountColor ? (
-                            <span
-                              className="hidden size-2 rounded-full md:inline-flex"
-                              style={{ backgroundColor: accountColor }}
-                            />
-                          ) : null}
-                        </div>
-                      </TableCell>
-                      <TableCell className="truncate">
-                        <span className={cn("truncate", isUnread ? "text-foreground" : "text-muted-foreground")}>
-                          {participantLabel}
-                        </span>
-                      </TableCell>
-                      <TableCell className="min-w-0">
-                        <div className="flex min-w-0 items-center gap-2">
+                    <EmailPreviewPopover key={thread.threadId} thread={thread}>
+                      <TableRow
+                        data-state={isSelected ? "selected" : undefined}
+                        onClick={() => onSelectThread(thread.threadId)}
+                        className={cn(
+                          "cursor-pointer",
+                          isUnread && "bg-accent/20 font-medium",
+                          isSelected && "bg-accent hover:bg-accent"
+                        )}
+                      >
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <span className={cn("size-2.5 rounded-full", isUnread ? "bg-primary" : "bg-transparent")} />
+                            {accountColor ? (
+                              <span
+                                className="hidden size-2 rounded-full md:inline-flex"
+                                style={{ backgroundColor: accountColor }}
+                              />
+                            ) : null}
+                          </div>
+                        </TableCell>
+                        <TableCell className="truncate">
                           <span className={cn("truncate", isUnread ? "text-foreground" : "text-muted-foreground")}>
-                            {thread.latestSubject || "(제목 없음)"}
+                            {participantLabel}
                           </span>
-                          <span className="truncate text-muted-foreground">- {thread.snippet}</span>
-                        </div>
-                      </TableCell>
-                      <TableCell className="hidden text-center md:table-cell">
-                        {hasAttachments ? <Paperclip className="mx-auto size-4 text-muted-foreground" /> : null}
-                      </TableCell>
-                      <TableCell className="text-right text-xs text-muted-foreground">
-                        {formatRelativeDate(thread.lastMessageAt)}
-                      </TableCell>
-                    </TableRow>
+                        </TableCell>
+                        <TableCell className="min-w-0">
+                          <div className="flex min-w-0 items-center gap-2">
+                            <span className={cn("truncate", isUnread ? "text-foreground" : "text-muted-foreground")}>
+                              {thread.latestSubject || "(제목 없음)"}
+                            </span>
+                            <span className="truncate text-muted-foreground">- {snippet}</span>
+                          </div>
+                        </TableCell>
+                        <TableCell className="hidden text-center md:table-cell">
+                          {hasAttachments ? <Paperclip className="mx-auto size-4 text-muted-foreground" /> : null}
+                        </TableCell>
+                        <TableCell className="text-right text-xs text-muted-foreground">
+                          {formatRelativeDate(thread.lastMessageAt)}
+                        </TableCell>
+                      </TableRow>
+                    </EmailPreviewPopover>
                   )
                 })}
                 {isFetchingNextPage ? <LoadingRows /> : null}
