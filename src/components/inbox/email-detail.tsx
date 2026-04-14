@@ -214,9 +214,7 @@ export function EmailDetail({ threadId, onClose }: EmailDetailProps) {
               {message.bodyHtml ? (
                 <div className="prose prose-sm max-w-none" dangerouslySetInnerHTML={{ __html: message.bodyHtml }} />
               ) : (
-                <div className="prose prose-sm max-w-none text-sm whitespace-pre-wrap">
-                  {message.bodyText || message.snippet}
-                </div>
+                <div className="prose prose-sm max-w-none text-sm whitespace-pre-wrap">{message.bodyText}</div>
               )}
 
               {message.attachments.length > 0 ? (
