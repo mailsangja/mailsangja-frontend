@@ -70,7 +70,7 @@ function EmailListItemCells({
         <div className="flex justify-center">
           {account?.icon ? (
             <div
-              className="flex size-7 items-center justify-center rounded-full"
+              className="flex size-6 shrink-0 items-center justify-center rounded-full"
               style={{ backgroundColor: account.color || "#6B7280" }}
             >
               <AccountIcon name={account.icon} className="size-3.5 text-white" />
