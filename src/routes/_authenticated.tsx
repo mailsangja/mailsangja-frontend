@@ -25,19 +25,20 @@ export const Route = createFileRoute("/_authenticated")({
 
 function getMailRouteState(pathname: string, search: unknown) {
   const [, section, mailbox] = pathname.split("/")
-  const { query = "", filter = "all" } = parseMailRouteSearch(search)
+  const { query = "", filter = "all", accountId } = parseMailRouteSearch(search)
 
   return {
     mailbox: section === "mail" && mailbox ? parseMailboxId(mailbox) : null,
     query,
     filter,
+    accountId,
   }
 }
 
 function AuthenticatedRouteLayout() {
   const isMobile = useIsMobile()
   const navigate = useNavigate()
-  const { mailbox, query, filter } = useLocation({
+  const { mailbox, query, filter, accountId } = useLocation({
     select: (currentLocation) => getMailRouteState(currentLocation.pathname, currentLocation.search),
   })
 
@@ -83,7 +84,10 @@ function AuthenticatedRouteLayout() {
             void navigate({
               to: "/mail/$mailbox",
               params: { mailbox: "inbox" },
-              search: q ? { query: q } : {},
+              search: {
+                ...(q ? { query: q } : {}),
+                ...(accountId ? { accountId } : {}),
+              },
             })
           }}
         >
@@ -121,6 +125,7 @@ function AuthenticatedRouteLayout() {
       <div className="flex min-h-0 flex-1 overflow-hidden bg-sidebar">
         <AppSidebar
           mailbox={mailbox}
+          activeAccountId={accountId}
           onMailboxChange={(nextMailbox) => {
             void navigate({
               to: "/mail/$mailbox",
@@ -128,7 +133,20 @@ function AuthenticatedRouteLayout() {
               search: {
                 ...(mailbox && query ? { query } : {}),
                 ...(mailbox && filter === "unread" ? { filter: filter } : {}),
+                ...(mailbox && accountId ? { accountId } : {}),
               },
+            })
+          }}
+          onAccountToggle={(nextAccountId) => {
+            void navigate({
+              to: "/mail/$mailbox",
+              params: { mailbox: mailbox ?? "inbox" },
+              search: (previous) => ({
+                ...previous,
+                accountId: previous.accountId === nextAccountId ? undefined : nextAccountId,
+                thread: undefined,
+              }),
+              replace: true,
             })
           }}
           className="top-14 h-[calc(100svh-3.5rem)]"

@@ -1,4 +1,6 @@
+import { useEffect } from "react"
 import { createFileRoute } from "@tanstack/react-router"
+import { toast } from "sonner"
 
 import { EmailDetail } from "@/components/inbox/email-detail"
 import { EmailList } from "@/components/inbox/email-list"
@@ -59,7 +61,7 @@ function getMailboxThreadsErrorCopy(error: unknown) {
 
 function MailboxPage() {
   const { mailbox } = Route.useParams()
-  const { query = "", filter = "all", thread: selectedThreadId = null } = Route.useSearch()
+  const { query = "", filter = "all", accountId, thread: selectedThreadId = null } = Route.useSearch()
   const navigate = Route.useNavigate()
   const isMobile = useIsMobile()
   const { data: accounts } = useMailAccounts()
@@ -78,9 +80,30 @@ function MailboxPage() {
 
   const loadedThreads = data?.pages.flatMap((page) => page.content) ?? []
   const searchTerms = query.trim().toLowerCase().split(/\s+/).filter(Boolean)
+  const selectedAccount = accountId ? (accounts?.find((account) => account.id === accountId) ?? null) : null
+
+  useEffect(() => {
+    if (!accountId || accounts === undefined || selectedAccount) {
+      return
+    }
+
+    toast.error("유효하지 않은 계정입니다")
+
+    void navigate({
+      search: (previous) => ({
+        ...previous,
+        accountId: undefined,
+      }),
+      replace: true,
+    })
+  }, [accounts, navigate, selectedAccount, accountId])
 
   const threads = supportedMailbox
     ? loadedThreads.filter((thread) => {
+        if (selectedAccount && thread.accountId !== selectedAccount.id) {
+          return false
+        }
+
         if (filter === "unread" && thread.isRead) {
           return false
         }
@@ -118,6 +141,9 @@ function MailboxPage() {
     emptyDescription = "현재까지 불러온 메일에서 검색 결과를 찾지 못했습니다."
   } else if (filter === "unread") {
     emptyTitle = "안 읽은 메일이 없습니다"
+  } else if (selectedAccount?.id) {
+    emptyTitle = "선택한 계정의 메일이 없습니다"
+    emptyDescription = `${selectedAccount.alias} (${selectedAccount.emailAddress}) 계정에서 불러온 메일이 없습니다.`
   }
 
   const emailList = (
