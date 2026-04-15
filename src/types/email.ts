@@ -1,19 +1,26 @@
-export const PRIMARY_MAILBOX_IDS = ["INBOX", "SENT", "DRAFT", "SPAM", "TRASH"] as const
-export const SUPPORTED_MAILBOX_IDS = ["INBOX", "SENT"] as const
+export const PRIMARY_MAILBOX_IDS = ["inbox", "sent", "draft", "spam", "trash"] as const
+export const SUPPORTED_MAILBOX_IDS = ["inbox", "sent"] as const
 
 export type PrimaryMailboxId = (typeof PRIMARY_MAILBOX_IDS)[number]
 export type SupportedMailboxId = (typeof SUPPORTED_MAILBOX_IDS)[number]
+export type EmailFilter = "all" | "unread"
 
 export const MAILBOX_LABELS: Record<PrimaryMailboxId, string> = {
-  INBOX: "받은편지함",
-  SENT: "보낸편지함",
-  DRAFT: "임시보관함",
-  SPAM: "스팸함",
-  TRASH: "휴지통",
+  inbox: "받은편지함",
+  sent: "보낸편지함",
+  draft: "임시보관함",
+  spam: "스팸함",
+  trash: "휴지통",
 }
 
 export function isSupportedMailboxId(mailboxId: PrimaryMailboxId): mailboxId is SupportedMailboxId {
-  return mailboxId === "INBOX" || mailboxId === "SENT"
+  return mailboxId === "inbox" || mailboxId === "sent"
+}
+
+export function parseMailboxId(value: string): PrimaryMailboxId | null {
+  const mailbox = value.trim().toLowerCase() as PrimaryMailboxId
+
+  return PRIMARY_MAILBOX_IDS.includes(mailbox) ? mailbox : null
 }
 
 export interface Attachment {

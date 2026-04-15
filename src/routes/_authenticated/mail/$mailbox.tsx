@@ -1,21 +1,34 @@
-import { useState } from "react"
 import { createFileRoute } from "@tanstack/react-router"
 
 import { EmailDetail } from "@/components/inbox/email-detail"
-import type { EmailFilter } from "@/components/inbox/email-list-header"
 import { EmailList } from "@/components/inbox/email-list"
-import { getErrorMessage, getHttpStatus } from "@/lib/http-error"
 import { Separator } from "@/components/ui/separator"
-import { useInboxContext } from "@/contexts/inbox-context"
 import { useIsMobile } from "@/hooks/use-mobile"
+import { getErrorMessage, getHttpStatus } from "@/lib/http-error"
+import { parseMailRouteSearch } from "@/lib/mail-routing"
 import { getMailAddressSearchText } from "@/lib/mail-address"
 import { cn } from "@/lib/utils"
 import { useMailAccounts } from "@/queries/mail-accounts"
 import { useMailboxThreads } from "@/queries/emails"
-import { isSupportedMailboxId, MAILBOX_LABELS } from "@/types/email"
+import { isSupportedMailboxId, MAILBOX_LABELS, parseMailboxId } from "@/types/email"
 
-export const Route = createFileRoute("/_authenticated/inbox")({
-  component: InboxPage,
+export const Route = createFileRoute("/_authenticated/mail/$mailbox")({
+  params: {
+    parse: (rawParams) => {
+      const mailbox = parseMailboxId(rawParams.mailbox)
+
+      if (!mailbox) {
+        throw new Error("Unknown mailbox")
+      }
+
+      return { mailbox }
+    },
+  },
+  skipRouteOnParseError: {
+    params: true,
+  },
+  validateSearch: parseMailRouteSearch,
+  component: MailboxPage,
 })
 
 function matchesSearch(value: string, terms: string[]) {
@@ -44,13 +57,13 @@ function getMailboxThreadsErrorCopy(error: unknown) {
   }
 }
 
-function InboxPage() {
-  const { activeMailbox, searchQuery } = useInboxContext()
-  const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null)
-  const [filter, setFilter] = useState<EmailFilter>("all")
+function MailboxPage() {
+  const { mailbox } = Route.useParams()
+  const { query = "", filter = "all", thread: selectedThreadId = null } = Route.useSearch()
+  const navigate = Route.useNavigate()
   const isMobile = useIsMobile()
   const { data: accounts } = useMailAccounts()
-  const supportedMailbox = isSupportedMailboxId(activeMailbox) ? activeMailbox : null
+  const supportedMailbox = isSupportedMailboxId(mailbox) ? mailbox : null
   const {
     data,
     isLoading,
@@ -64,7 +77,7 @@ function InboxPage() {
   } = useMailboxThreads(supportedMailbox)
 
   const loadedThreads = data?.pages.flatMap((page) => page.content) ?? []
-  const searchTerms = searchQuery.trim().toLowerCase().split(/\s+/).filter(Boolean)
+  const searchTerms = query.trim().toLowerCase().split(/\s+/).filter(Boolean)
 
   const threads = supportedMailbox
     ? loadedThreads.filter((thread) => {
@@ -92,7 +105,6 @@ function InboxPage() {
   const visibleSelectedThreadId = threads.some((thread) => thread.threadId === selectedThreadId)
     ? selectedThreadId
     : null
-  const mailboxName = MAILBOX_LABELS[activeMailbox]
   const hasSelection = visibleSelectedThreadId != null
 
   let emptyTitle = "메일이 없습니다"
@@ -110,15 +122,30 @@ function InboxPage() {
 
   const emailList = (
     <EmailList
-      mailboxName={mailboxName}
+      mailboxName={MAILBOX_LABELS[mailbox]}
       threads={threads}
       isLoading={supportedMailbox != null && isLoading}
       isFetchingNextPage={isFetchingNextPage}
       hasNextPage={!!hasNextPage}
       selectedThreadId={visibleSelectedThreadId}
       filter={filter}
-      onFilterChange={setFilter}
-      onSelectThread={setSelectedThreadId}
+      onFilterChange={(nextFilter) => {
+        void navigate({
+          search: (previous) => ({
+            ...previous,
+            filter: nextFilter === "unread" ? nextFilter : undefined,
+          }),
+          replace: true,
+        })
+      }}
+      onSelectThread={(threadId) => {
+        void navigate({
+          search: (previous) => ({
+            ...previous,
+            thread: threadId,
+          }),
+        })
+      }}
       onLoadMore={() => {
         if (supportedMailbox && hasNextPage && !isFetchingNextPage) {
           void fetchNextPage()
@@ -140,7 +167,18 @@ function InboxPage() {
     return (
       <div className="flex min-h-0 flex-1 overflow-hidden">
         {hasSelection ? (
-          <EmailDetail threadId={visibleSelectedThreadId} onClose={() => setSelectedThreadId(null)} />
+          <EmailDetail
+            threadId={visibleSelectedThreadId}
+            onClose={() => {
+              void navigate({
+                search: (previous) => ({
+                  ...previous,
+                  thread: undefined,
+                }),
+                replace: true,
+              })
+            }}
+          />
         ) : (
           emailList
         )}
@@ -161,8 +199,19 @@ function InboxPage() {
       {hasSelection ? (
         <>
           <Separator orientation="vertical" />
-          <div className="min-h-0 min-w-0 basis-3/4">
-            <EmailDetail threadId={visibleSelectedThreadId} onClose={() => setSelectedThreadId(null)} />
+          <div className="min-h-0 min-w-0 basis-2/3">
+            <EmailDetail
+              threadId={visibleSelectedThreadId}
+              onClose={() => {
+                void navigate({
+                  search: (previous) => ({
+                    ...previous,
+                    thread: undefined,
+                  }),
+                  replace: true,
+                })
+              }}
+            />
           </div>
         </>
       ) : null}

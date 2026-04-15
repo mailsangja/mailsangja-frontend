@@ -3,8 +3,7 @@ import { Tag, Trash2, SquareMinus } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Toggle } from "@/components/ui/toggle"
 import { cn } from "@/lib/utils"
-
-export type EmailFilter = "all" | "unread"
+import type { EmailFilter } from "@/types/email"
 
 const filterOptions: Array<{ value: EmailFilter; label: string }> = [
   { value: "all", label: "전체" },
