@@ -161,7 +161,7 @@ function InboxPage() {
       {hasSelection ? (
         <>
           <Separator orientation="vertical" />
-          <div className="min-h-0 min-w-0 basis-1/2">
+          <div className="min-h-0 min-w-0 basis-3/4">
             <EmailDetail threadId={visibleSelectedThreadId} onClose={() => setSelectedThreadId(null)} />
           </div>
         </>
