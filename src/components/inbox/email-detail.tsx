@@ -150,7 +150,7 @@ function ThreadToolbar({ onClose, onDelete, isDeleting }: ThreadToolbarProps) {
 
 interface ThreadHeaderProps {
   thread: InboxThreadDetail
-  account: MailAccount
+  account?: MailAccount
 }
 
 function ThreadHeader({ thread, account }: ThreadHeaderProps) {
@@ -162,7 +162,7 @@ function ThreadHeader({ thread, account }: ThreadHeaderProps) {
     <div className="shrink-0 border-b px-6 pt-2 pb-5">
       <h2 className="text-xl leading-snug font-semibold wrap-break-word">{thread.latestSubject || "(제목 없음)"}</h2>
       <div className="mt-2 flex flex-wrap items-center gap-1">
-        {account.icon ? (
+        {account?.icon ? (
           <span
             className="inline-flex size-5 shrink-0 items-center justify-center rounded-full"
             style={{ backgroundColor: account.color }}
@@ -461,7 +461,7 @@ export function EmailDetail({ threadId, onClose }: EmailDetailProps) {
   return (
     <div className="flex h-full w-full min-w-0 flex-1 flex-col">
       <ThreadToolbar onClose={onClose} onDelete={handleDeleteThread} isDeleting={isDeleting} />
-      <ThreadHeader thread={thread} account={account!} />
+      <ThreadHeader thread={thread} account={account} />
 
       <div className="flex-1 overflow-auto">
         <div className="p-2">
