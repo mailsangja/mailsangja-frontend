@@ -1,4 +1,4 @@
-export const PRIMARY_MAILBOX_IDS = ["inbox", "sent", "draft", "spam", "trash"] as const
+export const PRIMARY_MAILBOX_IDS = ["inbox", "sent", "spam", "trash"] as const
 export const SUPPORTED_MAILBOX_IDS = ["inbox", "sent"] as const
 
 export type PrimaryMailboxId = (typeof PRIMARY_MAILBOX_IDS)[number]
@@ -8,7 +8,6 @@ export type EmailFilter = "all" | "unread"
 export const MAILBOX_LABELS: Record<PrimaryMailboxId, string> = {
   inbox: "받은편지함",
   sent: "보낸편지함",
-  draft: "임시보관함",
   spam: "스팸함",
   trash: "휴지통",
 }

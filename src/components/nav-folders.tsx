@@ -1,4 +1,4 @@
-import { Inbox, Send, FileText, AlertTriangle, Trash2 } from "lucide-react"
+import { Inbox, Send, AlertTriangle, Trash2 } from "lucide-react"
 
 import {
   SidebarGroup,
@@ -13,7 +13,6 @@ import type { PrimaryMailboxId } from "@/types/email"
 const folderIcons: Record<PrimaryMailboxId, React.ReactNode> = {
   inbox: <Inbox />,
   sent: <Send />,
-  draft: <FileText />,
   spam: <AlertTriangle />,
   trash: <Trash2 />,
 }
