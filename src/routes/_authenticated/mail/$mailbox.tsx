@@ -10,6 +10,7 @@ import { getErrorMessage, getHttpStatus } from "@/lib/http-error"
 import { parseMailRouteSearch } from "@/lib/mail-routing"
 import { getMailAddressSearchText } from "@/lib/mail-address"
 import { cn } from "@/lib/utils"
+import { useMarkThreadAsRead } from "@/mutations/emails"
 import { useMailAccounts } from "@/queries/mail-accounts"
 import { useMailboxThreads } from "@/queries/emails"
 import { isSupportedMailboxId, MAILBOX_LABELS, parseMailboxId } from "@/types/email"
@@ -65,6 +66,7 @@ function MailboxPage() {
   const navigate = Route.useNavigate()
   const isMobile = useIsMobile()
   const { data: accounts } = useMailAccounts()
+  const { mutate: markAsRead } = useMarkThreadAsRead()
   const supportedMailbox = isSupportedMailboxId(mailbox) ? mailbox : null
   const {
     data,
@@ -165,6 +167,11 @@ function MailboxPage() {
         })
       }}
       onSelectThread={(threadId) => {
+        const thread = threads.find((t) => t.threadId === threadId)
+        if (thread && !thread.isRead) {
+          markAsRead(threadId)
+        }
+
         void navigate({
           search: (previous) => ({
             ...previous,
