@@ -136,9 +136,10 @@ export function EmailListItem({ thread, isSelected, isChecked, account, onSelect
   const isUnread = !thread.isRead
   const participantLabel = getMailAddressLabel(thread.participant)
   const rowClassName = cn(
-    "cursor-pointer",
-    isUnread && "bg-accent/20 font-medium",
-    isSelected && "bg-accent hover:bg-accent"
+    "cursor-pointer border-l-2 transition-colors",
+    isSelected ? "border-l-primary bg-accent" : "border-l-transparent",
+    isUnread ? "font-semibold hover:bg-accent" : "bg-accent/50 hover:bg-accent",
+    isSelected && "hover:bg-accent"
   )
 
   const updateAnchor = (event: React.PointerEvent<HTMLTableRowElement>) => {

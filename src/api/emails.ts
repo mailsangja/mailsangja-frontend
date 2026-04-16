@@ -53,6 +53,10 @@ export async function getThreadDetail(threadId: string): Promise<InboxThreadDeta
   return normalizeThreadDetail(response)
 }
 
+export async function markThreadAsRead(threadId: string): Promise<void> {
+  return apiClient.post<void>(`/api/v1/threads/${threadId}/read`)
+}
+
 export async function getUnreadCount(): Promise<UnreadCountResponse> {
   return apiClient.get<UnreadCountResponse>("/api/v1/threads/inbox/unread-count")
 }
