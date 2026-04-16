@@ -25,7 +25,10 @@ export const authMutationOptions = {
     mutationFn: (data: LoginPayload) => login(data),
     onSuccess: (user: User) => {
       queryClient.setQueryData(userKeys.me(), user)
-      void navigate({ to: "/inbox" })
+      void navigate({
+        to: "/mail/$mailbox",
+        params: { mailbox: "inbox" },
+      })
     },
   }),
   register: (navigate: NavigateFn) => ({

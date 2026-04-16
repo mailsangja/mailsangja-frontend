@@ -15,9 +15,11 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as GuestSignupRouteImport } from './routes/_guest/signup'
 import { Route as GuestLoginRouteImport } from './routes/_guest/login'
 import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
-import { Route as AuthenticatedInboxRouteImport } from './routes/_authenticated/inbox'
+import { Route as AuthenticatedMailRouteImport } from './routes/_authenticated/mail'
 import { Route as AuthenticatedSettingsIndexRouteImport } from './routes/_authenticated/settings/index'
+import { Route as AuthenticatedMailIndexRouteImport } from './routes/_authenticated/mail/index'
 import { Route as AuthenticatedSettingsAccountRouteImport } from './routes/_authenticated/settings/account'
+import { Route as AuthenticatedMailMailboxRouteImport } from './routes/_authenticated/mail/$mailbox'
 
 const GuestRoute = GuestRouteImport.update({
   id: '/_guest',
@@ -47,9 +49,9 @@ const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
   path: '/settings',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedInboxRoute = AuthenticatedInboxRouteImport.update({
-  id: '/inbox',
-  path: '/inbox',
+const AuthenticatedMailRoute = AuthenticatedMailRouteImport.update({
+  id: '/mail',
+  path: '/mail',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
 const AuthenticatedSettingsIndexRoute =
@@ -58,28 +60,42 @@ const AuthenticatedSettingsIndexRoute =
     path: '/',
     getParentRoute: () => AuthenticatedSettingsRoute,
   } as any)
+const AuthenticatedMailIndexRoute = AuthenticatedMailIndexRouteImport.update({
+  id: '/',
+  path: '/',
+  getParentRoute: () => AuthenticatedMailRoute,
+} as any)
 const AuthenticatedSettingsAccountRoute =
   AuthenticatedSettingsAccountRouteImport.update({
     id: '/account',
     path: '/account',
     getParentRoute: () => AuthenticatedSettingsRoute,
   } as any)
+const AuthenticatedMailMailboxRoute =
+  AuthenticatedMailMailboxRouteImport.update({
+    id: '/$mailbox',
+    path: '/$mailbox',
+    getParentRoute: () => AuthenticatedMailRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
-  '/inbox': typeof AuthenticatedInboxRoute
+  '/mail': typeof AuthenticatedMailRouteWithChildren
   '/settings': typeof AuthenticatedSettingsRouteWithChildren
   '/login': typeof GuestLoginRoute
   '/signup': typeof GuestSignupRoute
+  '/mail/$mailbox': typeof AuthenticatedMailMailboxRoute
   '/settings/account': typeof AuthenticatedSettingsAccountRoute
+  '/mail/': typeof AuthenticatedMailIndexRoute
   '/settings/': typeof AuthenticatedSettingsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
-  '/inbox': typeof AuthenticatedInboxRoute
   '/login': typeof GuestLoginRoute
   '/signup': typeof GuestSignupRoute
+  '/mail/$mailbox': typeof AuthenticatedMailMailboxRoute
   '/settings/account': typeof AuthenticatedSettingsAccountRoute
+  '/mail': typeof AuthenticatedMailIndexRoute
   '/settings': typeof AuthenticatedSettingsIndexRoute
 }
 export interface FileRoutesById {
@@ -87,35 +103,48 @@ export interface FileRoutesById {
   '/': typeof IndexRoute
   '/_authenticated': typeof AuthenticatedRouteWithChildren
   '/_guest': typeof GuestRouteWithChildren
-  '/_authenticated/inbox': typeof AuthenticatedInboxRoute
+  '/_authenticated/mail': typeof AuthenticatedMailRouteWithChildren
   '/_authenticated/settings': typeof AuthenticatedSettingsRouteWithChildren
   '/_guest/login': typeof GuestLoginRoute
   '/_guest/signup': typeof GuestSignupRoute
+  '/_authenticated/mail/$mailbox': typeof AuthenticatedMailMailboxRoute
   '/_authenticated/settings/account': typeof AuthenticatedSettingsAccountRoute
+  '/_authenticated/mail/': typeof AuthenticatedMailIndexRoute
   '/_authenticated/settings/': typeof AuthenticatedSettingsIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
-    | '/inbox'
+    | '/mail'
     | '/settings'
     | '/login'
     | '/signup'
+    | '/mail/$mailbox'
     | '/settings/account'
+    | '/mail/'
     | '/settings/'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/inbox' | '/login' | '/signup' | '/settings/account' | '/settings'
+  to:
+    | '/'
+    | '/login'
+    | '/signup'
+    | '/mail/$mailbox'
+    | '/settings/account'
+    | '/mail'
+    | '/settings'
   id:
     | '__root__'
     | '/'
     | '/_authenticated'
     | '/_guest'
-    | '/_authenticated/inbox'
+    | '/_authenticated/mail'
     | '/_authenticated/settings'
     | '/_guest/login'
     | '/_guest/signup'
+    | '/_authenticated/mail/$mailbox'
     | '/_authenticated/settings/account'
+    | '/_authenticated/mail/'
     | '/_authenticated/settings/'
   fileRoutesById: FileRoutesById
 }
@@ -169,11 +198,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
-    '/_authenticated/inbox': {
-      id: '/_authenticated/inbox'
-      path: '/inbox'
-      fullPath: '/inbox'
-      preLoaderRoute: typeof AuthenticatedInboxRouteImport
+    '/_authenticated/mail': {
+      id: '/_authenticated/mail'
+      path: '/mail'
+      fullPath: '/mail'
+      preLoaderRoute: typeof AuthenticatedMailRouteImport
       parentRoute: typeof AuthenticatedRoute
     }
     '/_authenticated/settings/': {
@@ -183,6 +212,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsIndexRouteImport
       parentRoute: typeof AuthenticatedSettingsRoute
     }
+    '/_authenticated/mail/': {
+      id: '/_authenticated/mail/'
+      path: '/'
+      fullPath: '/mail/'
+      preLoaderRoute: typeof AuthenticatedMailIndexRouteImport
+      parentRoute: typeof AuthenticatedMailRoute
+    }
     '/_authenticated/settings/account': {
       id: '/_authenticated/settings/account'
       path: '/account'
@@ -190,8 +226,28 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedSettingsAccountRouteImport
       parentRoute: typeof AuthenticatedSettingsRoute
     }
+    '/_authenticated/mail/$mailbox': {
+      id: '/_authenticated/mail/$mailbox'
+      path: '/$mailbox'
+      fullPath: '/mail/$mailbox'
+      preLoaderRoute: typeof AuthenticatedMailMailboxRouteImport
+      parentRoute: typeof AuthenticatedMailRoute
+    }
   }
 }
+
+interface AuthenticatedMailRouteChildren {
+  AuthenticatedMailMailboxRoute: typeof AuthenticatedMailMailboxRoute
+  AuthenticatedMailIndexRoute: typeof AuthenticatedMailIndexRoute
+}
+
+const AuthenticatedMailRouteChildren: AuthenticatedMailRouteChildren = {
+  AuthenticatedMailMailboxRoute: AuthenticatedMailMailboxRoute,
+  AuthenticatedMailIndexRoute: AuthenticatedMailIndexRoute,
+}
+
+const AuthenticatedMailRouteWithChildren =
+  AuthenticatedMailRoute._addFileChildren(AuthenticatedMailRouteChildren)
 
 interface AuthenticatedSettingsRouteChildren {
   AuthenticatedSettingsAccountRoute: typeof AuthenticatedSettingsAccountRoute
@@ -209,12 +265,12 @@ const AuthenticatedSettingsRouteWithChildren =
   )
 
 interface AuthenticatedRouteChildren {
-  AuthenticatedInboxRoute: typeof AuthenticatedInboxRoute
+  AuthenticatedMailRoute: typeof AuthenticatedMailRouteWithChildren
   AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRouteWithChildren
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
-  AuthenticatedInboxRoute: AuthenticatedInboxRoute,
+  AuthenticatedMailRoute: AuthenticatedMailRouteWithChildren,
   AuthenticatedSettingsRoute: AuthenticatedSettingsRouteWithChildren,
 }
 

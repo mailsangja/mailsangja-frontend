@@ -8,7 +8,10 @@ export const Route = createFileRoute("/_guest")({
     const user = await context.queryClient.ensureQueryData(userQueries.me())
 
     if (user) {
-      throw redirect({ to: "/inbox" })
+      throw redirect({
+        to: "/mail/$mailbox",
+        params: { mailbox: "inbox" },
+      })
     }
   },
   pendingComponent: LoadingLayout,

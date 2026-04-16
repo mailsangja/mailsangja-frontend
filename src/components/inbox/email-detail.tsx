@@ -10,10 +10,13 @@ import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigge
 import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
 import { getErrorMessage, getHttpStatus } from "@/lib/http-error"
+import { AccountIcon } from "@/lib/icon-entries"
 import { formatMailAddressList, getMailAddressLabel } from "@/lib/mail-address"
 import { useDeleteMessage, useDeleteThread, useRestoreTrashMessage, useRestoreTrashThread } from "@/mutations/trash"
 import { useThread } from "@/queries/emails"
+import { useMailAccounts } from "@/queries/mail-accounts"
 import type { Attachment, InboxMessage, InboxThreadDetail } from "@/types/email"
+import type { MailAccount } from "@/types/mail-account"
 
 function formatDate(value: string) {
   return new Date(value).toLocaleDateString("ko-KR", {
@@ -147,30 +150,41 @@ function ThreadToolbar({ onClose, onDelete, isDeleting }: ThreadToolbarProps) {
 
 interface ThreadHeaderProps {
   thread: InboxThreadDetail
+  account?: MailAccount
 }
 
-function ThreadHeader({ thread }: ThreadHeaderProps) {
+function ThreadHeader({ thread, account }: ThreadHeaderProps) {
   const messageCount = thread.messages.length
   const hasInbound = thread.messages.some((m) => m.direction === "INBOUND")
   const hasOutbound = thread.messages.some((m) => m.direction === "OUTBOUND")
 
   return (
     <div className="shrink-0 border-b px-6 pt-2 pb-5">
-      <h2 className="text-xl leading-snug font-semibold break-words">{thread.latestSubject || "(제목 없음)"}</h2>
-      <div className="mt-2 flex flex-wrap items-center gap-2">
-        <Badge variant="secondary" className="font-normal">
-          메시지 {messageCount}개
-        </Badge>
-        {hasInbound ? (
+      <h2 className="text-xl leading-snug font-semibold wrap-break-word">{thread.latestSubject || "(제목 없음)"}</h2>
+      <div className="mt-2 flex flex-wrap items-center gap-1">
+        {account?.icon ? (
+          <span
+            className="inline-flex size-5 shrink-0 items-center justify-center rounded-full"
+            style={{ backgroundColor: account.color }}
+            aria-label={`${account.emailAddress} 계정`}
+            title={account.emailAddress}
+          >
+            <AccountIcon name={account.icon} className="size-3 text-white" />
+          </span>
+        ) : null}
+        {hasInbound && (
           <Badge variant="outline" className="font-normal">
             수신
           </Badge>
-        ) : null}
-        {hasOutbound ? (
+        )}
+        {hasOutbound && (
           <Badge variant="outline" className="font-normal">
             발신
           </Badge>
-        ) : null}
+        )}
+        <Badge variant="secondary" className="font-normal">
+          메시지 {messageCount}개
+        </Badge>
       </div>
     </div>
   )
@@ -341,6 +355,7 @@ interface EmailDetailProps {
 
 export function EmailDetail({ threadId, onClose }: EmailDetailProps) {
   const { data: thread, isLoading, isError, error, refetch } = useThread(threadId)
+  const { data: accounts } = useMailAccounts()
   const { mutate: deleteThread, isPending: isDeleting } = useDeleteThread()
   const { mutate: restoreThread } = useRestoreTrashThread()
   const { mutate: deleteMessage } = useDeleteMessage()
@@ -441,11 +456,12 @@ export function EmailDetail({ threadId, onClose }: EmailDetailProps) {
   if (!thread) return <EmptyState />
 
   const messages = thread.messages
+  const account = accounts?.find((item) => item.id === thread.accountId)
 
   return (
     <div className="flex h-full w-full min-w-0 flex-1 flex-col">
       <ThreadToolbar onClose={onClose} onDelete={handleDeleteThread} isDeleting={isDeleting} />
-      <ThreadHeader thread={thread} />
+      <ThreadHeader thread={thread} account={account} />
 
       <div className="flex-1 overflow-auto">
         <div className="p-2">

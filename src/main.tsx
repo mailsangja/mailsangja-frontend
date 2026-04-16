@@ -4,6 +4,7 @@ import { createRouter } from "@tanstack/react-router"
 import { QueryClientProvider } from "@tanstack/react-query"
 import { RouterProvider } from "@tanstack/react-router"
 
+import { NotFoundComponent } from "@/components/layout/not-found-page"
 import { queryClient } from "@/lib/query-client"
 import { routeTree } from "@/routeTree.gen"
 
@@ -12,6 +13,8 @@ import "./index.css"
 const router = createRouter({
   routeTree,
   defaultPreload: "intent",
+  notFoundMode: "fuzzy",
+  defaultNotFoundComponent: NotFoundComponent,
   context: {
     queryClient,
   },

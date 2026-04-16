@@ -4,13 +4,12 @@ import { toast } from "sonner"
 
 import { EmailErrorState } from "@/components/inbox/email-error-state"
 import { EmailListHeader } from "@/components/inbox/email-list-header"
-import type { EmailFilter } from "@/components/inbox/email-list-header"
 import { EmailListItem } from "@/components/inbox/email-list-item"
 import { useDeleteThread, useRestoreTrashThread } from "@/mutations/trash"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Skeleton } from "@/components/ui/skeleton"
 import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table"
-import type { InboxThreadSummary } from "@/types/email"
+import type { EmailFilter, InboxThreadSummary } from "@/types/email"
 import type { MailAccount } from "@/types/mail-account"
 
 interface EmailListProps {

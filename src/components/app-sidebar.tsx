@@ -16,13 +16,17 @@ import {
 import type { PrimaryMailboxId } from "@/types/email"
 
 interface AppSidebarProps {
-  activeMailbox: PrimaryMailboxId
+  mailbox: PrimaryMailboxId | null
+  activeAccountId?: string
   onMailboxChange: (mailbox: PrimaryMailboxId) => void
+  onAccountToggle: (accountId: string) => void
 }
 
 export function AppSidebar({
-  activeMailbox,
+  mailbox,
+  activeAccountId,
   onMailboxChange,
+  onAccountToggle,
   ...props
 }: AppSidebarProps & React.ComponentProps<typeof Sidebar>) {
   return (
@@ -30,7 +34,7 @@ export function AppSidebar({
       <SidebarHeader className="md:hidden">
         <SidebarMenu>
           <SidebarMenuItem>
-            <SidebarMenuButton size="lg" render={<Link to="/inbox" />}>
+            <SidebarMenuButton size="lg" render={<Link to="/mail/$mailbox" params={{ mailbox: "inbox" }} />}>
               <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
                 <Mail className="size-4" />
               </div>
@@ -44,8 +48,8 @@ export function AppSidebar({
       </SidebarHeader>
 
       <SidebarContent>
-        <NavFolders activeMailbox={activeMailbox} onMailboxChange={onMailboxChange} />
-        <NavAccounts className="mt-auto" />
+        <NavFolders mailbox={mailbox} onMailboxChange={onMailboxChange} />
+        <NavAccounts activeAccountId={activeAccountId} onAccountToggle={onAccountToggle} className="mt-auto" />
       </SidebarContent>
 
       <SidebarFooter>

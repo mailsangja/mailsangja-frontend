@@ -35,7 +35,7 @@ export async function getMailboxThreads(
   mailbox: SupportedMailboxId,
   params: ListThreadsParams = {}
 ): Promise<MarkerSliceResponse<InboxThreadSummary>> {
-  const path = mailbox === "INBOX" ? "/api/v1/threads/inbox" : "/api/v1/threads/sent"
+  const path = `/api/v1/threads/${mailbox}`
 
   const response = await apiClient.get<MarkerSliceResponse<InboxThreadSummary>>(path, {
     params: params as Record<string, string | number | boolean | null | undefined>,
