@@ -12,8 +12,8 @@ import { useUser } from "@/queries/user"
 
 export function ComposeEmail() {
   const navigate = useNavigate()
-  const { data: user } = useUser()
-  const { data: mailAccounts } = useMailAccounts()
+  const { data: user, isPending: isUserPending } = useUser()
+  const { data: mailAccounts, isPending: isMailAccountsPending } = useMailAccounts()
   const sendMailMutation = useSendMail()
   const [to, setTo] = useState("")
   const [cc, setCc] = useState("")
@@ -26,8 +26,20 @@ export function ComposeEmail() {
   const defaultFromAddress =
     mailAccounts?.find((mailAccount) => mailAccount.id === user?.defaultMailAccountId)?.emailAddress ??
     mailAccounts?.find((mailAccount) => mailAccount.isActive)?.emailAddress
+  const isFromAddressPending = isUserPending || isMailAccountsPending
+  const cannotSend = sendMailMutation.isPending || isFromAddressPending || !defaultFromAddress
 
   const handleSend = async () => {
+    if (isFromAddressPending) {
+      toast.error("발신 계정을 불러오는 중입니다")
+      return
+    }
+
+    if (!defaultFromAddress) {
+      toast.error("발신 메일 계정을 먼저 연결해주세요")
+      return
+    }
+
     const toRecipients = parseMailAddressInput(to)
 
     if (toRecipients.length === 0) {
@@ -139,7 +151,7 @@ export function ComposeEmail() {
       </div>
 
       <div className="shrink-0 border-t px-4 py-3">
-        <Button className="w-full" size="lg" onClick={handleSend} disabled={sendMailMutation.isPending}>
+        <Button className="w-full" size="lg" onClick={handleSend} disabled={cannotSend}>
           {sendMailMutation.isPending ? <Loader2 className="size-4 animate-spin" /> : null}
           보내기
         </Button>
