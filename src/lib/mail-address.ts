@@ -32,3 +32,51 @@ export function getMailAddressSearchText(address?: MailAddress | null) {
 export function formatMailAddressList(addresses: MailAddress[]) {
   return addresses.map((address) => getMailAddressFullLabel(address)).join(", ")
 }
+
+export function parseMailAddressInput(value: string) {
+  const entries: string[] = []
+  let current = ""
+  let inQuotes = false
+  let angleDepth = 0
+
+  for (const char of value) {
+    if (char === '"') {
+      inQuotes = !inQuotes
+      current += char
+      continue
+    }
+
+    if (!inQuotes && char === "<") {
+      angleDepth += 1
+      current += char
+      continue
+    }
+
+    if (!inQuotes && char === ">" && angleDepth > 0) {
+      angleDepth -= 1
+      current += char
+      continue
+    }
+
+    if (!inQuotes && angleDepth === 0 && /[,\n;]/.test(char)) {
+      const entry = current.trim()
+
+      if (entry) {
+        entries.push(entry)
+      }
+
+      current = ""
+      continue
+    }
+
+    current += char
+  }
+
+  const lastEntry = current.trim()
+
+  if (lastEntry) {
+    entries.push(lastEntry)
+  }
+
+  return entries
+}
