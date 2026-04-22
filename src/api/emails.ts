@@ -1,6 +1,7 @@
 import { apiClient } from "@/lib/api-client"
 import { normalizeSnippetText } from "@/lib/html-entities"
 import type {
+  ComposeEmailData,
   InboxMessage,
   InboxThreadDetail,
   InboxThreadSummary,
@@ -28,6 +29,18 @@ function normalizeThreadDetail(thread: InboxThreadDetail): InboxThreadDetail {
   return {
     ...thread,
     messages: thread.messages.map(normalizeMessage),
+  }
+}
+
+function appendFormDataValues(formData: FormData, key: string, values?: string[]) {
+  for (const value of values ?? []) {
+    const normalizedValue = value.trim()
+
+    if (!normalizedValue) {
+      continue
+    }
+
+    formData.append(key, normalizedValue)
   }
 }
 
@@ -59,4 +72,24 @@ export async function markThreadAsRead(threadId: string): Promise<void> {
 
 export async function getUnreadCount(): Promise<UnreadCountResponse> {
   return apiClient.get<UnreadCountResponse>("/api/v1/threads/inbox/unread-count")
+}
+
+export async function sendMail(data: ComposeEmailData): Promise<void> {
+  const formData = new FormData()
+
+  if (data.from?.trim()) {
+    formData.append("from", data.from.trim())
+  }
+
+  appendFormDataValues(formData, "to", data.to)
+  appendFormDataValues(formData, "cc", data.cc)
+  appendFormDataValues(formData, "bcc", data.bcc)
+  formData.append("subject", data.subject)
+  formData.append("content", data.content)
+
+  for (const attachment of data.attachments ?? []) {
+    formData.append("attachments", attachment)
+  }
+
+  await apiClient.post<void>("/api/v1/mail/send", formData)
 }
