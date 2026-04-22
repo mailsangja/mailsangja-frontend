@@ -78,14 +78,17 @@ export function ComposeEmail() {
     <div className="flex h-full flex-col">
       <div className="flex h-11 shrink-0 items-center justify-between border-b px-4">
         <h1 className="text-sm font-medium">새 메일 작성</h1>
-        <Button variant="ghost" size="icon-sm" onClick={handleClose} className="-mr-2">
+        <Button variant="ghost" size="icon-sm" onClick={handleClose} className="-mr-2" aria-label="메일 작성 닫기">
           <X className="size-4" />
         </Button>
       </div>
 
       <div className="flex h-10 items-center border-b px-4 py-2">
-        <label className="w-18 shrink-0 text-sm text-muted-foreground">받는 사람</label>
+        <label htmlFor="compose-to" className="w-18 shrink-0 text-sm text-muted-foreground">
+          받는 사람
+        </label>
         <input
+          id="compose-to"
           type="text"
           value={to}
           onChange={(e) => setTo(e.target.value)}
@@ -106,8 +109,11 @@ export function ComposeEmail() {
 
       {showCc && (
         <div className="flex h-10 items-center border-b px-4 py-2">
-          <label className="w-18 shrink-0 text-sm text-muted-foreground">참조</label>
+          <label htmlFor="compose-cc" className="w-18 shrink-0 text-sm text-muted-foreground">
+            참조
+          </label>
           <input
+            id="compose-cc"
             type="text"
             value={cc}
             onChange={(e) => setCc(e.target.value)}
@@ -119,8 +125,11 @@ export function ComposeEmail() {
 
       {showBcc && (
         <div className="flex h-10 items-center border-b px-4 py-2">
-          <label className="w-18 shrink-0 text-sm text-muted-foreground">숨은 참조</label>
+          <label htmlFor="compose-bcc" className="w-18 shrink-0 text-sm text-muted-foreground">
+            숨은 참조
+          </label>
           <input
+            id="compose-bcc"
             type="text"
             value={bcc}
             onChange={(e) => setBcc(e.target.value)}
@@ -131,8 +140,11 @@ export function ComposeEmail() {
       )}
 
       <div className="flex h-10 items-center border-b px-4 py-2">
-        <label className="w-18 shrink-0 text-sm text-muted-foreground">제목</label>
+        <label htmlFor="compose-subject" className="w-18 shrink-0 text-sm text-muted-foreground">
+          제목
+        </label>
         <input
+          id="compose-subject"
           type="text"
           value={subject}
           onChange={(e) => setSubject(e.target.value)}
@@ -142,7 +154,11 @@ export function ComposeEmail() {
       </div>
 
       <div className="flex-1 overflow-hidden">
+        <label htmlFor="compose-body" className="sr-only">
+          메일 본문
+        </label>
         <textarea
+          id="compose-body"
           value={body}
           onChange={(e) => setBody(e.target.value)}
           placeholder="메일 내용을 입력하세요..."
