@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { X } from "lucide-react"
+import { Loader2, X } from "lucide-react"
 import { useNavigate } from "@tanstack/react-router"
 import { toast } from "sonner"
 
@@ -140,6 +140,7 @@ export function ComposeEmail() {
 
       <div className="shrink-0 border-t px-4 py-3">
         <Button className="w-full" size="lg" onClick={handleSend} disabled={sendMailMutation.isPending}>
+          {sendMailMutation.isPending ? <Loader2 className="size-4 animate-spin" /> : null}
           보내기
         </Button>
       </div>
