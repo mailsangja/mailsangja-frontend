@@ -48,14 +48,43 @@ function buildUrl(path: string, params?: QueryParams) {
   return url
 }
 
-function buildHeaders(headers?: HeadersInit, hasBody = false) {
+function isBodyInit(body: unknown): body is BodyInit {
+  if (typeof body === "string") {
+    return true
+  }
+
+  if (typeof FormData !== "undefined" && body instanceof FormData) {
+    return true
+  }
+
+  if (typeof Blob !== "undefined" && body instanceof Blob) {
+    return true
+  }
+
+  if (typeof URLSearchParams !== "undefined" && body instanceof URLSearchParams) {
+    return true
+  }
+
+  return false
+}
+
+function buildHeaders(headers?: HeadersInit, body?: unknown) {
   const requestHeaders = new Headers(headers)
   requestHeaders.set("Accept", "application/json")
-  if (hasBody && !requestHeaders.has("Content-Type")) {
+
+  if (body !== undefined && !isBodyInit(body) && !requestHeaders.has("Content-Type")) {
     requestHeaders.set("Content-Type", "application/json")
   }
 
   return requestHeaders
+}
+
+function buildRequestBody(body?: unknown): BodyInit | undefined {
+  if (body === undefined) {
+    return undefined
+  }
+
+  return isBodyInit(body) ? body : JSON.stringify(body)
 }
 
 async function parseResponseBody(response: Response) {
@@ -86,13 +115,12 @@ function getErrorMessage(statusText: string, data: unknown) {
 
 async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
   const { method = "GET", params, body, headers, signal } = options
-  const hasBody = body !== undefined
 
   const response = await fetch(buildUrl(path, params), {
     method,
     credentials: "include",
-    headers: buildHeaders(headers, hasBody),
-    body: hasBody ? JSON.stringify(body) : undefined,
+    headers: buildHeaders(headers, body),
+    body: buildRequestBody(body),
     signal,
   })
 
