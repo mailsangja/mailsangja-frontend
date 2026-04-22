@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router"
-import { Mail } from "lucide-react"
+import { Mail, Pencil } from "lucide-react"
 
+import { buttonVariants } from "@/components/ui/button"
 import { NavAccounts } from "@/components/nav-accounts"
 import { NavFolders } from "@/components/nav-folders"
 import { NavUser } from "@/components/nav-user"
@@ -48,6 +49,13 @@ export function AppSidebar({
       </SidebarHeader>
 
       <SidebarContent>
+        <div className="mb-2 px-2">
+          <Link to="/compose" className={buttonVariants({ size: "lg", className: "w-full" })}>
+            <Pencil className="mr-1" />
+            메일 작성
+          </Link>
+        </div>
+
         <NavFolders mailbox={mailbox} onMailboxChange={onMailboxChange} />
         <NavAccounts activeAccountId={activeAccountId} onAccountToggle={onAccountToggle} className="mt-auto" />
       </SidebarContent>

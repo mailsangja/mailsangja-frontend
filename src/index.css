@@ -237,7 +237,4 @@
 
     font-family: var(--font-sans);
   }
-  html {
-    scrollbar-gutter: stable;
-  }
 }
