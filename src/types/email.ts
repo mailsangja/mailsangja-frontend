@@ -87,3 +87,13 @@ export interface ListThreadsParams {
 export interface UnreadCountResponse {
   unreadCount: number
 }
+
+export interface ComposeEmailData {
+  from?: string
+  to: string[]
+  cc?: string[]
+  bcc?: string[]
+  subject: string
+  content: string
+  attachments?: File[]
+}
