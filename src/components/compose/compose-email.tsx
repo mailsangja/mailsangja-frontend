@@ -13,10 +13,11 @@ import { useActiveMailAccounts } from "@/queries/mail-accounts"
 import { useUser } from "@/queries/user"
 
 interface ComposeEmailProps {
-  initialFromAddress?: string
+  fromAddress: string | null
+  onFromAddressChange: (value: string | null) => void
 }
 
-export function ComposeEmail({ initialFromAddress }: ComposeEmailProps = {}) {
+export function ComposeEmail({ fromAddress, onFromAddressChange }: ComposeEmailProps) {
   const navigate = useNavigate()
   const { data: user, isPending: isUserPending } = useUser()
   const { data: activeMailAccounts, isPending: isMailAccountsPending } = useActiveMailAccounts()
@@ -28,7 +29,6 @@ export function ComposeEmail({ initialFromAddress }: ComposeEmailProps = {}) {
   const [body, setBody] = useState("")
   const [showCc, setShowCc] = useState(false)
   const [showBcc, setShowBcc] = useState(false)
-  const [fromAddress, setFromAddress] = useState<string | null>(initialFromAddress ?? null)
 
   const activeFromAddressSet = useMemo(
     () => new Set((activeMailAccounts ?? []).map((mailAccount) => mailAccount.emailAddress)),
@@ -181,7 +181,7 @@ export function ComposeEmail({ initialFromAddress }: ComposeEmailProps = {}) {
         </span>
         <Select
           value={selectedFromAddress}
-          onValueChange={setFromAddress}
+          onValueChange={onFromAddressChange}
           items={fromAddressItems}
           disabled={isFromAddressPending || fromAddressItems.length === 0}
         >

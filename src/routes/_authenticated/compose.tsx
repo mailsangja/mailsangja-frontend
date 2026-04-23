@@ -20,11 +20,19 @@ export const Route = createFileRoute("/_authenticated/compose")({
 function ComposePage() {
   const isMobile = useIsMobile()
   const { from } = Route.useSearch()
+  const navigate = Route.useNavigate()
+
+  const handleFromAddressChange = (nextFrom: string | null) => {
+    navigate({
+      search: (prev) => ({ ...prev, from: nextFrom ?? undefined }),
+      replace: true,
+    })
+  }
 
   if (isMobile) {
     return (
       <div className="flex min-h-0 flex-1 overflow-hidden">
-        <ComposeEmail initialFromAddress={from} />
+        <ComposeEmail fromAddress={from ?? null} onFromAddressChange={handleFromAddressChange} />
       </div>
     )
   }
@@ -36,7 +44,7 @@ function ComposePage() {
       </div>
       <Separator orientation="vertical" />
       <div className="min-h-0 min-w-0 basis-2/3">
-        <ComposeEmail initialFromAddress={from} />
+        <ComposeEmail fromAddress={from ?? null} onFromAddressChange={handleFromAddressChange} />
       </div>
     </div>
   )
