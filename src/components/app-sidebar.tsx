@@ -1,7 +1,9 @@
 import { Link } from "@tanstack/react-router"
-import { Mail, Pencil } from "lucide-react"
+import { ChevronDown, Mail, Pencil } from "lucide-react"
 
+import { Badge } from "@/components/ui/badge"
 import { buttonVariants } from "@/components/ui/button"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { NavAccounts } from "@/components/nav-accounts"
 import { NavFolders } from "@/components/nav-folders"
 import { NavUser } from "@/components/nav-user"
@@ -14,6 +16,8 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
+import { useMailAccounts } from "@/queries/mail-accounts"
+import { useUser } from "@/queries/user"
 import type { PrimaryMailboxId } from "@/types/email"
 
 interface AppSidebarProps {
@@ -30,6 +34,10 @@ export function AppSidebar({
   onAccountToggle,
   ...props
 }: AppSidebarProps & React.ComponentProps<typeof Sidebar>) {
+  const { data: user } = useUser()
+  const { data: mailAccounts } = useMailAccounts()
+  const hasMailAccounts = !!mailAccounts && mailAccounts.length > 0
+
   return (
     <Sidebar variant="inset" {...props}>
       <SidebarHeader className="md:hidden">
@@ -49,11 +57,36 @@ export function AppSidebar({
       </SidebarHeader>
 
       <SidebarContent>
-        <div className="mb-2 px-2">
-          <Link to="/compose" className={buttonVariants({ size: "lg", className: "w-full" })}>
+        <div className="mb-2 flex gap-px px-2">
+          <Link to="/compose" className={buttonVariants({ size: "lg", className: "flex-1 rounded-r-none" })}>
             <Pencil className="mr-1" />
             메일 작성
           </Link>
+          <DropdownMenu>
+            <DropdownMenuTrigger
+              disabled={!hasMailAccounts}
+              className={buttonVariants({
+                size: "lg",
+                className: "cursor-pointer rounded-l-none px-2",
+              })}
+              aria-label="발신 계정 선택"
+            >
+              <ChevronDown className="size-4" />
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end" className="min-w-56">
+              {(mailAccounts ?? []).map((mailAccount) => (
+                <DropdownMenuItem
+                  key={mailAccount.id}
+                  render={<Link to="/compose" search={{ from: mailAccount.emailAddress }} />}
+                >
+                  <span className="flex flex-1 items-center gap-2">
+                    <span className="truncate">{mailAccount.emailAddress}</span>
+                    {mailAccount.id === user?.defaultMailAccountId && <Badge variant="secondary">default</Badge>}
+                  </span>
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
 
         <NavFolders mailbox={mailbox} onMailboxChange={onMailboxChange} />

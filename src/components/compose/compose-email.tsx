@@ -12,7 +12,11 @@ import { useSendMail } from "@/mutations/emails"
 import { useMailAccounts } from "@/queries/mail-accounts"
 import { useUser } from "@/queries/user"
 
-export function ComposeEmail() {
+interface ComposeEmailProps {
+  initialFromAddress?: string
+}
+
+export function ComposeEmail({ initialFromAddress }: ComposeEmailProps = {}) {
   const navigate = useNavigate()
   const { data: user, isPending: isUserPending } = useUser()
   const { data: mailAccounts, isPending: isMailAccountsPending } = useMailAccounts()
@@ -24,7 +28,7 @@ export function ComposeEmail() {
   const [body, setBody] = useState("")
   const [showCc, setShowCc] = useState(false)
   const [showBcc, setShowBcc] = useState(false)
-  const [fromAddress, setFromAddress] = useState<string | null>(null)
+  const [fromAddress, setFromAddress] = useState<string | null>(initialFromAddress ?? null)
 
   const defaultFromAddress =
     mailAccounts?.find((mailAccount) => mailAccount.id === user?.defaultMailAccountId)?.emailAddress ??
