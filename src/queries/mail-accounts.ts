@@ -23,3 +23,10 @@ export function useMailAccounts() {
     enabled: user != null,
   })
 }
+
+export function useActiveMailAccounts() {
+  const query = useMailAccounts()
+  const data = query.data?.filter((mailAccount) => mailAccount.isActive)
+
+  return { ...query, data }
+}

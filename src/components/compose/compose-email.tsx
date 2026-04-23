@@ -1,19 +1,26 @@
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { Loader2, X } from "lucide-react"
 import { useNavigate } from "@tanstack/react-router"
 import { toast } from "sonner"
 
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { getErrorMessage } from "@/lib/http-error"
 import { parseMailAddressInput } from "@/lib/mail-address"
 import { useSendMail } from "@/mutations/emails"
-import { useMailAccounts } from "@/queries/mail-accounts"
+import { useActiveMailAccounts } from "@/queries/mail-accounts"
 import { useUser } from "@/queries/user"
 
-export function ComposeEmail() {
+interface ComposeEmailProps {
+  fromAddress: string | null
+  onFromAddressChange: (value: string | null) => void
+}
+
+export function ComposeEmail({ fromAddress, onFromAddressChange }: ComposeEmailProps) {
   const navigate = useNavigate()
   const { data: user, isPending: isUserPending } = useUser()
-  const { data: mailAccounts, isPending: isMailAccountsPending } = useMailAccounts()
+  const { data: activeMailAccounts, isPending: isMailAccountsPending } = useActiveMailAccounts()
   const sendMailMutation = useSendMail()
   const [to, setTo] = useState("")
   const [cc, setCc] = useState("")
@@ -23,11 +30,26 @@ export function ComposeEmail() {
   const [showCc, setShowCc] = useState(false)
   const [showBcc, setShowBcc] = useState(false)
 
+  const activeFromAddressSet = useMemo(
+    () => new Set((activeMailAccounts ?? []).map((mailAccount) => mailAccount.emailAddress)),
+    [activeMailAccounts]
+  )
   const defaultFromAddress =
-    mailAccounts?.find((mailAccount) => mailAccount.id === user?.defaultMailAccountId)?.emailAddress ??
-    mailAccounts?.find((mailAccount) => mailAccount.isActive)?.emailAddress
+    activeMailAccounts?.find((mailAccount) => mailAccount.id === user?.defaultMailAccountId)?.emailAddress ??
+    activeMailAccounts?.[0]?.emailAddress ??
+    null
+  const validatedFromAddress = fromAddress && activeFromAddressSet.has(fromAddress) ? fromAddress : null
+  const selectedFromAddress = validatedFromAddress ?? defaultFromAddress
+  const fromAddressItems = useMemo(
+    () =>
+      (activeMailAccounts ?? []).map((mailAccount) => ({
+        value: mailAccount.emailAddress,
+        label: mailAccount.emailAddress,
+      })),
+    [activeMailAccounts]
+  )
   const isFromAddressPending = isUserPending || isMailAccountsPending
-  const cannotSend = sendMailMutation.isPending || isFromAddressPending || !defaultFromAddress
+  const cannotSend = sendMailMutation.isPending || isFromAddressPending || !selectedFromAddress
 
   const handleSend = async () => {
     if (isFromAddressPending) {
@@ -35,7 +57,7 @@ export function ComposeEmail() {
       return
     }
 
-    if (!defaultFromAddress) {
+    if (!selectedFromAddress) {
       toast.error("발신 메일 계정을 먼저 연결해주세요")
       return
     }
@@ -54,7 +76,7 @@ export function ComposeEmail() {
 
     try {
       await sendMailMutation.mutateAsync({
-        from: defaultFromAddress,
+        from: selectedFromAddress,
         to: toRecipients,
         cc: parseMailAddressInput(cc),
         bcc: parseMailAddressInput(bcc),
@@ -75,7 +97,7 @@ export function ComposeEmail() {
   }
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full w-full flex-col">
       <div className="flex h-11 shrink-0 items-center justify-between border-b px-4">
         <h1 className="text-sm font-medium">새 메일 작성</h1>
         <Button variant="ghost" size="icon-sm" onClick={handleClose} className="-mr-2" aria-label="메일 작성 닫기">
@@ -84,7 +106,7 @@ export function ComposeEmail() {
       </div>
 
       <div className="flex h-10 items-center border-b px-4 py-2">
-        <label htmlFor="compose-to" className="w-18 shrink-0 text-sm text-muted-foreground">
+        <label htmlFor="compose-to" className="w-20 shrink-0 text-sm text-muted-foreground">
           받는 사람
         </label>
         <input
@@ -109,7 +131,7 @@ export function ComposeEmail() {
 
       {showCc && (
         <div className="flex h-10 items-center border-b px-4 py-2">
-          <label htmlFor="compose-cc" className="w-18 shrink-0 text-sm text-muted-foreground">
+          <label htmlFor="compose-cc" className="w-20 shrink-0 text-sm text-muted-foreground">
             참조
           </label>
           <input
@@ -125,7 +147,7 @@ export function ComposeEmail() {
 
       {showBcc && (
         <div className="flex h-10 items-center border-b px-4 py-2">
-          <label htmlFor="compose-bcc" className="w-18 shrink-0 text-sm text-muted-foreground">
+          <label htmlFor="compose-bcc" className="w-20 shrink-0 text-sm text-muted-foreground">
             숨은 참조
           </label>
           <input
@@ -140,7 +162,7 @@ export function ComposeEmail() {
       )}
 
       <div className="flex h-10 items-center border-b px-4 py-2">
-        <label htmlFor="compose-subject" className="w-18 shrink-0 text-sm text-muted-foreground">
+        <label htmlFor="compose-subject" className="w-20 shrink-0 text-sm text-muted-foreground">
           제목
         </label>
         <input
@@ -151,6 +173,35 @@ export function ComposeEmail() {
           placeholder="메일 제목 입력"
           className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
         />
+      </div>
+
+      <div className="flex h-10 items-center border-b px-4 py-2">
+        <span id="compose-from-label" className="w-20 shrink-0 text-sm text-muted-foreground">
+          보내는 사람
+        </span>
+        <Select
+          value={selectedFromAddress}
+          onValueChange={onFromAddressChange}
+          items={fromAddressItems}
+          disabled={isFromAddressPending || fromAddressItems.length === 0}
+        >
+          <SelectTrigger
+            aria-labelledby="compose-from-label"
+            className="h-auto min-w-0 flex-1 border-0 bg-transparent px-0 py-0 shadow-none focus-visible:ring-0 dark:bg-transparent dark:hover:bg-transparent"
+          >
+            <SelectValue placeholder={isFromAddressPending ? "발신 계정을 불러오는 중..." : "발신 계정을 선택하세요"} />
+          </SelectTrigger>
+          <SelectContent align="start" alignItemWithTrigger={false}>
+            {(activeMailAccounts ?? []).map((mailAccount) => (
+              <SelectItem key={mailAccount.id} value={mailAccount.emailAddress} className="px-3 py-2">
+                <span className="flex items-center gap-2">
+                  {mailAccount.emailAddress}
+                  {mailAccount.id === user?.defaultMailAccountId && <Badge variant="secondary">default</Badge>}
+                </span>
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
       </div>
 
       <div className="flex-1 overflow-hidden">
