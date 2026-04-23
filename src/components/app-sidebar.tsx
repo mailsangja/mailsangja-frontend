@@ -16,7 +16,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { useMailAccounts } from "@/queries/mail-accounts"
+import { useActiveMailAccounts } from "@/queries/mail-accounts"
 import { useUser } from "@/queries/user"
 import type { PrimaryMailboxId } from "@/types/email"
 
@@ -35,8 +35,8 @@ export function AppSidebar({
   ...props
 }: AppSidebarProps & React.ComponentProps<typeof Sidebar>) {
   const { data: user } = useUser()
-  const { data: mailAccounts } = useMailAccounts()
-  const hasMailAccounts = !!mailAccounts && mailAccounts.length > 0
+  const { data: activeMailAccounts } = useActiveMailAccounts()
+  const hasMailAccounts = !!activeMailAccounts && activeMailAccounts.length > 0
 
   return (
     <Sidebar variant="inset" {...props}>
@@ -74,7 +74,7 @@ export function AppSidebar({
               <ChevronDown className="size-4" />
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end" className="min-w-56">
-              {(mailAccounts ?? []).map((mailAccount) => (
+              {(activeMailAccounts ?? []).map((mailAccount) => (
                 <DropdownMenuItem
                   key={mailAccount.id}
                   render={<Link to="/compose" search={{ from: mailAccount.emailAddress }} />}

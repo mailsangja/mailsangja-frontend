@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { getErrorMessage } from "@/lib/http-error"
 import { parseMailAddressInput } from "@/lib/mail-address"
 import { useSendMail } from "@/mutations/emails"
-import { useMailAccounts } from "@/queries/mail-accounts"
+import { useActiveMailAccounts } from "@/queries/mail-accounts"
 import { useUser } from "@/queries/user"
 
 interface ComposeEmailProps {
@@ -19,7 +19,7 @@ interface ComposeEmailProps {
 export function ComposeEmail({ initialFromAddress }: ComposeEmailProps = {}) {
   const navigate = useNavigate()
   const { data: user, isPending: isUserPending } = useUser()
-  const { data: mailAccounts, isPending: isMailAccountsPending } = useMailAccounts()
+  const { data: activeMailAccounts, isPending: isMailAccountsPending } = useActiveMailAccounts()
   const sendMailMutation = useSendMail()
   const [to, setTo] = useState("")
   const [cc, setCc] = useState("")
@@ -30,18 +30,23 @@ export function ComposeEmail({ initialFromAddress }: ComposeEmailProps = {}) {
   const [showBcc, setShowBcc] = useState(false)
   const [fromAddress, setFromAddress] = useState<string | null>(initialFromAddress ?? null)
 
+  const activeFromAddressSet = useMemo(
+    () => new Set((activeMailAccounts ?? []).map((mailAccount) => mailAccount.emailAddress)),
+    [activeMailAccounts]
+  )
   const defaultFromAddress =
-    mailAccounts?.find((mailAccount) => mailAccount.id === user?.defaultMailAccountId)?.emailAddress ??
-    mailAccounts?.find((mailAccount) => mailAccount.isActive)?.emailAddress ??
+    activeMailAccounts?.find((mailAccount) => mailAccount.id === user?.defaultMailAccountId)?.emailAddress ??
+    activeMailAccounts?.[0]?.emailAddress ??
     null
-  const selectedFromAddress = fromAddress ?? defaultFromAddress
+  const validatedFromAddress = fromAddress && activeFromAddressSet.has(fromAddress) ? fromAddress : null
+  const selectedFromAddress = validatedFromAddress ?? defaultFromAddress
   const fromAddressItems = useMemo(
     () =>
-      (mailAccounts ?? []).map((mailAccount) => ({
+      (activeMailAccounts ?? []).map((mailAccount) => ({
         value: mailAccount.emailAddress,
         label: mailAccount.emailAddress,
       })),
-    [mailAccounts]
+    [activeMailAccounts]
   )
   const isFromAddressPending = isUserPending || isMailAccountsPending
   const cannotSend = sendMailMutation.isPending || isFromAddressPending || !selectedFromAddress
@@ -187,7 +192,7 @@ export function ComposeEmail({ initialFromAddress }: ComposeEmailProps = {}) {
             <SelectValue placeholder={isFromAddressPending ? "발신 계정을 불러오는 중..." : "발신 계정을 선택하세요"} />
           </SelectTrigger>
           <SelectContent align="start" alignItemWithTrigger={false}>
-            {(mailAccounts ?? []).map((mailAccount) => (
+            {(activeMailAccounts ?? []).map((mailAccount) => (
               <SelectItem key={mailAccount.id} value={mailAccount.emailAddress} className="px-3 py-2">
                 <span className="flex items-center gap-2">
                   {mailAccount.emailAddress}
