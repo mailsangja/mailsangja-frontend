@@ -88,7 +88,7 @@ export function ComposeEmail() {
   }
 
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full w-full flex-col">
       <div className="flex h-11 shrink-0 items-center justify-between border-b px-4">
         <h1 className="text-sm font-medium">새 메일 작성</h1>
         <Button variant="ghost" size="icon-sm" onClick={handleClose} className="-mr-2" aria-label="메일 작성 닫기">
@@ -178,7 +178,7 @@ export function ComposeEmail() {
         >
           <SelectTrigger
             aria-labelledby="compose-from-label"
-            className="h-auto min-w-0 flex-1 border-0 bg-transparent px-0 py-0 shadow-none focus-visible:ring-0"
+            className="h-auto min-w-0 flex-1 border-0 bg-transparent px-0 py-0 shadow-none focus-visible:ring-0 dark:bg-transparent dark:hover:bg-transparent"
           >
             <SelectValue placeholder={isFromAddressPending ? "발신 계정을 불러오는 중..." : "발신 계정을 선택하세요"} />
           </SelectTrigger>
