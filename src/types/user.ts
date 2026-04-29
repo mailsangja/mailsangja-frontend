@@ -12,3 +12,7 @@ export interface User {
 export interface UpdateDefaultAccountPayload {
   mailAccountId: string
 }
+
+export interface RegisterFcmTokenPayload {
+  fcmToken: string
+}
