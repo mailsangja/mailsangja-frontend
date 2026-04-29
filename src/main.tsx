@@ -6,9 +6,12 @@ import { RouterProvider } from "@tanstack/react-router"
 
 import { NotFoundComponent } from "@/components/layout/not-found-page"
 import { queryClient } from "@/lib/query-client"
+import { registerPwaServiceWorker } from "@/lib/pwa"
 import { routeTree } from "@/routeTree.gen"
 
 import "./index.css"
+
+void registerPwaServiceWorker()
 
 const router = createRouter({
   routeTree,
