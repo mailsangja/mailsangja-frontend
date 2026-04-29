@@ -3,7 +3,8 @@ import { Bell, Mail, Search } from "lucide-react"
 
 import { AppSidebar } from "@/components/app-sidebar"
 import { LoadingLayout } from "@/components/layout/loading-layout"
-import { Button } from "@/components/ui/button"
+import { PushNotificationListener } from "@/components/push-notification-listener"
+import { buttonVariants } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { useIsMobile } from "@/hooks/use-mobile"
@@ -116,9 +117,9 @@ function AuthenticatedRouteLayout() {
         </form>
 
         <div className="flex shrink-0 items-center gap-1">
-          <Button variant="ghost" size="icon" aria-label="알림">
+          <Link to="/settings" className={buttonVariants({ variant: "ghost", size: "icon" })}>
             <Bell className="size-5" />
-          </Button>
+          </Link>
         </div>
       </header>
 
@@ -157,6 +158,7 @@ function AuthenticatedRouteLayout() {
           </div>
         </div>
       </div>
+      <PushNotificationListener />
     </SidebarProvider>
   )
 }
