@@ -3,10 +3,29 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <meta name="theme-color" content="#faf9f5" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#262624" media="(prefers-color-scheme: dark)" />
+    <meta name="color-scheme" content="light dark" />
+    <script>
+      const themeColors = {
+        light: "#faf9f5",
+        dark: "#262624",
+      }
+      const storedTheme = localStorage.getItem("theme")
+      const systemTheme = matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light"
+      const resolvedTheme = storedTheme === "dark" || storedTheme === "light" ? storedTheme : systemTheme
+
+      const root = document.documentElement
+      root.classList.add(resolvedTheme)
+      root.style.colorScheme = resolvedTheme
+
+      document.querySelectorAll("meta[name='theme-color']").forEach((meta) => {
+        meta.content = themeColors[resolvedTheme]
+      })
+    </script>
     <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
     <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
     <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
-    <link rel="manifest" href="/site.webmanifest" />
     <title>메일상자</title>
   </head>
   <body>
