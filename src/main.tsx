@@ -11,7 +11,7 @@ import { routeTree } from "@/routeTree.gen"
 
 import "./index.css"
 
-void registerPwaServiceWorker()
+void registerPwaServiceWorker().catch(() => {})
 
 const router = createRouter({
   routeTree,
