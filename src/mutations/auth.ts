@@ -8,7 +8,7 @@ import type { User } from "@/types/user"
 
 import { login, logout, register } from "@/api/auth"
 import { unregisterFcmToken } from "@/api/users"
-import { clearStoredFcmToken, deleteFcmToken, disableFcm } from "@/lib/fcm"
+import { clearFcmToken, disableFcm } from "@/lib/fcm"
 import { getErrorMessage, getHttpStatus } from "@/lib/http-error"
 import { userKeys } from "@/queries/user"
 
@@ -47,8 +47,7 @@ export const authMutationOptions = {
         try {
           await disableFcm(user.id, (fcmToken) => unregisterFcmToken({ fcmToken }))
         } catch {
-          clearStoredFcmToken(user.id)
-          await deleteFcmToken().catch(() => {})
+          await clearFcmToken(user.id)
         }
       }
 

@@ -130,6 +130,11 @@ export function clearStoredFcmToken(userId: string) {
   window.dispatchEvent(new CustomEvent(FCM_TOKEN_CHANGED_EVENT))
 }
 
+export async function clearFcmToken(userId: string) {
+  clearStoredFcmToken(userId)
+  await deleteFcmToken().catch(() => {})
+}
+
 export async function deleteFcmToken() {
   const messaging = await getFirebaseMessaging()
 
@@ -147,9 +152,15 @@ export async function disableFcm(userId: string, unregisterToken: (token: string
     return
   }
 
-  await unregisterToken(registeredToken)
-  clearStoredFcmToken(userId)
-  await deleteFcmToken().catch(() => {})
+  // TODO: backend token deletion can fail, but the user intent is to disable notifications
+  // on this browser. We still clear frontend state and delete the Firebase token, then surface the backend issue.
+  let unregisterError: unknown
+  await unregisterToken(registeredToken).catch((error) => (unregisterError = error))
+  await clearFcmToken(userId)
+
+  if (unregisterError) {
+    throw unregisterError
+  }
 }
 
 export async function syncFcmToken(userId: string, registerToken: (token: string) => Promise<void>) {
