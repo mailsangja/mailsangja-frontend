@@ -4,10 +4,10 @@ import { toast } from "sonner"
 
 import { EmailErrorState } from "@/components/inbox/email-error-state"
 import { EmailListItem } from "@/components/inbox/email-list-item"
+import { EmailListLoadingRows } from "@/components/inbox/email-list-loading-rows"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Skeleton } from "@/components/ui/skeleton"
-import { Table, TableBody, TableCell, TableRow } from "@/components/ui/table"
+import { Table, TableBody } from "@/components/ui/table"
 import { getErrorMessage } from "@/lib/http-error"
 import { useRestoreTrashThread } from "@/mutations/trash"
 import type { InboxThreadSummary, MailAddress } from "@/types/email"
@@ -94,31 +94,6 @@ interface TrashListProps {
   loadMoreErrorTitle?: string
   loadMoreErrorDescription?: string
   onRetryLoadMore?: () => void
-}
-
-function LoadingRows() {
-  return Array.from({ length: 10 }).map((_, index) => (
-    <TableRow key={index}>
-      <TableCell className="w-10">
-        <Skeleton className="size-2.5 rounded-full" />
-      </TableCell>
-      <TableCell className="w-10">
-        <Skeleton className="size-2.5 rounded-full" />
-      </TableCell>
-      <TableCell className="w-[22%]">
-        <Skeleton className="h-4 w-28" />
-      </TableCell>
-      <TableCell className="w-[58%]">
-        <Skeleton className="h-4 w-full" />
-      </TableCell>
-      <TableCell className="hidden w-14 text-center md:table-cell">
-        <Skeleton className="mx-auto size-4 rounded-full" />
-      </TableCell>
-      <TableCell className="w-24 text-right">
-        <Skeleton className="ml-auto h-4 w-16" />
-      </TableCell>
-    </TableRow>
-  ))
 }
 
 export function TrashList({
@@ -226,7 +201,7 @@ export function TrashList({
         {isLoading ? (
           <Table className="table-fixed">
             <TableBody>
-              <LoadingRows />
+              <EmailListLoadingRows />
             </TableBody>
           </Table>
         ) : errorTitle && errorDescription ? (
@@ -254,7 +229,7 @@ export function TrashList({
                     onToggleCheck={() => toggleSelected(thread.threadId)}
                   />
                 ))}
-                {isFetchingNextPage ? <LoadingRows /> : null}
+                {isFetchingNextPage ? <EmailListLoadingRows /> : null}
               </TableBody>
             </Table>
             {loadMoreErrorTitle && loadMoreErrorDescription ? (
