@@ -1,7 +1,7 @@
 import { useMutation } from "@tanstack/react-query"
-import type { RegisterFcmTokenPayload, UpdateDefaultAccountPayload } from "@/types/user"
+import type { RegisterFcmTokenPayload, UnregisterFcmTokenPayload, UpdateDefaultAccountPayload } from "@/types/user"
 
-import { registerFcmToken, updateDefaultAccount } from "@/api/users"
+import { registerFcmToken, unregisterFcmToken, updateDefaultAccount } from "@/api/users"
 import { queryClient } from "@/lib/query-client"
 import { mailAccountKeys } from "@/queries/mail-accounts"
 import { userKeys } from "@/queries/user"
@@ -17,6 +17,9 @@ export const userMutationOptions = {
   registerFcmToken: () => ({
     mutationFn: (data: RegisterFcmTokenPayload) => registerFcmToken(data),
   }),
+  unregisterFcmToken: () => ({
+    mutationFn: (data: UnregisterFcmTokenPayload) => unregisterFcmToken(data),
+  }),
 }
 
 export function useUpdateDefaultAccount() {
@@ -25,4 +28,8 @@ export function useUpdateDefaultAccount() {
 
 export function useRegisterFcmToken() {
   return useMutation(userMutationOptions.registerFcmToken())
+}
+
+export function useUnregisterFcmToken() {
+  return useMutation(userMutationOptions.unregisterFcmToken())
 }

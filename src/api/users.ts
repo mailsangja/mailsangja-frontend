@@ -1,4 +1,4 @@
-import type { RegisterFcmTokenPayload, UpdateDefaultAccountPayload } from "@/types/user"
+import type { RegisterFcmTokenPayload, UnregisterFcmTokenPayload, UpdateDefaultAccountPayload } from "@/types/user"
 import type { User } from "@/types/user"
 
 import { apiClient } from "@/lib/api-client"
@@ -13,4 +13,8 @@ export async function updateDefaultAccount(data: UpdateDefaultAccountPayload): P
 
 export async function registerFcmToken(data: RegisterFcmTokenPayload): Promise<void> {
   await apiClient.post<void>("/api/v1/users/me/fcm-token", data)
+}
+
+export async function unregisterFcmToken(data: UnregisterFcmTokenPayload): Promise<void> {
+  await apiClient.delete<void>("/api/v1/users/me/fcm-token", { body: data })
 }

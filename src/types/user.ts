@@ -16,3 +16,5 @@ export interface UpdateDefaultAccountPayload {
 export interface RegisterFcmTokenPayload {
   fcmToken: string
 }
+
+export type UnregisterFcmTokenPayload = RegisterFcmTokenPayload

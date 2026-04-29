@@ -1,10 +1,10 @@
-import { getToken, onMessage, type MessagePayload, type Unsubscribe } from "firebase/messaging"
+import { deleteToken, getToken, onMessage, type MessagePayload, type Unsubscribe } from "firebase/messaging"
 
 import { getFirebaseMessaging } from "@/lib/firebase"
 import { getPwaServiceWorkerRegistration } from "@/lib/pwa"
 
-const FCM_TOKEN_STORAGE_KEY = "mailsangja:fcm-token"
-export const FCM_TOKEN_REGISTERED_EVENT = "mailsangja:fcm-token-registered"
+const FCM_TOKEN_STORAGE_KEY_PREFIX = "mailsangja:fcm-token"
+export const FCM_TOKEN_CHANGED_EVENT = "mailsangja:fcm-token-changed"
 
 export type PushNotificationErrorCode = "unsupported" | "missing-config" | "permission-denied" | "token-unavailable"
 
@@ -30,7 +30,7 @@ export function getPushNotificationPermission(): NotificationPermission | "unsup
   return Notification.permission
 }
 
-export async function requestFcmRegistrationToken() {
+export async function getFcmToken() {
   if (!("Notification" in window) || !("serviceWorker" in navigator) || !("PushManager" in window)) {
     throw new PushNotificationError("unsupported", "이 브라우저에서는 푸시 알림을 사용할 수 없습니다.")
   }
@@ -73,13 +73,99 @@ export async function requestFcmRegistrationToken() {
   return token
 }
 
-export function markFcmTokenRegistered(token: string) {
-  window.localStorage.setItem(FCM_TOKEN_STORAGE_KEY, token)
-  window.dispatchEvent(new CustomEvent(FCM_TOKEN_REGISTERED_EVENT))
+function getFcmTokenStorageKey(userId: string) {
+  return `${FCM_TOKEN_STORAGE_KEY_PREFIX}:${userId}`
 }
 
-export function getRegisteredFcmToken() {
-  return window.localStorage.getItem(FCM_TOKEN_STORAGE_KEY)
+function clearLegacyFcmTokenStorage() {
+  window.localStorage.removeItem(FCM_TOKEN_STORAGE_KEY_PREFIX)
+}
+
+function markFcmTokenRegistered(userId: string, token: string) {
+  clearLegacyFcmTokenStorage()
+  window.localStorage.setItem(getFcmTokenStorageKey(userId), token)
+  window.dispatchEvent(new CustomEvent(FCM_TOKEN_CHANGED_EVENT))
+}
+
+async function saveRegisteredFcmToken(userId: string, token: string, registerToken: (token: string) => Promise<void>) {
+  await registerToken(token)
+  markFcmTokenRegistered(userId, token)
+}
+
+export function getStoredFcmToken(userId: string) {
+  clearLegacyFcmTokenStorage()
+  return window.localStorage.getItem(getFcmTokenStorageKey(userId))
+}
+
+export function subscribeToFcmToken(listener: () => void) {
+  const handleStorageChange = (event: StorageEvent) => {
+    if (event.storageArea !== window.localStorage || event.key === null) {
+      return
+    }
+
+    if (event.key === FCM_TOKEN_STORAGE_KEY_PREFIX || event.key.startsWith(`${FCM_TOKEN_STORAGE_KEY_PREFIX}:`)) {
+      listener()
+    }
+  }
+
+  window.addEventListener(FCM_TOKEN_CHANGED_EVENT, listener)
+  window.addEventListener("storage", handleStorageChange)
+
+  return () => {
+    window.removeEventListener(FCM_TOKEN_CHANGED_EVENT, listener)
+    window.removeEventListener("storage", handleStorageChange)
+  }
+}
+
+export async function enableFcm(userId: string, registerToken: (token: string) => Promise<void>) {
+  const token = await getFcmToken()
+
+  await saveRegisteredFcmToken(userId, token, registerToken)
+
+  return token
+}
+
+export function clearStoredFcmToken(userId: string) {
+  window.localStorage.removeItem(getFcmTokenStorageKey(userId))
+  window.dispatchEvent(new CustomEvent(FCM_TOKEN_CHANGED_EVENT))
+}
+
+export async function deleteFcmToken() {
+  const messaging = await getFirebaseMessaging()
+
+  if (!messaging) {
+    return
+  }
+
+  await deleteToken(messaging)
+}
+
+export async function disableFcm(userId: string, unregisterToken: (token: string) => Promise<void>) {
+  const registeredToken = getStoredFcmToken(userId)
+
+  if (!registeredToken) {
+    return
+  }
+
+  await unregisterToken(registeredToken)
+  clearStoredFcmToken(userId)
+  await deleteFcmToken().catch(() => {})
+}
+
+export async function syncFcmToken(userId: string, registerToken: (token: string) => Promise<void>) {
+  const registeredToken = getStoredFcmToken(userId)
+
+  if (getPushNotificationPermission() !== "granted" || !registeredToken) {
+    return
+  }
+
+  const currentToken = await getFcmToken()
+
+  if (currentToken === registeredToken) {
+    return
+  }
+
+  await saveRegisteredFcmToken(userId, currentToken, registerToken)
 }
 
 export async function listenToForegroundFcmMessages(handler: (payload: MessagePayload) => void): Promise<Unsubscribe> {
