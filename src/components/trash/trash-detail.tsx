@@ -5,6 +5,7 @@ import { EmailErrorState } from "@/components/inbox/email-error-state"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
 import { getErrorMessage, getHttpStatus } from "@/lib/http-error"
@@ -262,7 +263,7 @@ export function TrashDetail({ threadId, onClose }: TrashDetailProps) {
       <TrashToolbar onClose={onClose} onRestore={handleRestoreThread} isRestoring={isRestoringThread} />
       <ThreadHeader thread={thread} account={account} />
 
-      <div className="flex-1 overflow-auto">
+      <ScrollArea className="min-h-0 flex-1">
         <div className="p-2">
           <div className="divide-y overflow-hidden rounded-lg border bg-card">
             {messages.map((message) => (
@@ -275,7 +276,7 @@ export function TrashDetail({ threadId, onClose }: TrashDetailProps) {
             ))}
           </div>
         </div>
-      </div>
+      </ScrollArea>
     </div>
   )
 }
