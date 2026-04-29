@@ -121,8 +121,9 @@ export function NotificationSettingsCard() {
       setPermission(getPermissionState())
       toast.success("푸시 알림이 비활성화되었습니다")
     } catch (error) {
-      toast.error("푸시 알림을 비활성화하지 못했습니다", {
-        description: getErrorDescription(error, "푸시 알림 해제에 실패했습니다."),
+      setPermission(getPermissionState())
+      toast.warning("푸시 알림이 비활성화되었습니다", {
+        description: getErrorDescription(error, "서버의 FCM 토큰 삭제 요청이 실패했습니다."),
       })
     }
   }
