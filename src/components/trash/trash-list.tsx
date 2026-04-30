@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { SquareMinus, Trash2, Undo2 } from "lucide-react"
 import { toast } from "sonner"
 
@@ -117,7 +117,7 @@ export function TrashList({
 }: TrashListProps) {
   const loadMoreRef = useRef<HTMLDivElement | null>(null)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
-  const { mutate: restoreThread } = useRestoreTrashThread()
+  const { mutateAsync: restoreThread } = useRestoreTrashThread()
 
   const toggleSelected = (id: string) => {
     setSelectedIds((prev) => {
@@ -152,31 +152,69 @@ export function TrashList({
     return () => observer.disconnect()
   }, [hasNextPage, isFetchingNextPage, onLoadMore])
 
+  const visibleSelectedIds = useMemo(() => {
+    if (selectedIds.size === 0 || !threads || threads.length === 0) {
+      return selectedIds
+    }
+
+    const visibleIds = new Set(threads.map((thread) => thread.threadId))
+    const next = new Set<string>()
+    for (const id of selectedIds) {
+      if (visibleIds.has(id)) {
+        next.add(id)
+      }
+    }
+
+    return next.size === selectedIds.size ? selectedIds : next
+  }, [selectedIds, threads])
+
   const header =
-    selectedIds.size > 0 ? (
+    visibleSelectedIds.size > 0 ? (
       <div className="flex h-11 shrink-0 items-center gap-2 border-b bg-accent/40 px-3">
         <Button variant="ghost" size="icon-sm" onClick={() => setSelectedIds(new Set())} aria-label="선택 해제">
           <SquareMinus />
         </Button>
-        <span className="text-sm font-medium">{selectedIds.size.toLocaleString()}개 선택됨</span>
+        <span className="text-sm font-medium">{visibleSelectedIds.size.toLocaleString()}개 선택됨</span>
         <div className="ml-auto flex shrink-0 items-center gap-2">
           <Button
             variant="ghost"
             size="icon-sm"
-            onClick={() => {
-              const ids = Array.from(selectedIds)
+            onClick={async () => {
+              const ids = Array.from(visibleSelectedIds)
               if (ids.length === 0) return
               setSelectedIds(new Set())
-              ids.forEach((id) =>
-                restoreThread(id, {
-                  onError: (err) => {
-                    toast.error("복구에 실패했습니다", {
-                      description: getErrorMessage(err, "잠시 후 다시 시도해주세요."),
-                    })
-                  },
+
+              const results = await Promise.allSettled(ids.map((id) => restoreThread(id)))
+              const failed = results
+                .map((result, index) => ({ result, id: ids[index] }))
+                .filter(
+                  (entry): entry is { result: PromiseRejectedResult; id: string } => entry.result.status === "rejected"
+                )
+              const succeededCount = ids.length - failed.length
+
+              if (failed.length === 0) {
+                toast.success(`${ids.length}개 스레드를 복구했습니다`)
+                return
+              }
+
+              setSelectedIds((prev) => {
+                const next = new Set(prev)
+                for (const { id } of failed) {
+                  next.add(id)
+                }
+                return next
+              })
+
+              if (succeededCount === 0) {
+                toast.error("복구에 실패했습니다", {
+                  description: getErrorMessage(failed[0].result.reason, "잠시 후 다시 시도해주세요."),
                 })
-              )
-              toast.success(`${ids.length}개 스레드를 복구했습니다`)
+                return
+              }
+
+              toast.warning(`${succeededCount}개 복구, ${failed.length}개 실패`, {
+                description: getErrorMessage(failed[0].result.reason, "실패한 항목은 선택 상태로 두었습니다."),
+              })
             }}
             aria-label="선택 복구"
           >
@@ -223,7 +261,7 @@ export function TrashList({
                     key={thread.threadId}
                     thread={toInboxSummary(thread)}
                     isSelected={selectedThreadId === thread.threadId}
-                    isChecked={selectedIds.has(thread.threadId)}
+                    isChecked={visibleSelectedIds.has(thread.threadId)}
                     account={getAccount(thread.accountId)}
                     onSelect={() => onSelectThread(thread.threadId)}
                     onToggleCheck={() => toggleSelected(thread.threadId)}
