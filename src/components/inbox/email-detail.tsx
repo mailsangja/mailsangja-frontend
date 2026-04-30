@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
 import { getErrorMessage, getHttpStatus } from "@/lib/http-error"
@@ -463,7 +464,7 @@ export function EmailDetail({ threadId, onClose }: EmailDetailProps) {
       <ThreadToolbar onClose={onClose} onDelete={handleDeleteThread} isDeleting={isDeleting} />
       <ThreadHeader thread={thread} account={account} />
 
-      <div className="flex-1 overflow-auto">
+      <ScrollArea className="min-h-0 flex-1">
         <div className="p-2">
           <div className="divide-y overflow-hidden rounded-lg border bg-card">
             {messages.map((message) => (
@@ -477,7 +478,7 @@ export function EmailDetail({ threadId, onClose }: EmailDetailProps) {
             ))}
           </div>
         </div>
-      </div>
+      </ScrollArea>
       <ThreadFooter />
     </div>
   )
