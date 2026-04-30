@@ -18,6 +18,10 @@ type ThemeProviderState = {
 
 const COLOR_SCHEME_QUERY = "(prefers-color-scheme: dark)"
 const THEME_VALUES: Theme[] = ["dark", "light", "system"]
+const THEME_COLORS: Record<ResolvedTheme, string> = {
+  light: "#faf9f5",
+  dark: "#262624",
+}
 
 const ThemeProviderContext = React.createContext<ThemeProviderState | undefined>(undefined)
 
@@ -52,6 +56,14 @@ function disableTransitionsTemporarily() {
       })
     })
   }
+}
+
+function updateThemeColor(resolvedTheme: ResolvedTheme) {
+  const themeColorMetas = document.querySelectorAll<HTMLMetaElement>("meta[name='theme-color']")
+
+  themeColorMetas.forEach((themeColorMeta) => {
+    themeColorMeta.content = THEME_COLORS[resolvedTheme]
+  })
 }
 
 function isEditableTarget(target: EventTarget | null) {
@@ -103,6 +115,8 @@ export function ThemeProvider({
 
       root.classList.remove("light", "dark")
       root.classList.add(resolvedTheme)
+      root.style.colorScheme = resolvedTheme
+      updateThemeColor(resolvedTheme)
 
       if (restoreTransitions) {
         restoreTransitions()

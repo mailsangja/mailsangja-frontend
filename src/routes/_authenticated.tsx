@@ -1,14 +1,18 @@
+import { useSyncExternalStore } from "react"
 import { Link, createFileRoute, Outlet, redirect, useLocation, useNavigate } from "@tanstack/react-router"
-import { Bell, Mail, Search } from "lucide-react"
+import { Bell, BellOff, Mail, Search } from "lucide-react"
 
 import { AppSidebar } from "@/components/app-sidebar"
 import { LoadingLayout } from "@/components/layout/loading-layout"
-import { Button } from "@/components/ui/button"
+import { PushNotificationListener } from "@/components/push-notification-listener"
+import { buttonVariants } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { useIsMobile } from "@/hooks/use-mobile"
+import { getPushNotificationPermission, getStoredFcmToken, subscribeToFcmToken } from "@/lib/fcm"
 import { parseMailRouteSearch } from "@/lib/mail-routing"
-import { userQueries } from "@/queries/user"
+import { cn } from "@/lib/utils"
+import { userQueries, useUser } from "@/queries/user"
 import { parseMailboxId, type PrimaryMailboxId } from "@/types/email"
 
 export const Route = createFileRoute("/_authenticated")({
@@ -33,6 +37,24 @@ function getMailRouteState(pathname: string, search: unknown) {
     filter,
     accountId,
   }
+}
+
+function NotificationSettingsLink() {
+  const { data: user } = useUser()
+  const registeredToken = useSyncExternalStore(
+    subscribeToFcmToken,
+    () => (user ? getStoredFcmToken(user.id) : null),
+    () => null
+  )
+  const isEnabled = getPushNotificationPermission() === "granted" && Boolean(registeredToken)
+  const Icon = isEnabled ? Bell : BellOff
+  const label = isEnabled ? "푸시 알림 설정, 활성화됨" : "푸시 알림 설정, 비활성화됨"
+
+  return (
+    <Link to="/settings" className={buttonVariants({ variant: "ghost", size: "icon" })} aria-label={label}>
+      <Icon className={cn("size-5", !isEnabled && "text-muted-foreground")} />
+    </Link>
+  )
 }
 
 function AuthenticatedRouteLayout() {
@@ -116,9 +138,7 @@ function AuthenticatedRouteLayout() {
         </form>
 
         <div className="flex shrink-0 items-center gap-1">
-          <Button variant="ghost" size="icon" aria-label="알림">
-            <Bell className="size-5" />
-          </Button>
+          <NotificationSettingsLink />
         </div>
       </header>
 
@@ -157,6 +177,7 @@ function AuthenticatedRouteLayout() {
           </div>
         </div>
       </div>
+      <PushNotificationListener />
     </SidebarProvider>
   )
 }

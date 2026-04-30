@@ -7,6 +7,8 @@ import type { LoginPayload, RegisterPayload } from "@/types/auth"
 import type { User } from "@/types/user"
 
 import { login, logout, register } from "@/api/auth"
+import { unregisterFcmToken } from "@/api/users"
+import { clearFcmToken, disableFcm } from "@/lib/fcm"
 import { getErrorMessage, getHttpStatus } from "@/lib/http-error"
 import { userKeys } from "@/queries/user"
 
@@ -38,7 +40,19 @@ export const authMutationOptions = {
     },
   }),
   logout: (queryClient: ReturnType<typeof useQueryClient>, navigate: NavigateFn) => ({
-    mutationFn: logout,
+    mutationFn: async () => {
+      const user = queryClient.getQueryData<User | null>(userKeys.me())
+
+      if (user) {
+        try {
+          await disableFcm(user.id, (fcmToken) => unregisterFcmToken({ fcmToken }))
+        } catch {
+          await clearFcmToken(user.id)
+        }
+      }
+
+      await logout()
+    },
     onSuccess: async () => {
       await queryClient.cancelQueries()
       queryClient.clear()

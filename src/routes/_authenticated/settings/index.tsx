@@ -1,5 +1,6 @@
 import { Link, createFileRoute } from "@tanstack/react-router"
 
+import { NotificationSettingsCard } from "@/components/notification-settings-card"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
 
@@ -24,12 +25,7 @@ function SettingsPage() {
         </CardContent>
       </Card>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>준비 중인 항목</CardTitle>
-          <CardDescription>알림 설정, 라벨 관리 같은 일반 설정은 이후 단계에서 추가될 예정입니다.</CardDescription>
-        </CardHeader>
-      </Card>
+      <NotificationSettingsCard />
     </div>
   )
 }

@@ -146,7 +146,7 @@ export const apiClient = {
   put<T>(path: string, body?: unknown, options?: Omit<RequestOptions, "method" | "body">) {
     return request<T>(path, { ...options, method: "PUT", body })
   },
-  delete<T>(path: string, options?: Omit<RequestOptions, "method" | "body">) {
+  delete<T>(path: string, options?: Omit<RequestOptions, "method">) {
     return request<T>(path, { ...options, method: "DELETE" })
   },
 }
