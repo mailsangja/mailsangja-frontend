@@ -1,9 +1,10 @@
 import { useMemo, useRef, useState } from "react"
-import { Loader2, X } from "lucide-react"
 import { EmailEditor, type EmailEditorRef } from "@react-email/editor"
+import { Loader2, X } from "lucide-react"
 import { useNavigate } from "@tanstack/react-router"
 import { toast } from "sonner"
 
+import { ComposeEditorToolbar, type ComposeEditor } from "@/components/compose/compose-editor-toolbar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -24,6 +25,7 @@ export function ComposeEmail({ fromAddress, onFromAddressChange }: ComposeEmailP
   const { data: user, isPending: isUserPending } = useUser()
   const { data: activeMailAccounts, isPending: isMailAccountsPending } = useActiveMailAccounts()
   const sendMailMutation = useSendMail()
+  const [editor, setEditor] = useState<ComposeEditor | null>(null)
   const [to, setTo] = useState("")
   const [cc, setCc] = useState("")
   const [bcc, setBcc] = useState("")
@@ -224,6 +226,8 @@ export function ComposeEmail({ fromAddress, onFromAddressChange }: ComposeEmailP
         </Select>
       </div>
 
+      <ComposeEditorToolbar editor={editor} disabled={!isEditorReady} />
+
       <div className="flex-1 overflow-hidden" aria-label="메일 본문">
         <EmailEditor
           ref={editorRef}
@@ -233,6 +237,7 @@ export function ComposeEmail({ fromAddress, onFromAddressChange }: ComposeEmailP
           onReady={(ref) => {
             setIsEditorReady(true)
             setIsEditorEmpty(ref.editor?.isEmpty ?? true)
+            setEditor(ref.editor)
           }}
           onUpdate={(ref) => {
             setIsEditorEmpty(ref.editor?.isEmpty ?? true)
