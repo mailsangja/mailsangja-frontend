@@ -7,6 +7,29 @@ import { VitePWA } from "vite-plugin-pwa"
 
 // https://vite.dev/config/
 export default defineConfig({
+  build: {
+    rollupOptions: {
+      output: {
+        manualChunks(id) {
+          if (!id.includes("node_modules")) {
+            return
+          }
+
+          if (id.includes("node_modules/@react-email/editor")) {
+            return "react-email-editor"
+          }
+
+          if (id.includes("node_modules/@tiptap")) {
+            return "tiptap-editor"
+          }
+
+          if (id.includes("node_modules/@react-email")) {
+            return "react-email-renderer"
+          }
+        },
+      },
+    },
+  },
   plugins: [
     tanstackRouter({
       target: "react",
