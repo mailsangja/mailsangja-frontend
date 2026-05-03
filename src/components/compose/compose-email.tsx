@@ -1,5 +1,6 @@
-import { useMemo, useState } from "react"
+import { useMemo, useRef, useState } from "react"
 import { Loader2, X } from "lucide-react"
+import { EmailEditor, type EmailEditorRef } from "@react-email/editor"
 import { useNavigate } from "@tanstack/react-router"
 import { toast } from "sonner"
 
@@ -19,6 +20,7 @@ interface ComposeEmailProps {
 
 export function ComposeEmail({ fromAddress, onFromAddressChange }: ComposeEmailProps) {
   const navigate = useNavigate()
+  const editorRef = useRef<EmailEditorRef>(null)
   const { data: user, isPending: isUserPending } = useUser()
   const { data: activeMailAccounts, isPending: isMailAccountsPending } = useActiveMailAccounts()
   const sendMailMutation = useSendMail()
@@ -26,7 +28,8 @@ export function ComposeEmail({ fromAddress, onFromAddressChange }: ComposeEmailP
   const [cc, setCc] = useState("")
   const [bcc, setBcc] = useState("")
   const [subject, setSubject] = useState("")
-  const [body, setBody] = useState("")
+  const [isEditorReady, setIsEditorReady] = useState(false)
+  const [isEditorEmpty, setIsEditorEmpty] = useState(true)
   const [showCc, setShowCc] = useState(false)
   const [showBcc, setShowBcc] = useState(false)
 
@@ -49,7 +52,7 @@ export function ComposeEmail({ fromAddress, onFromAddressChange }: ComposeEmailP
     [activeMailAccounts]
   )
   const isFromAddressPending = isUserPending || isMailAccountsPending
-  const cannotSend = sendMailMutation.isPending || isFromAddressPending || !selectedFromAddress
+  const cannotSend = sendMailMutation.isPending || isFromAddressPending || !selectedFromAddress || !isEditorReady
 
   const handleSend = async () => {
     if (isFromAddressPending) {
@@ -59,6 +62,11 @@ export function ComposeEmail({ fromAddress, onFromAddressChange }: ComposeEmailP
 
     if (!selectedFromAddress) {
       toast.error("발신 메일 계정을 먼저 연결해주세요")
+      return
+    }
+
+    if (!editorRef.current || !isEditorReady) {
+      toast.error("메일 에디터를 불러오는 중입니다")
       return
     }
 
@@ -74,14 +82,26 @@ export function ComposeEmail({ fromAddress, onFromAddressChange }: ComposeEmailP
       return
     }
 
+    if (isEditorEmpty || editorRef.current.editor?.isEmpty) {
+      toast.error("메일 내용을 입력해주세요")
+      return
+    }
+
     try {
+      const emailContent = await editorRef.current.getEmail()
+
+      if (!emailContent.text.trim() && !emailContent.html.trim()) {
+        toast.error("메일 내용을 입력해주세요")
+        return
+      }
+
       await sendMailMutation.mutateAsync({
         from: selectedFromAddress,
         to: toRecipients,
         cc: parseMailAddressInput(cc),
         bcc: parseMailAddressInput(bcc),
         subject: subject.trim(),
-        content: body,
+        content: emailContent.html,
       })
       toast.success("메일이 발송되었습니다")
       await navigate({ to: "/mail/$mailbox", params: { mailbox: "inbox" } })
@@ -204,16 +224,19 @@ export function ComposeEmail({ fromAddress, onFromAddressChange }: ComposeEmailP
         </Select>
       </div>
 
-      <div className="flex-1 overflow-hidden">
-        <label htmlFor="compose-body" className="sr-only">
-          메일 본문
-        </label>
-        <textarea
-          id="compose-body"
-          value={body}
-          onChange={(e) => setBody(e.target.value)}
-          placeholder="메일 내용을 입력하세요..."
-          className="h-full w-full resize-none bg-transparent p-4 text-sm outline-none placeholder:text-muted-foreground"
+      <div className="flex-1 overflow-hidden" aria-label="메일 본문">
+        <EmailEditor
+          ref={editorRef}
+          theme="basic"
+          placeholder="메일 내용을 입력하세요. / 로 블록을 추가할 수 있습니다."
+          className="compose-email-editor h-full overflow-auto text-sm outline-none"
+          onReady={(ref) => {
+            setIsEditorReady(true)
+            setIsEditorEmpty(ref.editor?.isEmpty ?? true)
+          }}
+          onUpdate={(ref) => {
+            setIsEditorEmpty(ref.editor?.isEmpty ?? true)
+          }}
         />
       </div>
 

@@ -1,8 +1,118 @@
 @import "tailwindcss";
 @import "tw-animate-css";
 @import "shadcn/tailwind.css";
+@import "@react-email/editor/themes/default.css";
 
 @custom-variant dark (&:is(.dark *));
+
+.compose-email-editor {
+  --re-bg: var(--popover);
+  --re-bg-active: var(--accent);
+  --re-border: var(--border);
+  --re-text: var(--foreground);
+  --re-text-muted: var(--muted-foreground);
+  --re-hover: color-mix(in oklch, var(--foreground) 6%, transparent);
+  --re-active: color-mix(in oklch, var(--foreground) 9%, transparent);
+  --re-pressed: color-mix(in oklch, var(--foreground) 10%, transparent);
+  --re-separator: var(--border);
+
+  background: color-mix(in oklch, var(--background) 92%, var(--card));
+  box-sizing: border-box;
+  color: var(--foreground);
+  min-height: 100%;
+  overflow-x: hidden;
+  scrollbar-gutter: stable both-edges;
+}
+
+.dark .compose-email-editor {
+  background: color-mix(in oklch, var(--background) 88%, var(--card));
+}
+
+.compose-email-editor .tiptap.ProseMirror {
+  background: transparent !important;
+  box-sizing: border-box;
+  color: var(--foreground) !important;
+  caret-color: var(--foreground);
+  min-height: 100%;
+  outline: none;
+  padding: 1.25rem 1rem;
+  width: 100%;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+}
+
+.compose-email-editor .tiptap .node-container,
+.compose-email-editor .tiptap .node-section,
+.compose-email-editor .tiptap .node-paragraph,
+.compose-email-editor .tiptap .node-bulletList,
+.compose-email-editor .tiptap .node-orderedList,
+.compose-email-editor .tiptap .node-blockquote {
+  background-color: transparent !important;
+}
+
+.compose-email-editor .tiptap .node-container {
+  max-width: 100% !important;
+  min-width: 0 !important;
+  width: 100% !important;
+}
+
+.compose-email-editor .tiptap .node-section,
+.compose-email-editor .tiptap .node-columns,
+.compose-email-editor .tiptap .node-column {
+  max-width: 100% !important;
+  min-width: 0 !important;
+}
+
+.compose-email-editor .tiptap p {
+  color: var(--foreground) !important;
+  margin: 0.125rem 0 !important;
+  padding-top: 0.0625rem !important;
+  padding-bottom: 0.0625rem !important;
+  line-height: 1.55 !important;
+}
+
+.compose-email-editor .tiptap h1,
+.compose-email-editor .tiptap h2,
+.compose-email-editor .tiptap h3 {
+  color: var(--foreground) !important;
+  line-height: 1.25;
+}
+
+.compose-email-editor .tiptap ul,
+.compose-email-editor .tiptap ol {
+  color: var(--foreground) !important;
+  margin: 0.25rem 0 !important;
+  padding-left: 1.35rem !important;
+}
+
+.compose-email-editor .tiptap li {
+  color: var(--foreground) !important;
+  margin: 0.0625rem 0 !important;
+}
+
+.compose-email-editor .tiptap li p {
+  margin: 0 !important;
+  padding-top: 0.03125rem !important;
+  padding-bottom: 0.03125rem !important;
+}
+
+.compose-email-editor .tiptap blockquote {
+  margin: 0.375rem 0 !important;
+  color: var(--muted-foreground) !important;
+  border-left-color: var(--border);
+}
+
+.compose-email-editor .tiptap pre,
+.compose-email-editor .tiptap code {
+  background: var(--muted);
+  color: var(--foreground);
+}
+
+.compose-email-editor .tiptap p.is-empty::before,
+.compose-email-editor .tiptap .node-placeholder::before {
+  color: var(--muted-foreground);
+  opacity: 0.72;
+}
 
 @font-face {
   font-family: "Pretendard";
@@ -231,6 +341,7 @@
 @layer base {
   * {
     @apply border-border outline-ring/50;
+    scrollbar-width: thin;
   }
   body {
     @apply bg-background text-foreground;
