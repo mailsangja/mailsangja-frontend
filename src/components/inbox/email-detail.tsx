@@ -409,7 +409,7 @@ export function EmailDetail({ threadId, onClose }: EmailDetailProps) {
 
     void navigate({
       to: "/compose",
-      search: { replyMessageId: lastMessage.id, replyTo, replySubject },
+      search: { replyMessageId: lastMessage.id, replyThreadId: thread.threadId, replyTo, replySubject },
     })
   }
 
@@ -477,7 +477,7 @@ export function EmailDetail({ threadId, onClose }: EmailDetailProps) {
           </div>
         </div>
       </ScrollArea>
-      <ThreadFooter onReply={handleReply}/>
+      <ThreadFooter onReply={handleReply} />
     </div>
   )
 }
