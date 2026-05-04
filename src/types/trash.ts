@@ -1,10 +1,6 @@
-import type { Attachment, InboxMessage, MailAddress } from "./email"
+import type { Attachment, InboxMessage, LabelSummary, MailAddress } from "./email"
 
-export interface LabelSummary {
-  labelId: string
-  name: string
-  colorCode: string
-}
+export type { LabelSummary }
 
 export interface TrashThreadSummary {
   threadId: string

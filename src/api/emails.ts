@@ -81,6 +81,10 @@ export async function sendMail(data: ComposeEmailData): Promise<void> {
     formData.append("from", data.from.trim())
   }
 
+  if (data.replyTo?.trim()) {
+    formData.append("replyTo", data.replyTo.trim())
+  }
+
   appendFormDataValues(formData, "to", data.to)
   appendFormDataValues(formData, "cc", data.cc)
   appendFormDataValues(formData, "bcc", data.bcc)
