@@ -6,6 +6,7 @@ import { buttonVariants } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { NavAccounts } from "@/components/nav/nav-accounts"
 import { NavFolders } from "@/components/nav/nav-folders"
+import { NavLabels } from "@/components/nav/nav-labels"
 import { NavUser } from "@/components/nav/nav-user"
 import {
   Sidebar,
@@ -90,6 +91,7 @@ export function AppSidebar({
         </div>
 
         <NavFolders mailbox={mailbox} onMailboxChange={onMailboxChange} />
+        <NavLabels className="mt-4" />
         <NavAccounts activeAccountId={activeAccountId} onAccountToggle={onAccountToggle} className="mt-auto" />
       </SidebarContent>
 
