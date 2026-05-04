@@ -28,10 +28,9 @@ import type { ComposeInlineImage } from "@/types/email"
 interface ComposeEmailProps {
   fromAddress: string | null
   onFromAddressChange: (value: string | null) => void
+  messageId?: string
   initialTo?: string
   initialSubject?: string
-  threadId?: string
-  messageId?: string
 }
 
 interface PendingInlineImage extends ComposeInlineImage {
@@ -239,10 +238,9 @@ function buildMailContentWithImages(
 export function ComposeEmail({
   fromAddress,
   onFromAddressChange,
+  messageId,
   initialTo,
   initialSubject,
-  threadId,
-  messageId,
 }: ComposeEmailProps) {
   const navigate = useNavigate()
   const editorRef = useRef<EmailEditorRef>(null)
@@ -451,7 +449,6 @@ export function ComposeEmail({
         bcc: parseMailAddressInput(bcc),
         subject: subject.trim(),
         content: emailContent.html,
-        ...(threadId ? { threadId } : {}),
         ...(messageId ? { messageId } : {}),
         attachments,
         inlineImages: sendContent.inlineImages,
@@ -501,7 +498,7 @@ export function ComposeEmail({
   return (
     <div className="flex h-full w-full flex-col">
       <div className="flex h-11 shrink-0 items-center justify-between border-b px-4">
-        <h1 className="text-sm font-medium">{threadId ? "답장" : "새 메일 작성"}</h1>
+        <h1 className="text-sm font-medium">{messageId ? "답장" : "새 메일 작성"}</h1>
         <Button variant="ghost" size="icon-sm" onClick={handleClose} className="-mr-2" aria-label="메일 작성 닫기">
           <X className="size-4" />
         </Button>

@@ -406,17 +406,10 @@ export function EmailDetail({ threadId, onClose }: EmailDetailProps) {
     const replyTo = lastMessage.from.email
     const currentSubject = thread.latestSubject
     const replySubject = /^re:/i.test(currentSubject) ? currentSubject : `Re: ${currentSubject}`
-    const account = accounts?.find((item) => item.id === thread.accountId)
 
     void navigate({
       to: "/compose",
-      search: {
-        replyThreadId: thread.threadId,
-        replyMessageId: lastMessage.id,
-        replyTo,
-        replySubject,
-        ...(account?.emailAddress ? { from: account.emailAddress } : {}),
-      },
+      search: { replyMessageId: lastMessage.id, replyTo, replySubject },
     })
   }
 

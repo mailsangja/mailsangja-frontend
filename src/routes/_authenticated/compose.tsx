@@ -7,7 +7,6 @@ import { useIsMobile } from "@/hooks/use-mobile"
 
 interface ComposeRouteSearch {
   from?: string
-  replyThreadId?: string
   replyMessageId?: string
   replyTo?: string
   replySubject?: string
@@ -16,13 +15,11 @@ interface ComposeRouteSearch {
 export const Route = createFileRoute("/_authenticated/compose")({
   validateSearch: (search: Record<string, unknown>): ComposeRouteSearch => {
     const from = typeof search.from === "string" ? search.from.trim() : ""
-    const replyThreadId = typeof search.replyThreadId === "string" ? search.replyThreadId.trim() : ""
     const replyMessageId = typeof search.replyMessageId === "string" ? search.replyMessageId.trim() : ""
     const replyTo = typeof search.replyTo === "string" ? search.replyTo.trim() : ""
     const replySubject = typeof search.replySubject === "string" ? search.replySubject.trim() : ""
     return {
       ...(from ? { from } : {}),
-      ...(replyThreadId ? { replyThreadId } : {}),
       ...(replyMessageId ? { replyMessageId } : {}),
       ...(replyTo ? { replyTo } : {}),
       ...(replySubject ? { replySubject } : {}),
@@ -33,7 +30,7 @@ export const Route = createFileRoute("/_authenticated/compose")({
 
 function ComposePage() {
   const isMobile = useIsMobile()
-  const { from, replyThreadId, replyMessageId, replyTo, replySubject } = Route.useSearch()
+  const { from, replyMessageId, replyTo, replySubject } = Route.useSearch()
   const navigate = Route.useNavigate()
 
   const handleFromAddressChange = (nextFrom: string | null) => {
@@ -49,10 +46,9 @@ function ComposePage() {
         <ComposeEmail
           fromAddress={from ?? null}
           onFromAddressChange={handleFromAddressChange}
+          messageId={replyMessageId}
           initialTo={replyTo}
           initialSubject={replySubject}
-          threadId={replyThreadId}
-          messageId={replyMessageId}
         />
       </div>
     )
@@ -68,10 +64,9 @@ function ComposePage() {
         <ComposeEmail
           fromAddress={from ?? null}
           onFromAddressChange={handleFromAddressChange}
+          messageId={replyMessageId}
           initialTo={replyTo}
           initialSubject={replySubject}
-          threadId={replyThreadId}
-          messageId={replyMessageId}
         />
       </div>
     </div>
