@@ -1,5 +1,6 @@
 import { useState } from "react"
 import { Archive, ArrowLeft, Forward, MailOpen, MoreVertical, Reply, Star, Trash2 } from "lucide-react"
+import { useNavigate } from "@tanstack/react-router"
 import { toast } from "sonner"
 
 import { AttachmentChip } from "@/components/attachment-chip"
@@ -105,10 +106,11 @@ function LoadingState() {
 interface ThreadToolbarProps {
   onClose?: () => void
   onDelete: () => void
+  onReply: () => void
   isDeleting: boolean
 }
 
-function ThreadToolbar({ onClose, onDelete, isDeleting }: ThreadToolbarProps) {
+function ThreadToolbar({ onClose, onDelete, onReply, isDeleting }: ThreadToolbarProps) {
   return (
     <div className="flex h-11 shrink-0 items-center justify-between gap-2 px-4">
       {onClose ? (
@@ -119,7 +121,7 @@ function ThreadToolbar({ onClose, onDelete, isDeleting }: ThreadToolbarProps) {
         <span />
       )}
       <div className="ml-auto flex items-center gap-1">
-        <Button variant="ghost" size="icon-sm" disabled title="답장 기능은 아직 지원되지 않습니다.">
+        <Button variant="ghost" size="icon-sm" onClick={onReply} aria-label="답장" title="답장">
           <Reply className="size-4" />
         </Button>
         <Button variant="ghost" size="icon-sm" disabled title="전달 기능은 아직 지원되지 않습니다.">
@@ -312,11 +314,11 @@ function MessageItem({ message, isExpanded, onToggle, onDelete }: MessageItemPro
   )
 }
 
-function ThreadFooter() {
+function ThreadFooter({ onReply }: { onReply: () => void }) {
   return (
     <div className="shrink-0 border-t px-6 py-2">
       <div className="flex flex-wrap gap-2">
-        <Button variant="outline" size="sm" disabled title="답장 기능은 아직 지원되지 않습니다.">
+        <Button variant="outline" size="sm" onClick={onReply}>
           <Reply className="size-4" />
           답장
         </Button>
@@ -335,6 +337,7 @@ interface EmailDetailProps {
 }
 
 export function EmailDetail({ threadId, onClose }: EmailDetailProps) {
+  const navigate = useNavigate()
   const { data: thread, isLoading, isError, error, refetch } = useThread(threadId)
   const { data: accounts } = useMailAccounts()
   const { mutate: deleteThread, isPending: isDeleting } = useDeleteThread()
@@ -395,6 +398,28 @@ export function EmailDetail({ threadId, onClose }: EmailDetailProps) {
     })
   }
 
+  const handleReply = () => {
+    if (!thread) return
+    const lastMessage = thread.messages.at(-1)
+    if (!lastMessage) return
+
+    const replyTo = lastMessage.from.email
+    const currentSubject = thread.latestSubject
+    const replySubject = /^re:/i.test(currentSubject) ? currentSubject : `Re: ${currentSubject}`
+    const account = accounts?.find((item) => item.id === thread.accountId)
+
+    void navigate({
+      to: "/compose",
+      search: {
+        replyThreadId: thread.threadId,
+        replyMessageId: lastMessage.id,
+        replyTo,
+        replySubject,
+        ...(account?.emailAddress ? { from: account.emailAddress } : {}),
+      },
+    })
+  }
+
   const handleDeleteThread = () => {
     if (!threadId) return
     deleteThread(threadId, {
@@ -441,7 +466,7 @@ export function EmailDetail({ threadId, onClose }: EmailDetailProps) {
 
   return (
     <div className="flex h-full w-full min-w-0 flex-1 flex-col">
-      <ThreadToolbar onClose={onClose} onDelete={handleDeleteThread} isDeleting={isDeleting} />
+      <ThreadToolbar onClose={onClose} onDelete={handleDeleteThread} onReply={handleReply} isDeleting={isDeleting} />
       <ThreadHeader thread={thread} account={account} />
 
       <ScrollArea className="min-h-0 flex-1">
@@ -459,7 +484,7 @@ export function EmailDetail({ threadId, onClose }: EmailDetailProps) {
           </div>
         </div>
       </ScrollArea>
-      <ThreadFooter />
+      <ThreadFooter onReply={handleReply}/>
     </div>
   )
 }

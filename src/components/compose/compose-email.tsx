@@ -28,6 +28,10 @@ import type { ComposeInlineImage } from "@/types/email"
 interface ComposeEmailProps {
   fromAddress: string | null
   onFromAddressChange: (value: string | null) => void
+  initialTo?: string
+  initialSubject?: string
+  threadId?: string
+  messageId?: string
 }
 
 interface PendingInlineImage extends ComposeInlineImage {
@@ -232,7 +236,14 @@ function buildMailContentWithImages(
   }
 }
 
-export function ComposeEmail({ fromAddress, onFromAddressChange }: ComposeEmailProps) {
+export function ComposeEmail({
+  fromAddress,
+  onFromAddressChange,
+  initialTo,
+  initialSubject,
+  threadId,
+  messageId,
+}: ComposeEmailProps) {
   const navigate = useNavigate()
   const editorRef = useRef<EmailEditorRef>(null)
   const attachmentInputRef = useRef<HTMLInputElement>(null)
@@ -242,10 +253,10 @@ export function ComposeEmail({ fromAddress, onFromAddressChange }: ComposeEmailP
   const { data: activeMailAccounts, isPending: isMailAccountsPending } = useActiveMailAccounts()
   const sendMailMutation = useSendMail()
   const [editor, setEditor] = useState<ComposeEditor | null>(null)
-  const [to, setTo] = useState("")
+  const [to, setTo] = useState(initialTo ?? "")
   const [cc, setCc] = useState("")
   const [bcc, setBcc] = useState("")
-  const [subject, setSubject] = useState("")
+  const [subject, setSubject] = useState(initialSubject ?? "")
   const [isEditorReady, setIsEditorReady] = useState(false)
   const [isEditorEmpty, setIsEditorEmpty] = useState(true)
   const [isPreparingPreview, setIsPreparingPreview] = useState(false)
@@ -439,7 +450,9 @@ export function ComposeEmail({ fromAddress, onFromAddressChange }: ComposeEmailP
         cc: parseMailAddressInput(cc),
         bcc: parseMailAddressInput(bcc),
         subject: subject.trim(),
-        content: sendContent.content,
+        content: emailContent.html,
+        ...(threadId ? { threadId } : {}),
+        ...(messageId ? { messageId } : {}),
         attachments,
         inlineImages: sendContent.inlineImages,
       },
@@ -488,7 +501,7 @@ export function ComposeEmail({ fromAddress, onFromAddressChange }: ComposeEmailP
   return (
     <div className="flex h-full w-full flex-col">
       <div className="flex h-11 shrink-0 items-center justify-between border-b px-4">
-        <h1 className="text-sm font-medium">새 메일 작성</h1>
+        <h1 className="text-sm font-medium">{threadId ? "답장" : "새 메일 작성"}</h1>
         <Button variant="ghost" size="icon-sm" onClick={handleClose} className="-mr-2" aria-label="메일 작성 닫기">
           <X className="size-4" />
         </Button>
