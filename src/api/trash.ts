@@ -1,17 +1,45 @@
 import { apiClient } from "@/lib/api-client"
-import type { MarkerSliceResponse, ListThreadsParams } from "@/types/email"
+import { normalizeSnippetText } from "@/lib/html-entities"
+import type { InboxMessage, ListThreadsParams, MarkerSliceResponse } from "@/types/email"
 import type { TrashThreadDetail, TrashThreadSummary } from "@/types/trash"
+
+function normalizeMessage(message: InboxMessage): InboxMessage {
+  return {
+    ...message,
+    snippet: normalizeSnippetText(message.snippet),
+  }
+}
+
+function normalizeSummary(thread: TrashThreadSummary): TrashThreadSummary {
+  return {
+    ...thread,
+    snippet: normalizeSnippetText(thread.snippet),
+  }
+}
+
+function normalizeDetail(thread: TrashThreadDetail): TrashThreadDetail {
+  return {
+    ...thread,
+    messages: thread.messages.map(normalizeMessage),
+  }
+}
 
 export async function getTrashThreads(
   params: ListThreadsParams = {}
 ): Promise<MarkerSliceResponse<TrashThreadSummary>> {
-  return apiClient.get<MarkerSliceResponse<TrashThreadSummary>>("/api/v1/trash/threads", {
+  const response = await apiClient.get<MarkerSliceResponse<TrashThreadSummary>>("/api/v1/trash/threads", {
     params: params as Record<string, string | number | boolean | null | undefined>,
   })
+
+  return {
+    ...response,
+    content: response.content.map(normalizeSummary),
+  }
 }
 
 export async function getTrashThreadDetail(threadId: string): Promise<TrashThreadDetail> {
-  return apiClient.get<TrashThreadDetail>(`/api/v1/trash/threads/${threadId}`)
+  const response = await apiClient.get<TrashThreadDetail>(`/api/v1/trash/threads/${threadId}`)
+  return normalizeDetail(response)
 }
 
 export async function deleteThread(threadId: string): Promise<void> {

@@ -1,27 +1,27 @@
-export interface TrashMessage {
-  messageId: string
-  gmailMessageId: string
-  direction: "INBOUND" | "OUTBOUND"
-  subject: string
-  fromAddress: string
-  toAddresses: string[]
-  snippet: string
-  sentAt: string
-  deletedAt: string
-}
+import type { Attachment, InboxMessage, LabelSummary, MailAddress } from "./email"
+
+export type { LabelSummary }
 
 export interface TrashThreadSummary {
   threadId: string
   gmailThreadId: string
   accountId: string
-  accountEmail: string
-  deletedMessages: TrashMessage[]
+  latestSubject: string
+  participant: MailAddress
+  snippet: string
+  isRead: boolean
+  lastMessageAt: string
+  attachments: Attachment[]
+  messageCount: number
+  labels: LabelSummary[]
 }
 
 export interface TrashThreadDetail {
   threadId: string
   gmailThreadId: string
   accountId: string
-  accountEmail: string
-  messages: TrashMessage[]
+  latestSubject: string
+  isRead: boolean
+  lastMessageAt: string
+  messages: InboxMessage[]
 }

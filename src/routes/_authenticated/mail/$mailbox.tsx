@@ -4,6 +4,8 @@ import { toast } from "sonner"
 
 import { EmailDetail } from "@/components/inbox/email-detail"
 import { EmailList } from "@/components/inbox/email-list"
+import { TrashDetail } from "@/components/trash/trash-detail"
+import { TrashList } from "@/components/trash/trash-list"
 import { Separator } from "@/components/ui/separator"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { getErrorMessage, getHttpStatus } from "@/lib/http-error"
@@ -13,7 +15,9 @@ import { cn } from "@/lib/utils"
 import { useMarkThreadAsRead } from "@/mutations/emails"
 import { useMailAccounts } from "@/queries/mail-accounts"
 import { useMailboxThreads } from "@/queries/emails"
-import { isSupportedMailboxId, MAILBOX_LABELS, parseMailboxId } from "@/types/email"
+import { useTrashThreads } from "@/queries/trash"
+import { isSupportedMailboxId, MAILBOX_LABELS, parseMailboxId, type PrimaryMailboxId } from "@/types/email"
+import type { TrashThreadSummary } from "@/types/trash"
 
 export const Route = createFileRoute("/_authenticated/mail/$mailbox")({
   params: {
@@ -62,6 +66,15 @@ function getMailboxThreadsErrorCopy(error: unknown) {
 
 function MailboxPage() {
   const { mailbox } = Route.useParams()
+
+  if (mailbox === "trash") {
+    return <TrashMailboxView />
+  }
+
+  return <MailboxView mailbox={mailbox} />
+}
+
+function MailboxView({ mailbox }: { mailbox: PrimaryMailboxId }) {
   const { query = "", filter = "all", accountId, thread: selectedThreadId = null } = Route.useSearch()
   const navigate = Route.useNavigate()
   const isMobile = useIsMobile()
@@ -245,6 +258,157 @@ function MailboxPage() {
                 })
               }}
             />
+          </div>
+        </>
+      ) : null}
+    </div>
+  )
+}
+
+function matchTrashThread(thread: TrashThreadSummary, terms: string[]): boolean {
+  if (terms.length === 0) {
+    return true
+  }
+
+  const text = [thread.latestSubject, thread.snippet, thread.participant.email, thread.participant.name]
+    .filter(Boolean)
+    .join(" ")
+
+  return matchesSearch(text, terms)
+}
+
+function TrashMailboxView() {
+  const { query = "", accountId, thread: selectedThreadId = null } = Route.useSearch()
+  const navigate = Route.useNavigate()
+  const isMobile = useIsMobile()
+  const { data: accounts } = useMailAccounts()
+  const {
+    data,
+    isLoading,
+    isError,
+    error,
+    refetch,
+    fetchNextPage,
+    hasNextPage,
+    isFetchingNextPage,
+    isFetchNextPageError,
+  } = useTrashThreads()
+
+  const loadedThreads = data?.pages.flatMap((page) => page.content) ?? []
+  const searchTerms = query.trim().toLowerCase().split(/\s+/).filter(Boolean)
+  const selectedAccount = accountId ? (accounts?.find((account) => account.id === accountId) ?? null) : null
+
+  useEffect(() => {
+    if (!accountId || accounts === undefined || selectedAccount) {
+      return
+    }
+
+    toast.error("유효하지 않은 계정입니다")
+
+    void navigate({
+      search: (previous) => ({
+        ...previous,
+        accountId: undefined,
+      }),
+      replace: true,
+    })
+  }, [accounts, navigate, selectedAccount, accountId])
+
+  const threads = loadedThreads.filter((thread) => {
+    if (selectedAccount && thread.accountId !== selectedAccount.id) {
+      return false
+    }
+
+    return matchTrashThread(thread, searchTerms)
+  })
+
+  const mailboxErrorCopy = isError ? getMailboxThreadsErrorCopy(error) : null
+  const loadMoreErrorCopy = isFetchNextPageError ? getMailboxThreadsErrorCopy(error) : null
+
+  const getAccount = (id: string) => accounts?.find((account) => account.id === id)
+
+  const visibleSelectedThreadId = threads.some((thread) => thread.threadId === selectedThreadId)
+    ? selectedThreadId
+    : null
+  const hasSelection = visibleSelectedThreadId != null
+
+  let emptyTitle = "휴지통이 비어있습니다"
+  let emptyDescription: string | undefined
+
+  if (searchTerms.length > 0) {
+    emptyTitle = "검색 결과가 없습니다"
+    emptyDescription = "현재까지 불러온 휴지통 항목에서 검색 결과를 찾지 못했습니다."
+  } else if (selectedAccount?.id) {
+    emptyTitle = "선택한 계정의 휴지통 항목이 없습니다"
+    emptyDescription = `${selectedAccount.alias} (${selectedAccount.emailAddress}) 계정에서 삭제된 메일이 없습니다.`
+  }
+
+  const trashList = (
+    <TrashList
+      mailboxName={MAILBOX_LABELS.trash}
+      threads={threads}
+      isLoading={isLoading}
+      isFetchingNextPage={isFetchingNextPage}
+      hasNextPage={!!hasNextPage}
+      selectedThreadId={visibleSelectedThreadId}
+      onSelectThread={(threadId) => {
+        void navigate({
+          search: (previous) => ({
+            ...previous,
+            thread: threadId,
+          }),
+        })
+      }}
+      onLoadMore={() => {
+        if (hasNextPage && !isFetchingNextPage) {
+          void fetchNextPage()
+        }
+      }}
+      getAccount={getAccount}
+      emptyTitle={emptyTitle}
+      emptyDescription={emptyDescription}
+      errorTitle={isError && threads.length === 0 ? mailboxErrorCopy?.title : undefined}
+      errorDescription={isError && threads.length === 0 ? mailboxErrorCopy?.description : undefined}
+      onRetry={isError ? () => void refetch() : undefined}
+      loadMoreErrorTitle={threads.length > 0 ? loadMoreErrorCopy?.title : undefined}
+      loadMoreErrorDescription={threads.length > 0 ? loadMoreErrorCopy?.description : undefined}
+      onRetryLoadMore={threads.length > 0 && isFetchNextPageError ? () => void fetchNextPage() : undefined}
+    />
+  )
+
+  const closeThread = () => {
+    void navigate({
+      search: (previous) => ({
+        ...previous,
+        thread: undefined,
+      }),
+      replace: true,
+    })
+  }
+
+  if (isMobile) {
+    return (
+      <div className="flex min-h-0 flex-1 overflow-hidden">
+        {hasSelection ? <TrashDetail threadId={visibleSelectedThreadId} onClose={closeThread} /> : trashList}
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex min-h-0 flex-1 overflow-hidden">
+      <div
+        className={cn(
+          "min-h-0 min-w-0 border-r-0 transition-[flex-basis,width] duration-300 ease-out",
+          hasSelection ? "basis-1/2" : "basis-full"
+        )}
+      >
+        {trashList}
+      </div>
+      {hasSelection ? (
+        <>
+          <Separator orientation="vertical" />
+          <div className="min-h-0 min-w-0 basis-2/3">
+            <TrashDetail threadId={visibleSelectedThreadId} onClose={closeThread} />
           </div>
         </>
       ) : null}

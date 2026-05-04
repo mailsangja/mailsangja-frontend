@@ -35,12 +35,19 @@ export interface MailAddress {
   email: string
 }
 
+export interface LabelSummary {
+  labelId: string
+  name: string
+  colorCode: string
+}
+
 export interface InboxMessage {
   id: string
   gmailMessageId: string
   subject: string
   direction: "INBOUND" | "OUTBOUND"
   from: MailAddress
+  replyTo?: MailAddress
   to: MailAddress[]
   cc: MailAddress[]
   snippet: string
@@ -49,6 +56,7 @@ export interface InboxMessage {
   bodyText: string
   bodyHtml: string
   attachments: Attachment[]
+  labels: LabelSummary[]
 }
 
 export interface InboxThreadSummary {
@@ -61,6 +69,8 @@ export interface InboxThreadSummary {
   isRead: boolean
   lastMessageAt: string
   attachments: Attachment[]
+  messageCount: number
+  labels: LabelSummary[]
 }
 
 export interface InboxThreadDetail {
@@ -90,6 +100,7 @@ export interface UnreadCountResponse {
 
 export interface ComposeEmailData {
   from?: string
+  replyTo?: string
   to: string[]
   cc?: string[]
   bcc?: string[]

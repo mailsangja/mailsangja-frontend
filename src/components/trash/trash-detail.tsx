@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Archive, ArrowLeft, FileText, Forward, MailOpen, MoreVertical, Reply, Star, Trash2 } from "lucide-react"
+import { ArrowLeft, FileText, MailOpen, MoreVertical, Star, Undo2 } from "lucide-react"
 import { toast } from "sonner"
 
 import { EmailErrorState } from "@/components/inbox/email-error-state"
@@ -13,11 +13,12 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { getErrorMessage, getHttpStatus } from "@/lib/http-error"
 import { AccountIcon } from "@/lib/icon-entries"
 import { formatMailAddressList, getMailAddressLabel } from "@/lib/mail-address"
-import { useDeleteMessage, useDeleteThread, useRestoreTrashMessage, useRestoreTrashThread } from "@/mutations/trash"
-import { useThread } from "@/queries/emails"
+import { useRestoreTrashMessage, useRestoreTrashThread } from "@/mutations/trash"
 import { useMailAccounts } from "@/queries/mail-accounts"
-import type { Attachment, InboxMessage, InboxThreadDetail } from "@/types/email"
+import { useTrashThread } from "@/queries/trash"
+import type { Attachment, InboxMessage } from "@/types/email"
 import type { MailAccount } from "@/types/mail-account"
+import type { TrashThreadDetail } from "@/types/trash"
 
 function formatDate(value: string) {
   return new Date(value).toLocaleDateString("ko-KR", {
@@ -57,7 +58,7 @@ function getThreadDetailErrorCopy(error: unknown) {
     case 404:
       return {
         title: "스레드를 찾을 수 없습니다",
-        description: "삭제되었거나 더 이상 접근할 수 없는 메일 스레드입니다.",
+        description: "영구 삭제되었거나 더 이상 접근할 수 없는 메일 스레드입니다.",
       }
     default:
       return {
@@ -75,7 +76,9 @@ function EmptyState() {
       </div>
       <div className="text-center">
         <p className="font-medium text-muted-foreground">스레드를 선택해주세요</p>
-        <p className="mt-1 text-sm text-muted-foreground/70">목록에서 대화를 클릭하면 여기에 내용이 표시됩니다</p>
+        <p className="mt-1 text-sm text-muted-foreground/70">
+          휴지통 목록에서 항목을 클릭하면 여기에 내용이 표시됩니다
+        </p>
       </div>
     </div>
   )
@@ -87,7 +90,7 @@ function LoadingState() {
       <div className="flex h-11 w-full min-w-0 shrink-0 items-center justify-between gap-2 px-4">
         <Skeleton className="h-4 w-24" />
         <div className="flex items-center gap-1">
-          {Array.from({ length: 3 }).map((_, index) => (
+          {Array.from({ length: 2 }).map((_, index) => (
             <Skeleton key={index} className="size-7 rounded-md" />
           ))}
         </div>
@@ -108,41 +111,32 @@ function LoadingState() {
   )
 }
 
-interface ThreadToolbarProps {
+interface TrashToolbarProps {
   onClose?: () => void
-  onDelete: () => void
-  isDeleting: boolean
+  onRestore: () => void
+  isRestoring: boolean
 }
 
-function ThreadToolbar({ onClose, onDelete, isDeleting }: ThreadToolbarProps) {
+function TrashToolbar({ onClose, onRestore, isRestoring }: TrashToolbarProps) {
   return (
     <div className="flex h-11 shrink-0 items-center justify-between gap-2 px-4">
       {onClose ? (
-        <Button variant="ghost" size="icon-sm" onClick={onClose} aria-label="스레드 목록으로 돌아가기">
+        <Button variant="ghost" size="icon-sm" onClick={onClose} aria-label="휴지통 목록으로 돌아가기">
           <ArrowLeft className="size-4" />
         </Button>
       ) : (
         <span />
       )}
       <div className="ml-auto flex items-center gap-1">
-        <Button variant="ghost" size="icon-sm" disabled title="답장 기능은 아직 지원되지 않습니다.">
-          <Reply className="size-4" />
-        </Button>
-        <Button variant="ghost" size="icon-sm" disabled title="전달 기능은 아직 지원되지 않습니다.">
-          <Forward className="size-4" />
-        </Button>
-        <Button variant="ghost" size="icon-sm" disabled title="보관 기능은 아직 지원되지 않습니다.">
-          <Archive className="size-4" />
-        </Button>
         <Button
           variant="ghost"
           size="icon-sm"
-          onClick={onDelete}
-          disabled={isDeleting}
-          title="삭제"
-          aria-label="메일 삭제"
+          onClick={onRestore}
+          disabled={isRestoring}
+          title="복구"
+          aria-label="메일 복구"
         >
-          <Trash2 className="size-4" />
+          <Undo2 className="size-4" />
         </Button>
       </div>
     </div>
@@ -150,7 +144,7 @@ function ThreadToolbar({ onClose, onDelete, isDeleting }: ThreadToolbarProps) {
 }
 
 interface ThreadHeaderProps {
-  thread: InboxThreadDetail
+  thread: TrashThreadDetail
   account?: MailAccount
 }
 
@@ -231,10 +225,10 @@ interface MessageItemProps {
   message: InboxMessage
   isExpanded: boolean
   onToggle: () => void
-  onDelete: () => void
+  onRestore: () => void
 }
 
-function MessageItem({ message, isExpanded, onToggle, onDelete }: MessageItemProps) {
+function MessageItem({ message, isExpanded, onToggle, onRestore }: MessageItemProps) {
   const senderName = getMailAddressLabel(message.from)
   const senderEmail = message.from.email
 
@@ -301,9 +295,9 @@ function MessageItem({ message, isExpanded, onToggle, onDelete }: MessageItemPro
                 <MoreVertical className="size-4" />
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={onDelete}>
-                  <Trash2 className="size-4" />
-                  삭제
+                <DropdownMenuItem onClick={onRestore}>
+                  <Undo2 className="size-4" />
+                  복구
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
@@ -332,34 +326,28 @@ function MessageItem({ message, isExpanded, onToggle, onDelete }: MessageItemPro
   )
 }
 
-function ThreadFooter() {
+function TrashFooter({ onRestore, isRestoring }: { onRestore: () => void; isRestoring: boolean }) {
   return (
     <div className="shrink-0 border-t px-6 py-2">
       <div className="flex flex-wrap gap-2">
-        <Button variant="outline" size="sm" disabled title="답장 기능은 아직 지원되지 않습니다.">
-          <Reply className="size-4" />
-          답장
-        </Button>
-        <Button variant="outline" size="sm" disabled title="전달 기능은 아직 지원되지 않습니다.">
-          <Forward className="size-4" />
-          전달
+        <Button variant="outline" size="sm" onClick={onRestore} disabled={isRestoring}>
+          <Undo2 className="size-4" />
+          복구
         </Button>
       </div>
     </div>
   )
 }
 
-interface EmailDetailProps {
+interface TrashDetailProps {
   threadId: string | null
   onClose?: () => void
 }
 
-export function EmailDetail({ threadId, onClose }: EmailDetailProps) {
-  const { data: thread, isLoading, isError, error, refetch } = useThread(threadId)
+export function TrashDetail({ threadId, onClose }: TrashDetailProps) {
+  const { data: thread, isLoading, isError, error, refetch } = useTrashThread(threadId)
   const { data: accounts } = useMailAccounts()
-  const { mutate: deleteThread, isPending: isDeleting } = useDeleteThread()
-  const { mutate: restoreThread } = useRestoreTrashThread()
-  const { mutate: deleteMessage } = useDeleteMessage()
+  const { mutate: restoreThread, isPending: isRestoringThread } = useRestoreTrashThread()
   const { mutate: restoreMessage } = useRestoreTrashMessage()
 
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
@@ -369,9 +357,6 @@ export function EmailDetail({ threadId, onClose }: EmailDetailProps) {
     const next = new Set<string>()
     const last = thread.messages.at(-1)
     if (last) next.add(last.id)
-    for (const message of thread.messages) {
-      if (!message.isRead) next.add(message.id)
-    }
     setExpandedIds(next)
     setExpandedThreadId(thread.threadId)
   }
@@ -385,61 +370,29 @@ export function EmailDetail({ threadId, onClose }: EmailDetailProps) {
     })
   }
 
-  const handleDeleteMessage = (messageId: string, isLast: boolean) => {
-    deleteMessage(messageId, {
+  const handleRestoreThread = () => {
+    if (!threadId) return
+    restoreThread(threadId, {
       onSuccess: () => {
-        if (isLast) onClose?.()
-        toast("메시지를 휴지통으로 옮겼습니다", {
-          action: {
-            label: "실행 취소",
-            onClick: () => {
-              restoreMessage(messageId, {
-                onSuccess: () => {
-                  toast.success("삭제가 취소되었습니다")
-                },
-                onError: (err) => {
-                  toast.error("삭제 취소에 실패했습니다", {
-                    description: getErrorMessage(err, "잠시 후 다시 시도해주세요."),
-                  })
-                },
-              })
-            },
-          },
-        })
+        onClose?.()
+        toast.success("스레드를 복구했습니다")
       },
       onError: (err) => {
-        toast.error("메시지 삭제에 실패했습니다", {
+        toast.error("복구에 실패했습니다", {
           description: getErrorMessage(err, "잠시 후 다시 시도해주세요."),
         })
       },
     })
   }
 
-  const handleDeleteThread = () => {
-    if (!threadId) return
-    deleteThread(threadId, {
+  const handleRestoreMessage = (messageId: string, isLast: boolean) => {
+    restoreMessage(messageId, {
       onSuccess: () => {
-        onClose?.()
-        toast("메일을 휴지통으로 옮겼습니다", {
-          action: {
-            label: "실행 취소",
-            onClick: () => {
-              restoreThread(threadId, {
-                onSuccess: () => {
-                  toast.success("삭제가 취소되었습니다")
-                },
-                onError: (err) => {
-                  toast.error("삭제 취소에 실패했습니다", {
-                    description: getErrorMessage(err, "잠시 후 다시 시도해주세요."),
-                  })
-                },
-              })
-            },
-          },
-        })
+        if (isLast) onClose?.()
+        toast.success("메시지를 복구했습니다")
       },
       onError: (err) => {
-        toast.error("메일 삭제에 실패했습니다", {
+        toast.error("복구에 실패했습니다", {
           description: getErrorMessage(err, "잠시 후 다시 시도해주세요."),
         })
       },
@@ -456,12 +409,12 @@ export function EmailDetail({ threadId, onClose }: EmailDetailProps) {
   }
   if (!thread) return <EmptyState />
 
-  const messages = thread.messages
   const account = accounts?.find((item) => item.id === thread.accountId)
+  const messages = thread.messages
 
   return (
     <div className="flex h-full w-full min-w-0 flex-1 flex-col">
-      <ThreadToolbar onClose={onClose} onDelete={handleDeleteThread} isDeleting={isDeleting} />
+      <TrashToolbar onClose={onClose} onRestore={handleRestoreThread} isRestoring={isRestoringThread} />
       <ThreadHeader thread={thread} account={account} />
 
       <ScrollArea className="min-h-0 flex-1">
@@ -473,13 +426,14 @@ export function EmailDetail({ threadId, onClose }: EmailDetailProps) {
                 message={message}
                 isExpanded={expandedIds.has(message.id)}
                 onToggle={() => toggleExpanded(message.id)}
-                onDelete={() => handleDeleteMessage(message.id, messages.length === 1)}
+                onRestore={() => handleRestoreMessage(message.id, messages.length === 1)}
               />
             ))}
           </div>
         </div>
       </ScrollArea>
-      <ThreadFooter />
+
+      <TrashFooter onRestore={handleRestoreThread} isRestoring={isRestoringThread} />
     </div>
   )
 }
