@@ -1,8 +1,11 @@
-import { useMemo, useState } from "react"
+import { useMemo, useRef, useState } from "react"
+import { EmailEditor, type EmailEditorRef } from "@react-email/editor"
 import { Loader2, X } from "lucide-react"
 import { useNavigate } from "@tanstack/react-router"
 import { toast } from "sonner"
 
+import { ComposeEditorToolbar, type ComposeEditor } from "@/components/compose/compose-editor-toolbar"
+import { ComposeSendPreviewDialog, type ComposeSendPreviewData } from "@/components/compose/compose-send-preview-dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
@@ -19,14 +22,19 @@ interface ComposeEmailProps {
 
 export function ComposeEmail({ fromAddress, onFromAddressChange }: ComposeEmailProps) {
   const navigate = useNavigate()
+  const editorRef = useRef<EmailEditorRef>(null)
   const { data: user, isPending: isUserPending } = useUser()
   const { data: activeMailAccounts, isPending: isMailAccountsPending } = useActiveMailAccounts()
   const sendMailMutation = useSendMail()
+  const [editor, setEditor] = useState<ComposeEditor | null>(null)
   const [to, setTo] = useState("")
   const [cc, setCc] = useState("")
   const [bcc, setBcc] = useState("")
   const [subject, setSubject] = useState("")
-  const [body, setBody] = useState("")
+  const [isEditorReady, setIsEditorReady] = useState(false)
+  const [isEditorEmpty, setIsEditorEmpty] = useState(true)
+  const [isPreparingPreview, setIsPreparingPreview] = useState(false)
+  const [sendPreview, setSendPreview] = useState<ComposeSendPreviewData | null>(null)
   const [showCc, setShowCc] = useState(false)
   const [showBcc, setShowBcc] = useState(false)
 
@@ -49,41 +57,88 @@ export function ComposeEmail({ fromAddress, onFromAddressChange }: ComposeEmailP
     [activeMailAccounts]
   )
   const isFromAddressPending = isUserPending || isMailAccountsPending
-  const cannotSend = sendMailMutation.isPending || isFromAddressPending || !selectedFromAddress
+  const isSendPreviewOpen = sendPreview !== null
+  const cannotSend =
+    sendMailMutation.isPending || isPreparingPreview || isFromAddressPending || !selectedFromAddress || !isEditorReady
 
-  const handleSend = async () => {
+  const createSendPreview = async () => {
     if (isFromAddressPending) {
       toast.error("발신 계정을 불러오는 중입니다")
-      return
+      return null
     }
 
     if (!selectedFromAddress) {
       toast.error("발신 메일 계정을 먼저 연결해주세요")
-      return
+      return null
+    }
+
+    if (!editorRef.current || !isEditorReady) {
+      toast.error("메일 에디터를 불러오는 중입니다")
+      return null
     }
 
     const toRecipients = parseMailAddressInput(to)
 
     if (toRecipients.length === 0) {
       toast.error("받는 사람을 입력해주세요")
-      return
+      return null
     }
 
     if (!subject.trim()) {
       toast.error("제목을 입력해주세요")
-      return
+      return null
     }
 
-    try {
-      await sendMailMutation.mutateAsync({
+    if (isEditorEmpty || editorRef.current.editor?.isEmpty) {
+      toast.error("메일 내용을 입력해주세요")
+      return null
+    }
+
+    const emailContent = await editorRef.current.getEmail()
+
+    if (!emailContent.text.trim() && !emailContent.html.trim()) {
+      toast.error("메일 내용을 입력해주세요")
+      return null
+    }
+
+    return {
+      mail: {
         from: selectedFromAddress,
         to: toRecipients,
         cc: parseMailAddressInput(cc),
         bcc: parseMailAddressInput(bcc),
         subject: subject.trim(),
-        content: body,
+        content: emailContent.html,
+      },
+      text: emailContent.text,
+    } satisfies ComposeSendPreviewData
+  }
+
+  const handleSendPreview = async () => {
+    setIsPreparingPreview(true)
+
+    try {
+      const preview = await createSendPreview()
+
+      if (preview) {
+        setSendPreview(preview)
+      }
+    } catch (error) {
+      toast.error("메일 미리보기를 생성하지 못했습니다", {
+        description: getErrorMessage(error, "잠시 후 다시 시도해주세요."),
       })
+    } finally {
+      setIsPreparingPreview(false)
+    }
+  }
+
+  const handleConfirmSend = async () => {
+    if (!sendPreview) return
+
+    try {
+      await sendMailMutation.mutateAsync(sendPreview.mail)
       toast.success("메일이 발송되었습니다")
+      setSendPreview(null)
       await navigate({ to: "/mail/$mailbox", params: { mailbox: "inbox" } })
     } catch (error) {
       toast.error("메일 발송에 실패했습니다", {
@@ -204,25 +259,41 @@ export function ComposeEmail({ fromAddress, onFromAddressChange }: ComposeEmailP
         </Select>
       </div>
 
-      <div className="flex-1 overflow-hidden">
-        <label htmlFor="compose-body" className="sr-only">
-          메일 본문
-        </label>
-        <textarea
-          id="compose-body"
-          value={body}
-          onChange={(e) => setBody(e.target.value)}
-          placeholder="메일 내용을 입력하세요..."
-          className="h-full w-full resize-none bg-transparent p-4 text-sm outline-none placeholder:text-muted-foreground"
+      <ComposeEditorToolbar editor={editor} disabled={!isEditorReady} />
+
+      <div className="flex-1 overflow-hidden" aria-label="메일 본문">
+        <EmailEditor
+          ref={editorRef}
+          theme="basic"
+          placeholder="메일 내용을 입력하세요. / 로 블록을 추가할 수 있습니다."
+          className="compose-email-editor h-full overflow-auto text-sm outline-none"
+          onReady={(ref) => {
+            setIsEditorReady(true)
+            setIsEditorEmpty(ref.editor?.isEmpty ?? true)
+            setEditor(ref.editor)
+          }}
+          onUpdate={(ref) => {
+            setIsEditorEmpty(ref.editor?.isEmpty ?? true)
+          }}
         />
       </div>
 
       <div className="shrink-0 border-t px-4 py-3">
-        <Button className="w-full" size="lg" onClick={handleSend} disabled={cannotSend}>
-          {sendMailMutation.isPending ? <Loader2 className="size-4 animate-spin" /> : null}
+        <Button className="w-full" size="lg" onClick={handleSendPreview} disabled={cannotSend}>
+          {isPreparingPreview || sendMailMutation.isPending ? <Loader2 className="size-4 animate-spin" /> : null}
           보내기
         </Button>
       </div>
+
+      <ComposeSendPreviewDialog
+        open={isSendPreviewOpen}
+        preview={sendPreview}
+        isSending={sendMailMutation.isPending}
+        onOpenChange={(open) => {
+          if (!open) setSendPreview(null)
+        }}
+        onConfirm={handleConfirmSend}
+      />
     </div>
   )
 }
