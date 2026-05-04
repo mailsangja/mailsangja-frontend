@@ -1,20 +1,24 @@
-import { ArrowLeft, MailOpen, Undo2 } from "lucide-react"
+import { useState } from "react"
+import { ArrowLeft, FileText, MailOpen, MoreVertical, Star, Undo2 } from "lucide-react"
 import { toast } from "sonner"
 
 import { EmailErrorState } from "@/components/inbox/email-error-state"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
 import { getErrorMessage, getHttpStatus } from "@/lib/http-error"
 import { AccountIcon } from "@/lib/icon-entries"
+import { formatMailAddressList, getMailAddressLabel } from "@/lib/mail-address"
 import { useRestoreTrashMessage, useRestoreTrashThread } from "@/mutations/trash"
 import { useMailAccounts } from "@/queries/mail-accounts"
 import { useTrashThread } from "@/queries/trash"
+import type { Attachment, InboxMessage } from "@/types/email"
 import type { MailAccount } from "@/types/mail-account"
-import type { TrashMessage, TrashThreadDetail } from "@/types/trash"
+import type { TrashThreadDetail } from "@/types/trash"
 
 function formatDate(value: string) {
   return new Date(value).toLocaleDateString("ko-KR", {
@@ -25,6 +29,13 @@ function formatDate(value: string) {
     minute: "2-digit",
     hour12: true,
   })
+}
+
+function formatFileSize(bytes: number) {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
+  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
+  return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`
 }
 
 function getInitials(value: string) {
@@ -78,7 +89,11 @@ function LoadingState() {
     <div className="flex h-full flex-col">
       <div className="flex h-11 w-full min-w-0 shrink-0 items-center justify-between gap-2 px-4">
         <Skeleton className="h-4 w-24" />
-        <Skeleton className="h-7 w-20 rounded-md" />
+        <div className="flex items-center gap-1">
+          {Array.from({ length: 2 }).map((_, index) => (
+            <Skeleton key={index} className="size-7 rounded-md" />
+          ))}
+        </div>
       </div>
       <div className="flex flex-col gap-4 p-6">
         <Skeleton className="h-7 w-3/4" />
@@ -113,9 +128,15 @@ function TrashToolbar({ onClose, onRestore, isRestoring }: TrashToolbarProps) {
         <span />
       )}
       <div className="ml-auto flex items-center gap-1">
-        <Button variant="ghost" size="sm" onClick={onRestore} disabled={isRestoring} aria-label="스레드 복구">
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          onClick={onRestore}
+          disabled={isRestoring}
+          title="복구"
+          aria-label="메일 복구"
+        >
           <Undo2 className="size-4" />
-          복구
         </Button>
       </div>
     </div>
@@ -128,14 +149,13 @@ interface ThreadHeaderProps {
 }
 
 function ThreadHeader({ thread, account }: ThreadHeaderProps) {
-  const latestSubject = thread.messages.at(-1)?.subject || "(제목 없음)"
   const messageCount = thread.messages.length
   const hasInbound = thread.messages.some((m) => m.direction === "INBOUND")
   const hasOutbound = thread.messages.some((m) => m.direction === "OUTBOUND")
 
   return (
     <div className="shrink-0 border-b px-6 pt-2 pb-5">
-      <h2 className="text-xl leading-snug font-semibold wrap-break-word">{latestSubject}</h2>
+      <h2 className="text-xl leading-snug font-semibold wrap-break-word">{thread.latestSubject || "(제목 없음)"}</h2>
       <div className="mt-2 flex flex-wrap items-center gap-1">
         {account?.icon ? (
           <span
@@ -165,43 +185,157 @@ function ThreadHeader({ thread, account }: ThreadHeaderProps) {
   )
 }
 
-interface MessageItemProps {
-  message: TrashMessage
-  onRestore: () => void
-  isRestoring: boolean
+interface AttachmentChipProps {
+  attachment: Attachment
 }
 
-function MessageItem({ message, onRestore, isRestoring }: MessageItemProps) {
-  const senderLabel = message.fromAddress || "알 수 없음"
-  const receivers = message.toAddresses.length > 0 ? message.toAddresses.join(", ") : "-"
+function AttachmentChip({ attachment }: AttachmentChipProps) {
+  return (
+    <div className="inline-flex max-w-full items-center gap-2 rounded-full border bg-background px-3 py-1.5 text-xs transition-colors hover:bg-muted">
+      <FileText className="size-3.5 shrink-0 text-muted-foreground" />
+      <span className="truncate font-medium">{attachment.filename}</span>
+      <span className="shrink-0 text-muted-foreground">{formatFileSize(attachment.size)}</span>
+    </div>
+  )
+}
+
+function MessageBodyFrame({ html }: { html: string }) {
+  const [height, setHeight] = useState(0)
+
+  const srcDoc = `<!doctype html><html><head><meta charset="utf-8"><base target="_blank"><style>html,body{margin:0;padding:0;font-family:ui-sans-serif,system-ui,sans-serif;font-size:14px;color:#111;word-break:break-word;overflow-wrap:anywhere;overflow:hidden}img{max-width:100%;height:auto}</style></head><body>${html}</body></html>`
+
+  return (
+    <iframe
+      title="메일 본문"
+      sandbox="allow-same-origin allow-popups"
+      srcDoc={srcDoc}
+      className="w-full border-0 bg-white"
+      style={{ height: height || 200 }}
+      onLoad={(event) => {
+        const doc = event.currentTarget.contentDocument
+        if (!doc) return
+        const next = Math.max(doc.documentElement.scrollHeight, doc.body.scrollHeight)
+        setHeight(next)
+      }}
+    />
+  )
+}
+
+interface MessageItemProps {
+  message: InboxMessage
+  isExpanded: boolean
+  onToggle: () => void
+  onRestore: () => void
+}
+
+function MessageItem({ message, isExpanded, onToggle, onRestore }: MessageItemProps) {
+  const senderName = getMailAddressLabel(message.from)
+  const senderEmail = message.from.email
 
   return (
     <article className="w-full min-w-0 p-4">
-      <header className="flex items-start gap-3">
+      <header
+        className="flex cursor-pointer items-start gap-3"
+        onClick={onToggle}
+        role="button"
+        tabIndex={0}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault()
+            onToggle()
+          }
+        }}
+        aria-expanded={isExpanded}
+      >
         <Avatar>
-          <AvatarFallback>{getInitials(senderLabel)}</AvatarFallback>
+          <AvatarFallback>{getInitials(senderName)}</AvatarFallback>
         </Avatar>
 
         <div className="min-w-0 flex-1 overflow-hidden">
-          <p className="truncate text-sm font-semibold">{senderLabel}</p>
-          <p className="mt-0.5 text-xs break-all text-muted-foreground">받는 사람: {receivers}</p>
-          <p className="mt-1 truncate text-sm">{message.subject || "(제목 없음)"}</p>
-          {message.snippet ? (
-            <p className="mt-0.5 line-clamp-2 text-xs text-muted-foreground">{message.snippet}</p>
+          <div className="flex min-w-0 items-baseline gap-2">
+            <p className="shrink-0 truncate text-sm font-semibold">{senderName}</p>
+            {senderEmail && senderEmail !== senderName ? (
+              <p className="hidden min-w-0 flex-1 truncate text-xs text-muted-foreground sm:block">
+                &lt;{senderEmail}&gt;
+              </p>
+            ) : null}
+          </div>
+          {isExpanded ? (
+            <p className="mt-0.5 text-xs break-all text-muted-foreground">
+              받는 사람: {message.to.length > 0 ? formatMailAddressList(message.to) : "-"}
+            </p>
+          ) : (
+            <p className="mt-0.5 truncate text-xs text-muted-foreground">{message.snippet}</p>
+          )}
+          {isExpanded && message.cc.length > 0 ? (
+            <p className="mt-0.5 text-xs break-all text-muted-foreground">참조: {formatMailAddressList(message.cc)}</p>
           ) : null}
         </div>
 
-        <div className="flex shrink-0 flex-col items-end gap-2">
+        <div
+          className="flex shrink-0 items-center gap-1"
+          onClick={(event) => event.stopPropagation()}
+          onKeyDown={(event) => event.stopPropagation()}
+        >
           <span className="hidden truncate text-xs text-muted-foreground/80 sm:inline">
             {formatDate(message.sentAt)}
           </span>
-          <Button variant="outline" size="sm" onClick={onRestore} disabled={isRestoring} aria-label="메시지 복구">
-            <Undo2 className="size-4" />
-            복구
-          </Button>
+          <div className="flex shrink-0 items-center">
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              disabled
+              title="즐겨찾기는 아직 지원되지 않습니다."
+              aria-label="즐겨찾기"
+            >
+              <Star className="size-4" />
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" aria-label="메시지 더보기" />}>
+                <MoreVertical className="size-4" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem onClick={onRestore}>
+                  <Undo2 className="size-4" />
+                  복구
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </div>
       </header>
+
+      {isExpanded ? (
+        <div className="mt-4 pl-0 sm:pl-13">
+          {message.bodyHtml ? (
+            <MessageBodyFrame html={message.bodyHtml} />
+          ) : (
+            <div className="prose prose-sm max-w-none text-sm whitespace-pre-wrap">{message.bodyText}</div>
+          )}
+
+          {message.attachments.length > 0 ? (
+            <div className="mt-4 flex flex-wrap gap-2">
+              {message.attachments.map((attachment) => (
+                <AttachmentChip key={attachment.id} attachment={attachment} />
+              ))}
+            </div>
+          ) : null}
+        </div>
+      ) : null}
     </article>
+  )
+}
+
+function TrashFooter({ onRestore, isRestoring }: { onRestore: () => void; isRestoring: boolean }) {
+  return (
+    <div className="shrink-0 border-t px-6 py-2">
+      <div className="flex flex-wrap gap-2">
+        <Button variant="outline" size="sm" onClick={onRestore} disabled={isRestoring}>
+          <Undo2 className="size-4" />
+          복구
+        </Button>
+      </div>
+    </div>
   )
 }
 
@@ -214,7 +348,27 @@ export function TrashDetail({ threadId, onClose }: TrashDetailProps) {
   const { data: thread, isLoading, isError, error, refetch } = useTrashThread(threadId)
   const { data: accounts } = useMailAccounts()
   const { mutate: restoreThread, isPending: isRestoringThread } = useRestoreTrashThread()
-  const { mutate: restoreMessage, isPending: isRestoringMessage } = useRestoreTrashMessage()
+  const { mutate: restoreMessage } = useRestoreTrashMessage()
+
+  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
+  const [expandedThreadId, setExpandedThreadId] = useState<string | null>(null)
+
+  if (thread && thread.threadId !== expandedThreadId) {
+    const next = new Set<string>()
+    const last = thread.messages.at(-1)
+    if (last) next.add(last.id)
+    setExpandedIds(next)
+    setExpandedThreadId(thread.threadId)
+  }
+
+  const toggleExpanded = (id: string) => {
+    setExpandedIds((prev) => {
+      const next = new Set(prev)
+      if (next.has(id)) next.delete(id)
+      else next.add(id)
+      return next
+    })
+  }
 
   const handleRestoreThread = () => {
     if (!threadId) return
@@ -268,15 +422,18 @@ export function TrashDetail({ threadId, onClose }: TrashDetailProps) {
           <div className="divide-y overflow-hidden rounded-lg border bg-card">
             {messages.map((message) => (
               <MessageItem
-                key={message.messageId}
+                key={message.id}
                 message={message}
-                onRestore={() => handleRestoreMessage(message.messageId, messages.length === 1)}
-                isRestoring={isRestoringMessage}
+                isExpanded={expandedIds.has(message.id)}
+                onToggle={() => toggleExpanded(message.id)}
+                onRestore={() => handleRestoreMessage(message.id, messages.length === 1)}
               />
             ))}
           </div>
         </div>
       </ScrollArea>
+
+      <TrashFooter onRestore={handleRestoreThread} isRestoring={isRestoringThread} />
     </div>
   )
 }

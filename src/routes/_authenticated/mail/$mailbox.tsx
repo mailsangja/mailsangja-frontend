@@ -17,7 +17,7 @@ import { useMailAccounts } from "@/queries/mail-accounts"
 import { useMailboxThreads } from "@/queries/emails"
 import { useTrashThreads } from "@/queries/trash"
 import { isSupportedMailboxId, MAILBOX_LABELS, parseMailboxId, type PrimaryMailboxId } from "@/types/email"
-import type { TrashMessage, TrashThreadSummary } from "@/types/trash"
+import type { TrashThreadSummary } from "@/types/trash"
 
 export const Route = createFileRoute("/_authenticated/mail/$mailbox")({
   params: {
@@ -270,17 +270,11 @@ function matchTrashThread(thread: TrashThreadSummary, terms: string[]): boolean 
     return true
   }
 
-  const parts: string[] = [thread.accountEmail]
+  const text = [thread.latestSubject, thread.snippet, thread.participant.email, thread.participant.name]
+    .filter(Boolean)
+    .join(" ")
 
-  for (const message of thread.deletedMessages) {
-    parts.push(message.subject ?? "", message.fromAddress ?? "", message.snippet ?? "", ...(message.toAddresses ?? []))
-  }
-
-  return matchesSearch(parts.filter(Boolean).join(" "), terms)
-}
-
-function hasRecentDeletion(messages: TrashMessage[]): boolean {
-  return messages.length > 0
+  return matchesSearch(text, terms)
 }
 
 function TrashMailboxView() {
@@ -322,10 +316,6 @@ function TrashMailboxView() {
 
   const threads = loadedThreads.filter((thread) => {
     if (selectedAccount && thread.accountId !== selectedAccount.id) {
-      return false
-    }
-
-    if (!hasRecentDeletion(thread.deletedMessages)) {
       return false
     }
 

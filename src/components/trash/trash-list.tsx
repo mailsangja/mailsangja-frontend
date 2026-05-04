@@ -10,69 +10,23 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Table, TableBody } from "@/components/ui/table"
 import { getErrorMessage } from "@/lib/http-error"
 import { useRestoreTrashThread } from "@/mutations/trash"
-import type { InboxThreadSummary, MailAddress } from "@/types/email"
+import type { InboxThreadSummary } from "@/types/email"
 import type { MailAccount } from "@/types/mail-account"
-import type { TrashMessage, TrashThreadSummary } from "@/types/trash"
-
-function getLatestMessage(thread: TrashThreadSummary): TrashMessage | undefined {
-  if (thread.deletedMessages.length === 0) {
-    return undefined
-  }
-
-  return thread.deletedMessages.reduce((latest, current) => {
-    const latestTime = new Date(latest.deletedAt).getTime()
-    const currentTime = new Date(current.deletedAt).getTime()
-
-    return currentTime > latestTime ? current : latest
-  })
-}
-
-function parseAddress(raw: string): MailAddress {
-  const match = raw.match(/^\s*(.*?)\s*<(.+)>\s*$/)
-  if (match) {
-    const name = match[1].replace(/^["']|["']$/g, "").trim()
-    return { ...(name ? { name } : {}), email: match[2].trim() }
-  }
-
-  return { email: raw.trim() }
-}
-
-function getParticipant(thread: TrashThreadSummary, latest: TrashMessage | undefined): MailAddress {
-  if (!latest) {
-    return { email: thread.accountEmail }
-  }
-
-  if (latest.direction === "INBOUND") {
-    return parseAddress(latest.fromAddress || thread.accountEmail)
-  }
-
-  const [first, ...rest] = latest.toAddresses
-  if (!first) {
-    return { email: thread.accountEmail }
-  }
-
-  const parsed = parseAddress(first)
-  if (rest.length === 0) {
-    return parsed
-  }
-
-  const base = parsed.name || parsed.email
-  return { name: `${base} 외 ${rest.length}명`, email: parsed.email }
-}
+import type { TrashThreadSummary } from "@/types/trash"
 
 function toInboxSummary(thread: TrashThreadSummary): InboxThreadSummary {
-  const latest = getLatestMessage(thread)
-
   return {
     threadId: thread.threadId,
     gmailThreadId: thread.gmailThreadId,
     accountId: thread.accountId,
-    latestSubject: latest?.subject ?? "",
-    participant: getParticipant(thread, latest),
-    snippet: latest?.snippet ?? "",
-    isRead: true,
-    lastMessageAt: latest?.deletedAt ?? "",
-    attachments: [],
+    latestSubject: thread.latestSubject,
+    participant: thread.participant,
+    snippet: thread.snippet,
+    isRead: thread.isRead,
+    lastMessageAt: thread.lastMessageAt,
+    attachments: thread.attachments,
+    messageCount: thread.messageCount,
+    labels: thread.labels,
   }
 }
 

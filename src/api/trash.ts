@@ -1,9 +1,9 @@
 import { apiClient } from "@/lib/api-client"
 import { normalizeSnippetText } from "@/lib/html-entities"
-import type { MarkerSliceResponse, ListThreadsParams } from "@/types/email"
-import type { TrashMessage, TrashThreadDetail, TrashThreadSummary } from "@/types/trash"
+import type { InboxMessage, ListThreadsParams, MarkerSliceResponse } from "@/types/email"
+import type { TrashThreadDetail, TrashThreadSummary } from "@/types/trash"
 
-function normalizeMessage(message: TrashMessage): TrashMessage {
+function normalizeMessage(message: InboxMessage): InboxMessage {
   return {
     ...message,
     snippet: normalizeSnippetText(message.snippet),
@@ -13,7 +13,7 @@ function normalizeMessage(message: TrashMessage): TrashMessage {
 function normalizeSummary(thread: TrashThreadSummary): TrashThreadSummary {
   return {
     ...thread,
-    deletedMessages: thread.deletedMessages.map(normalizeMessage),
+    snippet: normalizeSnippetText(thread.snippet),
   }
 }
 
