@@ -1,8 +1,9 @@
 import { useState } from "react"
-import { ChevronDown, ChevronUp, Mail } from "lucide-react"
+import { Mail } from "lucide-react"
 
+import { ScrollArea } from "@/components/ui/scroll-area"
 import { Skeleton } from "@/components/ui/skeleton"
-import { getMailAddressLabel } from "@/lib/mail-address"
+import { formatMailAddressList, getMailAddressLabel } from "@/lib/mail-address"
 import { useThread } from "@/queries/emails"
 import type { InboxMessage } from "@/types/email"
 
@@ -17,11 +18,11 @@ function formatDate(value: string) {
 }
 
 function ReferenceMessageItem({ message }: { message: InboxMessage }) {
-  const [expanded, setExpanded] = useState(false)
+  const [expanded, setExpanded] = useState(true)
   const senderLabel = getMailAddressLabel(message.from)
 
   return (
-    <div className="border-b last:border-b-0">
+    <article className="w-full min-w-0">
       <button
         type="button"
         className="flex w-full items-start gap-3 px-4 py-3 text-left hover:bg-muted/40"
@@ -35,13 +36,28 @@ function ReferenceMessageItem({ message }: { message: InboxMessage }) {
           </div>
           {!expanded && <p className="mt-0.5 truncate text-xs text-muted-foreground">{message.snippet}</p>}
         </div>
-        <span className="mt-0.5 shrink-0 text-muted-foreground">
-          {expanded ? <ChevronUp className="size-4" /> : <ChevronDown className="size-4" />}
-        </span>
       </button>
 
       {expanded && (
         <div className="px-4 pb-4">
+          <div className="mb-3 space-y-0.5">
+            {message.to.length > 0 && (
+              <div className="flex gap-2">
+                <span className="w-14 shrink-0 text-xs text-muted-foreground">받는사람</span>
+                <span className="min-w-0 text-xs break-all text-foreground/80">
+                  {formatMailAddressList(message.to)}
+                </span>
+              </div>
+            )}
+            {message.cc.length > 0 && (
+              <div className="flex gap-2">
+                <span className="w-14 shrink-0 text-xs text-muted-foreground">참조</span>
+                <span className="min-w-0 text-xs break-all text-foreground/80">
+                  {formatMailAddressList(message.cc)}
+                </span>
+              </div>
+            )}
+          </div>
           {message.bodyHtml ? (
             <ReferenceBodyFrame html={message.bodyHtml} />
           ) : (
@@ -49,7 +65,7 @@ function ReferenceMessageItem({ message }: { message: InboxMessage }) {
           )}
         </div>
       )}
-    </div>
+    </article>
   )
 }
 
@@ -121,17 +137,19 @@ export function ComposeReference({ threadId }: ComposeReferenceProps) {
       {threadId && isLoading && <LoadingState />}
 
       {thread && (
-        <div className="flex-1 overflow-auto">
-          <div className="border-b px-4 py-3">
-            <p className="text-sm leading-snug font-semibold">{thread.latestSubject || "(제목 없음)"}</p>
+        <ScrollArea className="min-h-0 flex-1">
+          <div className="px-4 py-3">
+            <p className="text-sm leading-snug font-semibold">{thread.latestSubject}</p>
             <p className="mt-0.5 text-xs text-muted-foreground">메시지 {thread.messages.length}개</p>
           </div>
-          <div>
-            {thread.messages.map((message) => (
-              <ReferenceMessageItem key={message.id} message={message} />
-            ))}
+          <div className="px-2 pb-2">
+            <div className="divide-y overflow-hidden rounded-lg border bg-card">
+              {thread.messages.map((message) => (
+                <ReferenceMessageItem key={message.id} message={message} />
+              ))}
+            </div>
           </div>
-        </div>
+        </ScrollArea>
       )}
     </div>
   )
