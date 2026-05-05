@@ -403,7 +403,7 @@ export function EmailDetail({ threadId, onClose }: EmailDetailProps) {
     const lastMessage = thread.messages.at(-1)
     if (!lastMessage) return
 
-    const replyTo = lastMessage.from.email
+    const replyTo = lastMessage.replyTo?.email ?? lastMessage.from.email
     const currentSubject = thread.latestSubject
     const replySubject = /^re:/i.test(currentSubject) ? currentSubject : `Re: ${currentSubject}`
 

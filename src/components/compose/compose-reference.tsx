@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { Mail } from "lucide-react"
 
+import { EmailErrorState } from "@/components/inbox/email-error-state"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Skeleton } from "@/components/ui/skeleton"
 import { formatMailAddressList, getMailAddressLabel } from "@/lib/mail-address"
@@ -124,7 +125,7 @@ interface ComposeReferenceProps {
 }
 
 export function ComposeReference({ threadId }: ComposeReferenceProps) {
-  const { data: thread, isLoading } = useThread(threadId ?? null)
+  const { data: thread, isLoading, isError, refetch } = useThread(threadId ?? null)
 
   return (
     <div className="flex h-full flex-col overflow-hidden">
@@ -135,6 +136,14 @@ export function ComposeReference({ threadId }: ComposeReferenceProps) {
       {!threadId && <EmptyPlaceholder />}
 
       {threadId && isLoading && <LoadingState />}
+
+      {threadId && isError && (
+        <EmailErrorState
+          title="참고 메일을 불러오지 못했습니다"
+          description="네트워크 상태를 확인한 뒤 다시 시도해주세요."
+          onRetry={() => void refetch()}
+        />
+      )}
 
       {thread && (
         <ScrollArea className="min-h-0 flex-1">
