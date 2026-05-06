@@ -78,6 +78,25 @@
   line-height: 1.25;
 }
 
+.compose-email-editor .tiptap img[alignment] {
+  display: block;
+}
+
+.compose-email-editor .tiptap img[alignment="left"] {
+  margin-left: 0;
+  margin-right: auto;
+}
+
+.compose-email-editor .tiptap img[alignment="center"] {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.compose-email-editor .tiptap img[alignment="right"] {
+  margin-left: auto;
+  margin-right: 0;
+}
+
 .compose-email-editor .tiptap ul,
 .compose-email-editor .tiptap ol {
   color: var(--foreground) !important;

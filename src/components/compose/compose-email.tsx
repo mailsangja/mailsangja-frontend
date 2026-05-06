@@ -28,6 +28,10 @@ interface PendingInlineImage extends ComposeInlineImage {
   objectUrl: string
 }
 
+interface ComposeImageMetadata {
+  alignment: "left" | "center" | "right" | null
+}
+
 const MAX_SEND_FILE_BYTES = 20 * 1024 * 1024
 
 function createInlineImageCid() {
@@ -42,12 +46,18 @@ function getSendFileSize(attachments: readonly File[], inlineImages: readonly Pe
   return getFilesSize(attachments) + getFilesSize(inlineImages.map((image) => image.file))
 }
 
-function collectImageSources(content: JSONContent) {
-  const sources = new Set<string>()
+function normalizeImageAlignment(value: unknown): ComposeImageMetadata["alignment"] {
+  return value === "left" || value === "center" || value === "right" ? value : null
+}
+
+function collectImageMetadata(content: JSONContent) {
+  const metadata = new Map<string, ComposeImageMetadata>()
 
   const visit = (node: JSONContent) => {
     if (node.type === "image" && typeof node.attrs?.src === "string") {
-      sources.add(node.attrs.src)
+      metadata.set(node.attrs.src, {
+        alignment: normalizeImageAlignment(node.attrs.align ?? node.attrs.alignment),
+      })
     }
 
     for (const child of node.content ?? []) {
@@ -57,24 +67,93 @@ function collectImageSources(content: JSONContent) {
 
   visit(content)
 
-  return sources
+  return metadata
 }
 
-function buildMailContentWithCidImages(html: string, inlineImages: readonly PendingInlineImage[]) {
+function mergeInlineStyle(element: HTMLElement, styles: Record<string, string>) {
+  for (const [property, value] of Object.entries(styles)) {
+    element.style.setProperty(property, value)
+  }
+}
+
+function isSingleImageLink(element: Element | null, imageElement: HTMLImageElement): element is HTMLAnchorElement {
+  return (
+    element instanceof HTMLAnchorElement && element.children.length === 1 && element.firstElementChild === imageElement
+  )
+}
+
+function applyImageAlignment(
+  document: Document,
+  imageElement: HTMLImageElement,
+  alignment: ComposeImageMetadata["alignment"]
+) {
+  if (!alignment) return
+
+  mergeInlineStyle(imageElement, {
+    display: "inline-block",
+    "margin-left": "0",
+    "margin-right": "0",
+    "vertical-align": "top",
+  })
+
+  const parentElement = imageElement.parentElement
+  const alignmentTarget: HTMLElement = isSingleImageLink(parentElement, imageElement) ? parentElement : imageElement
+
+  if (!alignmentTarget.parentNode) {
+    return
+  }
+
+  const table = document.createElement("table")
+  const tbody = document.createElement("tbody")
+  const row = document.createElement("tr")
+  const cell = document.createElement("td")
+
+  table.setAttribute("role", "presentation")
+  table.setAttribute("border", "0")
+  table.setAttribute("cellpadding", "0")
+  table.setAttribute("cellspacing", "0")
+  table.setAttribute("width", "100%")
+  mergeInlineStyle(table, {
+    width: "100%",
+    "border-collapse": "collapse",
+  })
+  cell.setAttribute("align", alignment)
+  mergeInlineStyle(cell, {
+    "text-align": alignment,
+    "line-height": "0",
+  })
+
+  alignmentTarget.parentNode.insertBefore(table, alignmentTarget)
+  cell.appendChild(alignmentTarget)
+  row.appendChild(cell)
+  tbody.appendChild(row)
+  table.appendChild(tbody)
+}
+
+function buildMailContentWithImages(
+  html: string,
+  inlineImages: readonly PendingInlineImage[],
+  imageMetadata: ReadonlyMap<string, ComposeImageMetadata>,
+  options: { replaceInlineImageSrcWithCid: boolean }
+) {
   const parser = new DOMParser()
   const document = parser.parseFromString(html, "text/html")
   const imageByObjectUrl = new Map(inlineImages.map((image) => [image.objectUrl, image]))
   const usedInlineImages: PendingInlineImage[] = []
   const usedObjectUrls = new Set<string>()
 
-  for (const imageElement of Array.from(document.querySelectorAll("img[src]"))) {
+  for (const imageElement of Array.from(document.querySelectorAll<HTMLImageElement>("img[src]"))) {
     const src = imageElement.getAttribute("src")
     if (!src) continue
+
+    applyImageAlignment(document, imageElement, imageMetadata.get(src)?.alignment ?? null)
 
     const inlineImage = imageByObjectUrl.get(src)
     if (!inlineImage) continue
 
-    imageElement.setAttribute("src", `cid:${inlineImage.cid}`)
+    if (options.replaceInlineImageSrcWithCid) {
+      imageElement.setAttribute("src", `cid:${inlineImage.cid}`)
+    }
 
     if (!usedObjectUrls.has(src)) {
       usedInlineImages.push(inlineImage)
@@ -218,7 +297,7 @@ export function ComposeEmail({ fromAddress, onFromAddressChange }: ComposeEmailP
   }, [])
 
   const pruneUnusedInlineImages = (content: JSONContent) => {
-    const imageSources = collectImageSources(content)
+    const imageMetadata = collectImageMetadata(content)
 
     setInlineImages((currentInlineImages) => {
       if (currentInlineImages.length === 0) {
@@ -227,7 +306,7 @@ export function ComposeEmail({ fromAddress, onFromAddressChange }: ComposeEmailP
 
       let didRemoveImage = false
       const nextInlineImages = currentInlineImages.filter((inlineImage) => {
-        const isUsed = imageSources.has(inlineImage.objectUrl)
+        const isUsed = imageMetadata.has(inlineImage.objectUrl)
 
         if (!isUsed) {
           didRemoveImage = true
@@ -286,13 +365,19 @@ export function ComposeEmail({ fromAddress, onFromAddressChange }: ComposeEmailP
     }
 
     const emailContent = await editorRef.current.getEmail()
+    const imageMetadata = collectImageMetadata(editorRef.current.getJSON())
 
     if (!emailContent.text.trim() && !emailContent.html.trim()) {
       toast.error("메일 내용을 입력해주세요")
       return null
     }
 
-    const sendContent = buildMailContentWithCidImages(emailContent.html, inlineImagesRef.current)
+    const previewContent = buildMailContentWithImages(emailContent.html, inlineImagesRef.current, imageMetadata, {
+      replaceInlineImageSrcWithCid: false,
+    })
+    const sendContent = buildMailContentWithImages(emailContent.html, inlineImagesRef.current, imageMetadata, {
+      replaceInlineImageSrcWithCid: true,
+    })
 
     return {
       mail: {
@@ -306,7 +391,7 @@ export function ComposeEmail({ fromAddress, onFromAddressChange }: ComposeEmailP
         inlineImages: sendContent.inlineImages,
       },
       text: emailContent.text,
-      html: emailContent.html,
+      html: previewContent.content,
     } satisfies ComposeSendPreviewData
   }
 
@@ -462,6 +547,7 @@ export function ComposeEmail({ fromAddress, onFromAddressChange }: ComposeEmailP
           ref={editorRef}
           theme="basic"
           placeholder="메일 내용을 입력하세요. / 로 블록을 추가할 수 있습니다."
+          bubbleMenu={{ hideWhenActiveNodes: ["button", "image"] }}
           className="compose-email-editor h-full overflow-auto text-sm outline-none"
           onUploadImage={uploadInlineImage}
           onReady={(ref) => {
