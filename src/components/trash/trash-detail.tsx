@@ -1,7 +1,8 @@
 import { useState } from "react"
-import { ArrowLeft, FileText, MailOpen, MoreVertical, Star, Undo2 } from "lucide-react"
+import { ArrowLeft, MailOpen, MoreVertical, Star, Undo2 } from "lucide-react"
 import { toast } from "sonner"
 
+import { AttachmentChip } from "@/components/attachment-chip"
 import { EmailErrorState } from "@/components/inbox/email-error-state"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Badge } from "@/components/ui/badge"
@@ -16,7 +17,7 @@ import { formatMailAddressList, getMailAddressLabel } from "@/lib/mail-address"
 import { useRestoreTrashMessage, useRestoreTrashThread } from "@/mutations/trash"
 import { useMailAccounts } from "@/queries/mail-accounts"
 import { useTrashThread } from "@/queries/trash"
-import type { Attachment, InboxMessage } from "@/types/email"
+import type { InboxMessage } from "@/types/email"
 import type { MailAccount } from "@/types/mail-account"
 import type { TrashThreadDetail } from "@/types/trash"
 
@@ -29,13 +30,6 @@ function formatDate(value: string) {
     minute: "2-digit",
     hour12: true,
   })
-}
-
-function formatFileSize(bytes: number) {
-  if (bytes < 1024) return `${bytes} B`
-  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
-  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
-  return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`
 }
 
 function getInitials(value: string) {
@@ -181,20 +175,6 @@ function ThreadHeader({ thread, account }: ThreadHeaderProps) {
           메시지 {messageCount}개
         </Badge>
       </div>
-    </div>
-  )
-}
-
-interface AttachmentChipProps {
-  attachment: Attachment
-}
-
-function AttachmentChip({ attachment }: AttachmentChipProps) {
-  return (
-    <div className="inline-flex max-w-full items-center gap-2 rounded-full border bg-background px-3 py-1.5 text-xs transition-colors hover:bg-muted">
-      <FileText className="size-3.5 shrink-0 text-muted-foreground" />
-      <span className="truncate font-medium">{attachment.filename}</span>
-      <span className="shrink-0 text-muted-foreground">{formatFileSize(attachment.size)}</span>
     </div>
   )
 }

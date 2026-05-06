@@ -1,4 +1,5 @@
 import { apiClient } from "@/lib/api-client"
+import { getVisibleAttachments } from "@/lib/email-attachments"
 import { normalizeSnippetText } from "@/lib/html-entities"
 import type { InboxMessage, ListThreadsParams, MarkerSliceResponse } from "@/types/email"
 import type { TrashThreadDetail, TrashThreadSummary } from "@/types/trash"
@@ -6,6 +7,7 @@ import type { TrashThreadDetail, TrashThreadSummary } from "@/types/trash"
 function normalizeMessage(message: InboxMessage): InboxMessage {
   return {
     ...message,
+    attachments: getVisibleAttachments(message.attachments),
     snippet: normalizeSnippetText(message.snippet),
   }
 }
@@ -13,6 +15,7 @@ function normalizeMessage(message: InboxMessage): InboxMessage {
 function normalizeSummary(thread: TrashThreadSummary): TrashThreadSummary {
   return {
     ...thread,
+    attachments: getVisibleAttachments(thread.attachments),
     snippet: normalizeSnippetText(thread.snippet),
   }
 }

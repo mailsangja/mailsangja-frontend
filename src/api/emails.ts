@@ -1,4 +1,5 @@
-import { apiClient } from "@/lib/api-client"
+import { apiClient, buildApiUrl } from "@/lib/api-client"
+import { getVisibleAttachments } from "@/lib/email-attachments"
 import { normalizeSnippetText } from "@/lib/html-entities"
 import type {
   ComposeEmailData,
@@ -14,6 +15,7 @@ import type {
 function normalizeThreadSummary(thread: InboxThreadSummary): InboxThreadSummary {
   return {
     ...thread,
+    attachments: getVisibleAttachments(thread.attachments),
     snippet: normalizeSnippetText(thread.snippet),
   }
 }
@@ -21,6 +23,7 @@ function normalizeThreadSummary(thread: InboxThreadSummary): InboxThreadSummary 
 function normalizeMessage(message: InboxMessage): InboxMessage {
   return {
     ...message,
+    attachments: getVisibleAttachments(message.attachments),
     snippet: normalizeSnippetText(message.snippet),
   }
 }
@@ -32,7 +35,7 @@ function normalizeThreadDetail(thread: InboxThreadDetail): InboxThreadDetail {
   }
 }
 
-function appendFormDataValues(formData: FormData, key: string, values?: string[]) {
+function appendFormDataValues(formData: FormData, key: string, values?: readonly string[]) {
   for (const value of values ?? []) {
     const normalizedValue = value.trim()
 
@@ -74,6 +77,10 @@ export async function getUnreadCount(): Promise<UnreadCountResponse> {
   return apiClient.get<UnreadCountResponse>("/api/v1/threads/inbox/unread-count")
 }
 
+export function getAttachmentDownloadUrl(attachmentId: string) {
+  return buildApiUrl(`/api/v1/mail/attachments/${attachmentId}`)
+}
+
 export async function sendMail(data: ComposeEmailData): Promise<void> {
   const formData = new FormData()
 
@@ -95,5 +102,20 @@ export async function sendMail(data: ComposeEmailData): Promise<void> {
     formData.append("attachments", attachment)
   }
 
-  await apiClient.post<void>("/api/v1/mail/send", formData)
+  for (const inlineImage of data.inlineImages ?? []) {
+    const cid = inlineImage.cid.trim()
+
+    if (!cid) {
+      continue
+    }
+
+    formData.append("inlineImages", inlineImage.file)
+    formData.append("inlineImageCids", cid)
+  }
+
+  await apiClient.post<void>("/api/v1/mail/send", formData, {
+    params: {
+      messageId: data.messageId,
+    },
+  })
 }

@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react"
 import type { EmailEditorRef } from "@react-email/editor"
 import type {} from "@react-email/editor/extensions"
+import type {} from "@react-email/editor/plugins"
 import { defaultSlashCommands } from "@react-email/editor/ui"
 import { setTextAlignment } from "@react-email/editor/utils"
 import { useEditorState } from "@tiptap/react"
@@ -13,6 +14,7 @@ import {
   Heading1,
   Heading2,
   Heading3,
+  Image as ImageIcon,
   Italic,
   Link as LinkIcon,
   List,
@@ -82,6 +84,13 @@ function ToolbarSeparator() {
 function getActiveAlignment(editor: ComposeEditor | null) {
   if (!editor) return "left"
 
+  const selectedNode = getSelectedNode(editor)
+  const selectedAlignment = selectedNode?.attrs.align ?? selectedNode?.attrs.alignment
+
+  if (typeof selectedAlignment === "string" && selectedAlignment.length > 0) {
+    return selectedAlignment
+  }
+
   const { $from } = editor.state.selection
 
   for (let depth = $from.depth; depth >= 0; depth -= 1) {
@@ -94,6 +103,28 @@ function getActiveAlignment(editor: ComposeEditor | null) {
   }
 
   return "left"
+}
+
+function getSelectedNode(editor: ComposeEditor) {
+  const selection = editor.state.selection
+
+  if (!("node" in selection)) {
+    return null
+  }
+
+  return selection.node as { attrs: Record<string, unknown>; type: { name: string } } | null
+}
+
+function setEditorAlignment(editor: ComposeEditor, alignment: "left" | "center" | "right") {
+  const selectedNode = getSelectedNode(editor)
+
+  if (selectedNode?.type.name === "image") {
+    editor.chain().focus().updateAttributes("image", { alignment }).run()
+    return
+  }
+
+  editor.commands.focus()
+  setTextAlignment(editor, alignment)
 }
 
 function getToolbarState(editor: ComposeEditor | null) {
@@ -322,6 +353,12 @@ export function ComposeEditorToolbar({ editor, disabled }: ComposeEditorToolbarP
           disabled={isDisabled}
           onClick={() => runCommand(openLinkEditor)}
         />
+        <ToolbarIconButton
+          label="이미지 삽입"
+          icon={ImageIcon}
+          disabled={isDisabled}
+          onClick={() => runCommand((editor) => editor.chain().focus().uploadImage().run())}
+        />
 
         <ToolbarSeparator />
 
@@ -358,36 +395,21 @@ export function ComposeEditorToolbar({ editor, disabled }: ComposeEditorToolbarP
           icon={AlignLeft}
           active={toolbarState?.activeAlignment === "left"}
           disabled={isDisabled}
-          onClick={() =>
-            runCommand((editor) => {
-              editor.commands.focus()
-              setTextAlignment(editor, "left")
-            })
-          }
+          onClick={() => runCommand((editor) => setEditorAlignment(editor, "left"))}
         />
         <ToolbarIconButton
           label="가운데 정렬"
           icon={AlignCenter}
           active={toolbarState?.activeAlignment === "center"}
           disabled={isDisabled}
-          onClick={() =>
-            runCommand((editor) => {
-              editor.commands.focus()
-              setTextAlignment(editor, "center")
-            })
-          }
+          onClick={() => runCommand((editor) => setEditorAlignment(editor, "center"))}
         />
         <ToolbarIconButton
           label="오른쪽 정렬"
           icon={AlignRight}
           active={toolbarState?.activeAlignment === "right"}
           disabled={isDisabled}
-          onClick={() =>
-            runCommand((editor) => {
-              editor.commands.focus()
-              setTextAlignment(editor, "right")
-            })
-          }
+          onClick={() => runCommand((editor) => setEditorAlignment(editor, "right"))}
         />
 
         <ToolbarSeparator />

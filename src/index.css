@@ -35,13 +35,11 @@
   caret-color: var(--foreground);
   min-height: 100%;
   outline: none;
-  padding: 1.25rem 1rem;
   width: 100%;
   max-width: 100%;
   overflow-wrap: anywhere;
 }
 
-.compose-email-editor .tiptap .node-container,
 .compose-email-editor .tiptap .node-section,
 .compose-email-editor .tiptap .node-paragraph,
 .compose-email-editor .tiptap .node-bulletList,
@@ -51,6 +49,7 @@
 }
 
 .compose-email-editor .tiptap .node-container {
+  background-color: transparent !important;
   max-width: 100% !important;
   min-width: 0 !important;
   width: 100% !important;
@@ -65,29 +64,43 @@
 
 .compose-email-editor .tiptap p {
   color: var(--foreground) !important;
-  margin: 0.125rem 0 !important;
-  padding-top: 0.0625rem !important;
-  padding-bottom: 0.0625rem !important;
-  line-height: 1.55 !important;
+  margin: 0 !important;
 }
 
 .compose-email-editor .tiptap h1,
 .compose-email-editor .tiptap h2,
 .compose-email-editor .tiptap h3 {
   color: var(--foreground) !important;
-  line-height: 1.25;
+  margin: 0 !important;
+}
+
+.compose-email-editor .tiptap img[alignment] {
+  display: block;
+}
+
+.compose-email-editor .tiptap img[alignment="left"] {
+  margin-left: 0;
+  margin-right: auto;
+}
+
+.compose-email-editor .tiptap img[alignment="center"] {
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.compose-email-editor .tiptap img[alignment="right"] {
+  margin-left: auto;
+  margin-right: 0;
 }
 
 .compose-email-editor .tiptap ul,
 .compose-email-editor .tiptap ol {
   color: var(--foreground) !important;
-  margin: 0.25rem 0 !important;
-  padding-left: 1.35rem !important;
+  padding-bottom: 0.5rem !important;
 }
 
 .compose-email-editor .tiptap li {
   color: var(--foreground) !important;
-  margin: 0.0625rem 0 !important;
 }
 
 .compose-email-editor .tiptap li p {
@@ -97,7 +110,6 @@
 }
 
 .compose-email-editor .tiptap blockquote {
-  margin: 0.375rem 0 !important;
   color: var(--muted-foreground) !important;
   border-left-color: var(--border);
 }

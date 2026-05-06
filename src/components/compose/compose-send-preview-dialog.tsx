@@ -1,19 +1,14 @@
 import { Loader2, Send } from "lucide-react"
 
+import { FileAttachmentChip } from "@/components/attachment-chip"
 import { Button } from "@/components/ui/button"
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import type { ComposeEmailData } from "@/types/email"
 
 export interface ComposeSendPreviewData {
   mail: ComposeEmailData
   text: string
+  html: string
 }
 
 interface ComposeSendPreviewDialogProps {
@@ -45,7 +40,10 @@ function escapeHtml(value: string) {
 function EmailPreviewFrame({ html, text }: { html: string; text: string }) {
   const fallbackText = text.trim()
   const body = html.trim() || `<pre>${escapeHtml(fallbackText)}</pre>`
-  const srcDoc = `<!doctype html>
+  const isFullHtmlDocument = /^\s*(<!doctype|<html[\s>])/i.test(body)
+  const srcDoc = isFullHtmlDocument
+    ? body
+    : `<!doctype html>
 <html>
   <head>
     <meta charset="utf-8">
@@ -63,9 +61,9 @@ function EmailPreviewFrame({ html, text }: { html: string; text: string }) {
   return (
     <iframe
       title="최종 발송 본문 미리보기"
-      sandbox="allow-popups"
+      sandbox="allow-popups allow-same-origin"
       srcDoc={srcDoc}
-      className="h-[min(52vh,34rem)] w-full rounded-lg border bg-white"
+      className="h-[min(40vh,30rem)] w-full rounded-lg border bg-white"
     />
   )
 }
@@ -84,11 +82,10 @@ export function ComposeSendPreviewDialog({
       <DialogContent className="sm:max-w-3xl">
         <DialogHeader>
           <DialogTitle>메일 미리보기</DialogTitle>
-          <DialogDescription>아래 내용으로 메일이 발송됩니다.</DialogDescription>
         </DialogHeader>
 
         {mail && (
-          <div className="grid gap-4">
+          <div className="grid gap-4 overflow-y-auto">
             <dl className="overflow-hidden rounded-lg border text-sm">
               <PreviewField label="보내는 사람" value={mail.from ?? ""} />
               <PreviewField label="받는 사람" value={mail.to.join(", ")} />
@@ -97,7 +94,18 @@ export function ComposeSendPreviewDialog({
               <PreviewField label="제목" value={mail.subject} />
             </dl>
 
-            <EmailPreviewFrame html={mail.content} text={preview.text} />
+            <EmailPreviewFrame html={preview.html} text={preview.text} />
+
+            {mail.attachments && mail.attachments.length > 0 && (
+              <div className="rounded-lg border px-4 py-3 text-sm">
+                <div className="mb-2 font-medium">첨부파일</div>
+                <div className="flex max-h-20 flex-wrap gap-2 overflow-y-auto pr-1">
+                  {mail.attachments.map((file, index) => (
+                    <FileAttachmentChip key={`${file.name}-${file.lastModified}-${index}`} file={file} />
+                  ))}
+                </div>
+              </div>
+            )}
           </div>
         )}
 
