@@ -1,4 +1,5 @@
 import { apiClient } from "@/lib/api-client"
+import { getVisibleAttachments } from "@/lib/email-attachments"
 import { normalizeSnippetText } from "@/lib/html-entities"
 import type {
   ComposeEmailData,
@@ -14,6 +15,7 @@ import type {
 function normalizeThreadSummary(thread: InboxThreadSummary): InboxThreadSummary {
   return {
     ...thread,
+    attachments: getVisibleAttachments(thread.attachments),
     snippet: normalizeSnippetText(thread.snippet),
   }
 }
@@ -21,6 +23,7 @@ function normalizeThreadSummary(thread: InboxThreadSummary): InboxThreadSummary 
 function normalizeMessage(message: InboxMessage): InboxMessage {
   return {
     ...message,
+    attachments: getVisibleAttachments(message.attachments),
     snippet: normalizeSnippetText(message.snippet),
   }
 }
