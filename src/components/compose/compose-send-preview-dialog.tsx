@@ -9,11 +9,13 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { formatFileSize } from "@/lib/file-size"
 import type { ComposeEmailData } from "@/types/email"
 
 export interface ComposeSendPreviewData {
   mail: ComposeEmailData
   text: string
+  html: string
 }
 
 interface ComposeSendPreviewDialogProps {
@@ -45,7 +47,10 @@ function escapeHtml(value: string) {
 function EmailPreviewFrame({ html, text }: { html: string; text: string }) {
   const fallbackText = text.trim()
   const body = html.trim() || `<pre>${escapeHtml(fallbackText)}</pre>`
-  const srcDoc = `<!doctype html>
+  const isFullHtmlDocument = /^\s*(<!doctype|<html[\s>])/i.test(body)
+  const srcDoc = isFullHtmlDocument
+    ? body
+    : `<!doctype html>
 <html>
   <head>
     <meta charset="utf-8">
@@ -63,7 +68,7 @@ function EmailPreviewFrame({ html, text }: { html: string; text: string }) {
   return (
     <iframe
       title="최종 발송 본문 미리보기"
-      sandbox="allow-popups"
+      sandbox="allow-popups allow-same-origin"
       srcDoc={srcDoc}
       className="h-[min(52vh,34rem)] w-full rounded-lg border bg-white"
     />
@@ -97,7 +102,21 @@ export function ComposeSendPreviewDialog({
               <PreviewField label="제목" value={mail.subject} />
             </dl>
 
-            <EmailPreviewFrame html={mail.content} text={preview.text} />
+            {mail.attachments && mail.attachments.length > 0 && (
+              <div className="rounded-lg border px-4 py-3 text-sm">
+                <div className="mb-2 font-medium">첨부파일</div>
+                <ul className="flex flex-col gap-1.5">
+                  {mail.attachments.map((attachment, index) => (
+                    <li key={`${attachment.name}-${attachment.lastModified}-${index}`} className="flex min-w-0 gap-2">
+                      <span className="min-w-0 flex-1 truncate">{attachment.name}</span>
+                      <span className="shrink-0 text-muted-foreground">{formatFileSize(attachment.size)}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            <EmailPreviewFrame html={preview.html} text={preview.text} />
           </div>
         )}
 

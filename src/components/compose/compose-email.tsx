@@ -1,6 +1,7 @@
-import { useMemo, useRef, useState } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from "react"
 import { EmailEditor, type EmailEditorRef } from "@react-email/editor"
-import { Loader2, X } from "lucide-react"
+import type { JSONContent } from "@tiptap/core"
+import { FileText, Loader2, Paperclip, X } from "lucide-react"
 import { useNavigate } from "@tanstack/react-router"
 import { toast } from "sonner"
 
@@ -9,20 +10,95 @@ import { ComposeSendPreviewDialog, type ComposeSendPreviewData } from "@/compone
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { formatFileSize } from "@/lib/file-size"
 import { getErrorMessage } from "@/lib/http-error"
 import { parseMailAddressInput } from "@/lib/mail-address"
 import { useSendMail } from "@/mutations/emails"
 import { useActiveMailAccounts } from "@/queries/mail-accounts"
 import { useUser } from "@/queries/user"
+import type { ComposeInlineImage } from "@/types/email"
 
 interface ComposeEmailProps {
   fromAddress: string | null
   onFromAddressChange: (value: string | null) => void
 }
 
+interface PendingInlineImage extends ComposeInlineImage {
+  id: string
+  objectUrl: string
+}
+
+const MAX_SEND_FILE_BYTES = 20 * 1024 * 1024
+
+function createInlineImageCid() {
+  return `inline-${crypto.randomUUID()}`
+}
+
+function getFilesSize(files: readonly File[]) {
+  return files.reduce((total, file) => total + file.size, 0)
+}
+
+function getSendFileSize(attachments: readonly File[], inlineImages: readonly PendingInlineImage[]) {
+  return getFilesSize(attachments) + getFilesSize(inlineImages.map((image) => image.file))
+}
+
+function collectImageSources(content: JSONContent) {
+  const sources = new Set<string>()
+
+  const visit = (node: JSONContent) => {
+    if (node.type === "image" && typeof node.attrs?.src === "string") {
+      sources.add(node.attrs.src)
+    }
+
+    for (const child of node.content ?? []) {
+      visit(child)
+    }
+  }
+
+  visit(content)
+
+  return sources
+}
+
+function buildMailContentWithCidImages(html: string, inlineImages: readonly PendingInlineImage[]) {
+  const parser = new DOMParser()
+  const document = parser.parseFromString(html, "text/html")
+  const imageByObjectUrl = new Map(inlineImages.map((image) => [image.objectUrl, image]))
+  const usedInlineImages: PendingInlineImage[] = []
+  const usedObjectUrls = new Set<string>()
+
+  for (const imageElement of Array.from(document.querySelectorAll("img[src]"))) {
+    const src = imageElement.getAttribute("src")
+    if (!src) continue
+
+    const inlineImage = imageByObjectUrl.get(src)
+    if (!inlineImage) continue
+
+    imageElement.setAttribute("src", `cid:${inlineImage.cid}`)
+
+    if (!usedObjectUrls.has(src)) {
+      usedInlineImages.push(inlineImage)
+      usedObjectUrls.add(src)
+    }
+  }
+
+  const isFullHtmlDocument = /^\s*(<!doctype|<html[\s>])/i.test(html)
+  const content = isFullHtmlDocument
+    ? `<!doctype html>\n${document.documentElement.outerHTML}`
+    : document.body.innerHTML
+
+  return {
+    content,
+    inlineImages: usedInlineImages.map(({ file, cid }) => ({ file, cid })),
+  }
+}
+
 export function ComposeEmail({ fromAddress, onFromAddressChange }: ComposeEmailProps) {
   const navigate = useNavigate()
   const editorRef = useRef<EmailEditorRef>(null)
+  const attachmentInputRef = useRef<HTMLInputElement>(null)
+  const attachmentsRef = useRef<File[]>([])
+  const inlineImagesRef = useRef<PendingInlineImage[]>([])
   const { data: user, isPending: isUserPending } = useUser()
   const { data: activeMailAccounts, isPending: isMailAccountsPending } = useActiveMailAccounts()
   const sendMailMutation = useSendMail()
@@ -37,6 +113,8 @@ export function ComposeEmail({ fromAddress, onFromAddressChange }: ComposeEmailP
   const [sendPreview, setSendPreview] = useState<ComposeSendPreviewData | null>(null)
   const [showCc, setShowCc] = useState(false)
   const [showBcc, setShowBcc] = useState(false)
+  const [attachments, setAttachments] = useState<File[]>([])
+  const [inlineImages, setInlineImages] = useState<PendingInlineImage[]>([])
 
   const activeFromAddressSet = useMemo(
     () => new Set((activeMailAccounts ?? []).map((mailAccount) => mailAccount.emailAddress)),
@@ -60,6 +138,119 @@ export function ComposeEmail({ fromAddress, onFromAddressChange }: ComposeEmailP
   const isSendPreviewOpen = sendPreview !== null
   const cannotSend =
     sendMailMutation.isPending || isPreparingPreview || isFromAddressPending || !selectedFromAddress || !isEditorReady
+
+  useEffect(() => {
+    attachmentsRef.current = attachments
+  }, [attachments])
+
+  useEffect(() => {
+    inlineImagesRef.current = inlineImages
+  }, [inlineImages])
+
+  useEffect(() => {
+    return () => {
+      for (const inlineImage of inlineImagesRef.current) {
+        URL.revokeObjectURL(inlineImage.objectUrl)
+      }
+    }
+  }, [])
+
+  const showUploadLimitError = () => {
+    toast.error("첨부 용량은 본문 이미지를 포함해 20MB 이하만 가능합니다")
+  }
+
+  const handleAttachmentInputChange = (event: ChangeEvent<HTMLInputElement>) => {
+    const selectedFiles = Array.from(event.target.files ?? [])
+    event.target.value = ""
+
+    if (selectedFiles.length === 0) {
+      return
+    }
+
+    setAttachments((currentAttachments) => {
+      const nextAttachments = [...currentAttachments, ...selectedFiles]
+
+      if (getSendFileSize(nextAttachments, inlineImagesRef.current) > MAX_SEND_FILE_BYTES) {
+        showUploadLimitError()
+        return currentAttachments
+      }
+
+      attachmentsRef.current = nextAttachments
+      return nextAttachments
+    })
+  }
+
+  const removeAttachment = (index: number) => {
+    setAttachments((currentAttachments) => {
+      const nextAttachments = currentAttachments.filter((_, currentIndex) => currentIndex !== index)
+      attachmentsRef.current = nextAttachments
+      return nextAttachments
+    })
+  }
+
+  const uploadInlineImage = useCallback(async (file: File) => {
+    if (!file.type.startsWith("image/")) {
+      toast.error("이미지 파일만 본문에 삽입할 수 있습니다")
+      throw new Error("Only image files can be inserted inline")
+    }
+
+    if (getSendFileSize(attachmentsRef.current, inlineImagesRef.current) + file.size > MAX_SEND_FILE_BYTES) {
+      showUploadLimitError()
+      throw new Error("Inline image exceeds upload size limit")
+    }
+
+    const cid = createInlineImageCid()
+    const objectUrl = URL.createObjectURL(file)
+    const inlineImage: PendingInlineImage = {
+      id: cid,
+      cid,
+      file,
+      objectUrl,
+    }
+
+    setInlineImages((currentInlineImages) => {
+      const nextInlineImages = [...currentInlineImages, inlineImage]
+      inlineImagesRef.current = nextInlineImages
+      return nextInlineImages
+    })
+
+    return { url: objectUrl }
+  }, [])
+
+  const pruneUnusedInlineImages = (content: JSONContent) => {
+    const imageSources = collectImageSources(content)
+
+    setInlineImages((currentInlineImages) => {
+      if (currentInlineImages.length === 0) {
+        return currentInlineImages
+      }
+
+      let didRemoveImage = false
+      const nextInlineImages = currentInlineImages.filter((inlineImage) => {
+        const isUsed = imageSources.has(inlineImage.objectUrl)
+
+        if (!isUsed) {
+          didRemoveImage = true
+          URL.revokeObjectURL(inlineImage.objectUrl)
+        }
+
+        return isUsed
+      })
+
+      if (!didRemoveImage) {
+        return currentInlineImages
+      }
+
+      inlineImagesRef.current = nextInlineImages
+      return nextInlineImages
+    })
+  }
+
+  const handleInsertImage = () => {
+    editor?.chain().focus().run()
+    const commands = editor?.commands as { uploadImage?: () => boolean } | undefined
+    commands?.uploadImage?.()
+  }
 
   const createSendPreview = async () => {
     if (isFromAddressPending) {
@@ -101,6 +292,8 @@ export function ComposeEmail({ fromAddress, onFromAddressChange }: ComposeEmailP
       return null
     }
 
+    const sendContent = buildMailContentWithCidImages(emailContent.html, inlineImagesRef.current)
+
     return {
       mail: {
         from: selectedFromAddress,
@@ -108,9 +301,12 @@ export function ComposeEmail({ fromAddress, onFromAddressChange }: ComposeEmailP
         cc: parseMailAddressInput(cc),
         bcc: parseMailAddressInput(bcc),
         subject: subject.trim(),
-        content: emailContent.html,
+        content: sendContent.content,
+        attachments,
+        inlineImages: sendContent.inlineImages,
       },
       text: emailContent.text,
+      html: emailContent.html,
     } satisfies ComposeSendPreviewData
   }
 
@@ -259,7 +455,7 @@ export function ComposeEmail({ fromAddress, onFromAddressChange }: ComposeEmailP
         </Select>
       </div>
 
-      <ComposeEditorToolbar editor={editor} disabled={!isEditorReady} />
+      <ComposeEditorToolbar editor={editor} disabled={!isEditorReady} onInsertImage={handleInsertImage} />
 
       <div className="flex-1 overflow-hidden" aria-label="메일 본문">
         <EmailEditor
@@ -267,6 +463,7 @@ export function ComposeEmail({ fromAddress, onFromAddressChange }: ComposeEmailP
           theme="basic"
           placeholder="메일 내용을 입력하세요. / 로 블록을 추가할 수 있습니다."
           className="compose-email-editor h-full overflow-auto text-sm outline-none"
+          onUploadImage={uploadInlineImage}
           onReady={(ref) => {
             setIsEditorReady(true)
             setIsEditorEmpty(ref.editor?.isEmpty ?? true)
@@ -274,15 +471,68 @@ export function ComposeEmail({ fromAddress, onFromAddressChange }: ComposeEmailP
           }}
           onUpdate={(ref) => {
             setIsEditorEmpty(ref.editor?.isEmpty ?? true)
+            pruneUnusedInlineImages(ref.getJSON())
           }}
         />
       </div>
 
       <div className="shrink-0 border-t px-4 py-3">
-        <Button className="w-full" size="lg" onClick={handleSendPreview} disabled={cannotSend}>
-          {isPreparingPreview || sendMailMutation.isPending ? <Loader2 className="size-4 animate-spin" /> : null}
-          보내기
-        </Button>
+        <input
+          ref={attachmentInputRef}
+          type="file"
+          multiple
+          className="sr-only"
+          onChange={handleAttachmentInputChange}
+        />
+
+        {(attachments.length > 0 || inlineImages.length > 0) && (
+          <div className="mb-3 flex flex-col gap-2">
+            {attachments.length > 0 && (
+              <ul className="flex flex-col gap-1.5">
+                {attachments.map((attachment, index) => (
+                  <li
+                    key={`${attachment.name}-${attachment.lastModified}-${index}`}
+                    className="flex min-h-9 items-center gap-2 rounded-md border bg-background px-3 text-sm"
+                  >
+                    <FileText className="size-4 shrink-0 text-muted-foreground" />
+                    <span className="min-w-0 flex-1 truncate">{attachment.name}</span>
+                    <span className="shrink-0 text-xs text-muted-foreground">{formatFileSize(attachment.size)}</span>
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="icon-sm"
+                      className="-mr-2"
+                      onClick={() => removeAttachment(index)}
+                      aria-label={`${attachment.name} 첨부파일 제거`}
+                    >
+                      <X className="size-4" />
+                    </Button>
+                  </li>
+                ))}
+              </ul>
+            )}
+            {inlineImages.length > 0 && (
+              <div className="text-xs text-muted-foreground">본문 이미지 {inlineImages.length}개가 포함됩니다</div>
+            )}
+          </div>
+        )}
+
+        <div className="flex gap-2">
+          <Button
+            type="button"
+            variant="outline"
+            size="lg"
+            onClick={() => attachmentInputRef.current?.click()}
+            disabled={sendMailMutation.isPending || isPreparingPreview}
+            aria-label="첨부파일 추가"
+          >
+            <Paperclip className="size-4" />
+          </Button>
+          <Button className="flex-1" size="lg" onClick={handleSendPreview} disabled={cannotSend}>
+            {isPreparingPreview || sendMailMutation.isPending ? <Loader2 className="size-4 animate-spin" /> : null}
+            보내기
+          </Button>
+        </div>
       </div>
 
       <ComposeSendPreviewDialog

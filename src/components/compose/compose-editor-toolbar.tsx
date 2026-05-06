@@ -13,6 +13,7 @@ import {
   Heading1,
   Heading2,
   Heading3,
+  Image as ImageIcon,
   Italic,
   Link as LinkIcon,
   List,
@@ -178,9 +179,10 @@ function insertLinkedText(editor: ComposeEditor, range: LinkSelectionRange, text
 interface ComposeEditorToolbarProps {
   editor: ComposeEditor | null
   disabled: boolean
+  onInsertImage?: () => void
 }
 
-export function ComposeEditorToolbar({ editor, disabled }: ComposeEditorToolbarProps) {
+export function ComposeEditorToolbar({ editor, disabled, onInsertImage }: ComposeEditorToolbarProps) {
   const linkTextInputRef = useRef<HTMLInputElement>(null)
   const linkSelectionRangeRef = useRef<LinkSelectionRange | null>(null)
   const [isLinkEditorOpen, setIsLinkEditorOpen] = useState(false)
@@ -321,6 +323,12 @@ export function ComposeEditorToolbar({ editor, disabled }: ComposeEditorToolbarP
           active={toolbarState?.isLink ?? false}
           disabled={isDisabled}
           onClick={() => runCommand(openLinkEditor)}
+        />
+        <ToolbarIconButton
+          label="이미지 삽입"
+          icon={ImageIcon}
+          disabled={isDisabled || !onInsertImage}
+          onClick={() => onInsertImage?.()}
         />
 
         <ToolbarSeparator />
