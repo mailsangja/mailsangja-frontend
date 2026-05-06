@@ -111,7 +111,6 @@ export interface ComposeInlineImage {
 
 export interface ComposeEmailData {
   messageId?: string
-  threadId?: string
   from?: string
   replyTo?: string
   to: string[]

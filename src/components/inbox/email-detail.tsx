@@ -417,28 +417,9 @@ export function EmailDetail({ threadId, onClose, readOnly }: EmailDetailProps) {
 
   const handleReply = () => {
     if (!thread) return
-    const lastMessage = thread.messages.at(-1)
-    if (!lastMessage) return
-
-    const replyTo = lastMessage.replyTo?.email ?? lastMessage.from.email
-    const currentSubject = thread.latestSubject
-    const replySubject = /^re:/i.test(currentSubject) ? currentSubject : `Re: ${currentSubject}`
-    const fromAccount = accounts?.find((item) => item.id === thread.accountId)
-
-    const ownEmails = new Set((accounts ?? []).map((a) => a.emailAddress))
-    const replyCcAddresses = lastMessage.cc.filter((addr) => !ownEmails.has(addr.email))
-    const replyCc = replyCcAddresses.length > 0 ? formatMailAddressList(replyCcAddresses) : undefined
-
     void navigate({
       to: "/compose",
-      search: {
-        replyMessageId: lastMessage.id,
-        replyThreadId: thread.threadId,
-        replyTo,
-        replySubject,
-        ...(fromAccount ? { from: fromAccount.emailAddress } : {}),
-        ...(replyCc ? { replyCc } : {}),
-      },
+      search: { replyThreadId: thread.threadId },
     })
   }
 
