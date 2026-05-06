@@ -1,4 +1,4 @@
-import { apiClient } from "@/lib/api-client"
+import { apiClient, buildApiUrl } from "@/lib/api-client"
 import { getVisibleAttachments } from "@/lib/email-attachments"
 import { normalizeSnippetText } from "@/lib/html-entities"
 import type {
@@ -75,6 +75,10 @@ export async function markThreadAsRead(threadId: string): Promise<void> {
 
 export async function getUnreadCount(): Promise<UnreadCountResponse> {
   return apiClient.get<UnreadCountResponse>("/api/v1/threads/inbox/unread-count")
+}
+
+export function getAttachmentDownloadUrl(attachmentId: string) {
+  return buildApiUrl(`/api/v1/mail/attachments/${attachmentId}`)
 }
 
 export async function sendMail(data: ComposeEmailData): Promise<void> {

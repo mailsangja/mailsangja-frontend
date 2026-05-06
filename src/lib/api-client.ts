@@ -48,6 +48,10 @@ function buildUrl(path: string, params?: QueryParams) {
   return url
 }
 
+export function buildApiUrl(path: string, params?: QueryParams) {
+  return buildUrl(path, params).toString()
+}
+
 function isBodyInit(body: unknown): body is BodyInit {
   if (typeof body === "string") {
     return true
@@ -70,7 +74,10 @@ function isBodyInit(body: unknown): body is BodyInit {
 
 function buildHeaders(headers?: HeadersInit, body?: unknown) {
   const requestHeaders = new Headers(headers)
-  requestHeaders.set("Accept", "application/json")
+
+  if (!requestHeaders.has("Accept")) {
+    requestHeaders.set("Accept", "application/json")
+  }
 
   if (body !== undefined && !isBodyInit(body) && !requestHeaders.has("Content-Type")) {
     requestHeaders.set("Content-Type", "application/json")
