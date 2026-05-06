@@ -306,25 +306,22 @@ export function ComposeEmail({ fromAddress, onFromAddressChange }: ComposeEmailP
       return
     }
 
-    setAttachments((currentAttachments) => {
-      const nextAttachments = [...currentAttachments, ...selectedFiles]
+    const nextAttachments = [...attachmentsRef.current, ...selectedFiles]
 
-      if (getSendFileSize(nextAttachments, inlineImagesRef.current) > MAX_SEND_FILE_BYTES) {
-        showUploadLimitError()
-        return currentAttachments
-      }
+    if (getSendFileSize(nextAttachments, inlineImagesRef.current) > MAX_SEND_FILE_BYTES) {
+      showUploadLimitError()
+      return
+    }
 
-      attachmentsRef.current = nextAttachments
-      return nextAttachments
-    })
+    attachmentsRef.current = nextAttachments
+    setAttachments(nextAttachments)
   }
 
   const removeAttachment = (index: number) => {
-    setAttachments((currentAttachments) => {
-      const nextAttachments = currentAttachments.filter((_, currentIndex) => currentIndex !== index)
-      attachmentsRef.current = nextAttachments
-      return nextAttachments
-    })
+    const nextAttachments = attachmentsRef.current.filter((_, currentIndex) => currentIndex !== index)
+
+    attachmentsRef.current = nextAttachments
+    setAttachments(nextAttachments)
   }
 
   const uploadInlineImage = useCallback(async (file: File) => {
@@ -354,11 +351,10 @@ export function ComposeEmail({ fromAddress, onFromAddressChange }: ComposeEmailP
       objectUrl,
     }
 
-    setInlineImages((currentInlineImages) => {
-      const nextInlineImages = [...currentInlineImages, inlineImage]
-      inlineImagesRef.current = nextInlineImages
-      return nextInlineImages
-    })
+    const nextInlineImages = [...inlineImagesRef.current, inlineImage]
+
+    inlineImagesRef.current = nextInlineImages
+    setInlineImages(nextInlineImages)
 
     return { url: objectUrl }
   }, [])
@@ -366,30 +362,26 @@ export function ComposeEmail({ fromAddress, onFromAddressChange }: ComposeEmailP
   const pruneUnusedInlineImages = (content: JSONContent) => {
     const imageMetadata = collectImageMetadata(content)
 
-    setInlineImages((currentInlineImages) => {
-      if (currentInlineImages.length === 0) {
-        return currentInlineImages
+    if (inlineImagesRef.current.length === 0) {
+      return
+    }
+
+    const nextInlineImages = inlineImagesRef.current.filter((inlineImage) => imageMetadata.has(inlineImage.objectUrl))
+
+    if (nextInlineImages.length === inlineImagesRef.current.length) {
+      return
+    }
+
+    const nextInlineImageObjectUrls = new Set(nextInlineImages.map((inlineImage) => inlineImage.objectUrl))
+
+    for (const inlineImage of inlineImagesRef.current) {
+      if (!nextInlineImageObjectUrls.has(inlineImage.objectUrl)) {
+        URL.revokeObjectURL(inlineImage.objectUrl)
       }
+    }
 
-      let didRemoveImage = false
-      const nextInlineImages = currentInlineImages.filter((inlineImage) => {
-        const isUsed = imageMetadata.has(inlineImage.objectUrl)
-
-        if (!isUsed) {
-          didRemoveImage = true
-          URL.revokeObjectURL(inlineImage.objectUrl)
-        }
-
-        return isUsed
-      })
-
-      if (!didRemoveImage) {
-        return currentInlineImages
-      }
-
-      inlineImagesRef.current = nextInlineImages
-      return nextInlineImages
-    })
+    inlineImagesRef.current = nextInlineImages
+    setInlineImages(nextInlineImages)
   }
 
   const handleInsertImage = () => {
