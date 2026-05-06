@@ -8,16 +8,16 @@ import {
   themeStylesToPanelOverrides,
 } from "@react-email/editor/plugins"
 import type { JSONContent } from "@tiptap/core"
-import { FileText, Loader2, Paperclip, X } from "lucide-react"
+import { Loader2, Paperclip, X } from "lucide-react"
 import { useNavigate } from "@tanstack/react-router"
 import { toast } from "sonner"
 
+import { FileAttachmentChip } from "@/components/attachment-chip"
 import { ComposeEditorToolbar, type ComposeEditor } from "@/components/compose/compose-editor-toolbar"
 import { ComposeSendPreviewDialog, type ComposeSendPreviewData } from "@/components/compose/compose-send-preview-dialog"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { formatFileSize } from "@/lib/file-size"
 import { getErrorMessage } from "@/lib/http-error"
 import { parseMailAddressInput } from "@/lib/mail-address"
 import { useSendMail } from "@/mutations/emails"
@@ -629,29 +629,16 @@ export function ComposeEmail({ fromAddress, onFromAddressChange }: ComposeEmailP
         />
 
         {attachments.length > 0 && (
-          <div className="mb-3 flex flex-col gap-2">
-            <ul className="flex flex-col gap-1.5">
-              {attachments.map((attachment, index) => (
-                <li
-                  key={`${attachment.name}-${attachment.lastModified}-${index}`}
-                  className="flex min-h-9 items-center gap-2 rounded-md border bg-background px-3 text-sm"
-                >
-                  <FileText className="size-4 shrink-0 text-muted-foreground" />
-                  <span className="min-w-0 flex-1 truncate">{attachment.name}</span>
-                  <span className="shrink-0 text-xs text-muted-foreground">{formatFileSize(attachment.size)}</span>
-                  <Button
-                    type="button"
-                    variant="ghost"
-                    size="icon-sm"
-                    className="-mr-2"
-                    onClick={() => removeAttachment(index)}
-                    aria-label={`${attachment.name} 첨부파일 제거`}
-                  >
-                    <X className="size-4" />
-                  </Button>
-                </li>
+          <div className="mb-3">
+            <div className="flex max-h-20 flex-wrap gap-2 overflow-y-auto pr-1">
+              {attachments.map((file, index) => (
+                <FileAttachmentChip
+                  key={`${file.name}-${file.lastModified}-${index}`}
+                  file={file}
+                  onRemove={() => removeAttachment(index)}
+                />
               ))}
-            </ul>
+            </div>
           </div>
         )}
 
