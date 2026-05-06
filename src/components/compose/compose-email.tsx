@@ -1,5 +1,12 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from "react"
 import { EmailEditor, type EmailEditorRef } from "@react-email/editor"
+import {
+  EDITOR_THEMES,
+  extendTheme,
+  setCurrentTheme,
+  setGlobalStyles,
+  themeStylesToPanelOverrides,
+} from "@react-email/editor/plugins"
 import type { JSONContent } from "@tiptap/core"
 import { FileText, Loader2, Paperclip, X } from "lucide-react"
 import { useNavigate } from "@tanstack/react-router"
@@ -34,6 +41,18 @@ interface ComposeImageMetadata {
 }
 
 const MAX_SEND_FILE_BYTES = 20 * 1024 * 1024
+const EDITOR_THEME = extendTheme("basic", {
+  body: { backgroundColor: "transparent" },
+  container: {
+    backgroundColor: "#fff",
+    padding: "1rem",
+  },
+  paragraph: {
+    paddingTop: "0.25em",
+    paddingBottom: "0.25em",
+  },
+})
+const EDITOR_THEME_STYLES = themeStylesToPanelOverrides(EDITOR_THEME.styles, EDITOR_THEMES.basic)
 
 function createInlineImageCid() {
   return `inline-${crypto.randomUUID()}`
@@ -53,6 +72,27 @@ function getInlineImagesSize(inlineImages: readonly PendingInlineImage[]) {
 
 function getSendFileSize(attachments: readonly File[], inlineImages: readonly PendingInlineImage[]) {
   return getFilesSize(attachments) + getInlineImagesSize(inlineImages)
+}
+
+function getGlobalContentData(content: JSONContent) {
+  const globalContent = content.content?.find((node) => node.type === "globalContent")
+  const data = globalContent?.attrs?.data
+
+  return data && typeof data === "object" && !Array.isArray(data) ? (data as Record<string, unknown>) : null
+}
+
+function hasEditorTheme(content: JSONContent) {
+  const data = getGlobalContentData(content)
+
+  return data?.theme === (EDITOR_THEME.extends ?? "basic") && Array.isArray(data.styles)
+}
+
+function applyEditorTheme(editor: ComposeEditor | null, content?: JSONContent) {
+  if (!editor) return
+  if (content && hasEditorTheme(content)) return
+
+  setCurrentTheme(editor, EDITOR_THEME.extends ?? "basic")
+  setGlobalStyles(editor, EDITOR_THEME_STYLES)
 }
 
 function normalizeImageAlignment(value: unknown): ComposeImageMetadata["alignment"] {
@@ -139,6 +179,15 @@ function applyImageAlignment(
   table.appendChild(tbody)
 }
 
+function applyListIndentation(document: Document) {
+  for (const listElement of Array.from(document.querySelectorAll<HTMLElement>("ul, ol"))) {
+    mergeInlineStyle(listElement, {
+      "padding-bottom": "0.5rem",
+      "padding-left": "0.25rem",
+    })
+  }
+}
+
 function buildMailContentWithImages(
   html: string,
   inlineImages: readonly PendingInlineImage[],
@@ -169,6 +218,8 @@ function buildMailContentWithImages(
       usedInlineImageCids.add(inlineImage.cid)
     }
   }
+
+  applyListIndentation(document)
 
   const isFullHtmlDocument = /^\s*(<!doctype|<html[\s>])/i.test(html)
   const content = isFullHtmlDocument
@@ -561,19 +612,23 @@ export function ComposeEmail({ fromAddress, onFromAddressChange }: ComposeEmailP
       <div className="flex-1 overflow-hidden" aria-label="메일 본문">
         <EmailEditor
           ref={editorRef}
-          theme="basic"
+          theme={EDITOR_THEME}
           placeholder="메일 내용을 입력하세요. / 로 블록을 추가할 수 있습니다."
           bubbleMenu={{ hideWhenActiveNodes: ["button", "image"] }}
           className="compose-email-editor h-full overflow-auto text-sm outline-none"
           onUploadImage={uploadInlineImage}
           onReady={(ref) => {
+            applyEditorTheme(ref.editor)
             setIsEditorReady(true)
             setIsEditorEmpty(ref.editor?.isEmpty ?? true)
             setEditor(ref.editor)
           }}
           onUpdate={(ref) => {
+            const content = ref.getJSON()
+
+            applyEditorTheme(ref.editor, content)
             setIsEditorEmpty(ref.editor?.isEmpty ?? true)
-            pruneUnusedInlineImages(ref.getJSON())
+            pruneUnusedInlineImages(content)
           }}
         />
       </div>
