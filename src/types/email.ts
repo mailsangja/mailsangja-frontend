@@ -27,6 +27,8 @@ export interface Attachment {
   gmailAttachmentId: string
   filename: string
   mimeType: string
+  contentId?: string
+  disposition?: "ATTACHMENT" | "INLINE"
   size: number
 }
 
@@ -87,18 +89,28 @@ export interface MarkerSliceResponse<T> {
   content: T[]
   nextMarker: string | null
   hasNext: boolean
+  unreadCount?: number
+  totalCount?: number
 }
 
 export interface ListThreadsParams {
   marker?: string
   size?: number
+  labelId?: string[]
+  read?: boolean
 }
 
 export interface UnreadCountResponse {
   unreadCount: number
 }
 
+export interface ComposeInlineImage {
+  file: File
+  cid: string
+}
+
 export interface ComposeEmailData {
+  messageId?: string
   from?: string
   replyTo?: string
   to: string[]
@@ -107,4 +119,5 @@ export interface ComposeEmailData {
   subject: string
   content: string
   attachments?: File[]
+  inlineImages?: ComposeInlineImage[]
 }

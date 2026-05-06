@@ -32,7 +32,7 @@ function normalizeThreadDetail(thread: InboxThreadDetail): InboxThreadDetail {
   }
 }
 
-function appendFormDataValues(formData: FormData, key: string, values?: string[]) {
+function appendFormDataValues(formData: FormData, key: string, values?: readonly string[]) {
   for (const value of values ?? []) {
     const normalizedValue = value.trim()
 
@@ -95,5 +95,20 @@ export async function sendMail(data: ComposeEmailData): Promise<void> {
     formData.append("attachments", attachment)
   }
 
-  await apiClient.post<void>("/api/v1/mail/send", formData)
+  for (const inlineImage of data.inlineImages ?? []) {
+    const cid = inlineImage.cid.trim()
+
+    if (!cid) {
+      continue
+    }
+
+    formData.append("inlineImages", inlineImage.file)
+    formData.append("inlineImageCids", cid)
+  }
+
+  await apiClient.post<void>("/api/v1/mail/send", formData, {
+    params: {
+      messageId: data.messageId,
+    },
+  })
 }

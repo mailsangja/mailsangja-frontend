@@ -9,6 +9,7 @@ import { emailKeys } from "@/queries/emails"
 
 export const emailMutationOptions = {
   sendMail: () => ({
+    mutationKey: [...emailKeys.all(), "send"] as const,
     mutationFn: (data: ComposeEmailData) => sendMail(data),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: emailKeys.all() })
