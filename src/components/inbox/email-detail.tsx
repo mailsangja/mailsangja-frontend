@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Archive, ArrowLeft, Forward, MailOpen, MoreVertical, Reply, Star, Trash2 } from "lucide-react"
+import { Archive, ArrowLeft, Forward, Mail, MailOpen, MoreVertical, Reply, Star, Trash2 } from "lucide-react"
 import { useNavigate } from "@tanstack/react-router"
 import { toast } from "sonner"
 
@@ -71,6 +71,20 @@ function EmptyState() {
       <div className="text-center">
         <p className="font-medium text-muted-foreground">스레드를 선택해주세요</p>
         <p className="mt-1 text-sm text-muted-foreground/70">목록에서 대화를 클릭하면 여기에 내용이 표시됩니다</p>
+      </div>
+    </div>
+  )
+}
+
+function ReferenceEmptyState() {
+  return (
+    <div className="flex min-h-full flex-col items-center justify-center gap-3 px-6 py-16 text-center">
+      <div className="flex size-14 items-center justify-center rounded-full bg-muted">
+        <Mail className="size-7 text-muted-foreground/60" />
+      </div>
+      <div>
+        <p className="font-medium text-muted-foreground">레퍼런스 메일</p>
+        <p className="mt-1 text-sm text-muted-foreground">메일 작성시 참고할 메일이 여기 표시됩니다</p>
       </div>
     </div>
   )
@@ -213,7 +227,7 @@ interface MessageItemProps {
   message: InboxMessage
   isExpanded: boolean
   onToggle: () => void
-  onDelete: () => void
+  onDelete?: () => void
 }
 
 function MessageItem({ message, isExpanded, onToggle, onDelete }: MessageItemProps) {
@@ -278,17 +292,19 @@ function MessageItem({ message, isExpanded, onToggle, onDelete }: MessageItemPro
             >
               <Star className="size-4" />
             </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" aria-label="메시지 더보기" />}>
-                <MoreVertical className="size-4" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={onDelete}>
-                  <Trash2 className="size-4" />
-                  삭제
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
+            {onDelete && (
+              <DropdownMenu>
+                <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" aria-label="메시지 더보기" />}>
+                  <MoreVertical className="size-4" />
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={onDelete}>
+                    <Trash2 className="size-4" />
+                    삭제
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
+            )}
           </div>
         </div>
       </header>
@@ -334,9 +350,10 @@ function ThreadFooter({ onReply }: { onReply: () => void }) {
 interface EmailDetailProps {
   threadId: string | null
   onClose?: () => void
+  readOnly?: boolean
 }
 
-export function EmailDetail({ threadId, onClose }: EmailDetailProps) {
+export function EmailDetail({ threadId, onClose, readOnly }: EmailDetailProps) {
   const navigate = useNavigate()
   const { data: thread, isLoading, isError, error, refetch } = useThread(threadId)
   const { data: accounts } = useMailAccounts()
@@ -406,10 +423,22 @@ export function EmailDetail({ threadId, onClose }: EmailDetailProps) {
     const replyTo = lastMessage.replyTo?.email ?? lastMessage.from.email
     const currentSubject = thread.latestSubject
     const replySubject = /^re:/i.test(currentSubject) ? currentSubject : `Re: ${currentSubject}`
+    const fromAccount = accounts?.find((item) => item.id === thread.accountId)
+
+    const ownEmails = new Set((accounts ?? []).map((a) => a.emailAddress))
+    const replyCcAddresses = lastMessage.cc.filter((addr) => !ownEmails.has(addr.email))
+    const replyCc = replyCcAddresses.length > 0 ? formatMailAddressList(replyCcAddresses) : undefined
 
     void navigate({
       to: "/compose",
-      search: { replyMessageId: lastMessage.id, replyThreadId: thread.threadId, replyTo, replySubject },
+      search: {
+        replyMessageId: lastMessage.id,
+        replyThreadId: thread.threadId,
+        replyTo,
+        replySubject,
+        ...(fromAccount ? { from: fromAccount.emailAddress } : {}),
+        ...(replyCc ? { replyCc } : {}),
+      },
     })
   }
 
@@ -442,6 +471,50 @@ export function EmailDetail({ threadId, onClose }: EmailDetailProps) {
         })
       },
     })
+  }
+
+  if (readOnly) {
+    return (
+      <div className="flex h-full flex-col overflow-hidden">
+        <div className="flex h-11 shrink-0 items-center border-b px-4">
+          <h1 className="text-sm font-medium">참고 메일</h1>
+        </div>
+        {!threadId || (!isLoading && !thread && !isError) ? (
+          <ReferenceEmptyState />
+        ) : isLoading ? (
+          <LoadingState />
+        ) : isError ? (
+          (() => {
+            const errorCopy = getThreadDetailErrorCopy(error)
+            return (
+              <EmailErrorState
+                title={errorCopy.title}
+                description={errorCopy.description}
+                onRetry={() => void refetch()}
+              />
+            )
+          })()
+        ) : thread ? (
+          <>
+            <ThreadHeader thread={thread} account={accounts?.find((item) => item.id === thread.accountId)} />
+            <ScrollArea className="min-h-0 flex-1">
+              <div className="p-2">
+                <div className="divide-y overflow-hidden rounded-lg border bg-card">
+                  {thread.messages.map((message) => (
+                    <MessageItem
+                      key={message.id}
+                      message={message}
+                      isExpanded={expandedIds.has(message.id)}
+                      onToggle={() => toggleExpanded(message.id)}
+                    />
+                  ))}
+                </div>
+              </div>
+            </ScrollArea>
+          </>
+        ) : null}
+      </div>
+    )
   }
 
   if (!threadId) return <EmptyState />

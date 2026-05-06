@@ -31,6 +31,7 @@ interface ComposeEmailProps {
   messageId?: string
   initialTo?: string
   initialSubject?: string
+  initialCc?: string
 }
 
 interface PendingInlineImage extends ComposeInlineImage {
@@ -241,6 +242,7 @@ export function ComposeEmail({
   messageId,
   initialTo,
   initialSubject,
+  initialCc,
 }: ComposeEmailProps) {
   const navigate = useNavigate()
   const editorRef = useRef<EmailEditorRef>(null)
@@ -252,14 +254,14 @@ export function ComposeEmail({
   const sendMailMutation = useSendMail()
   const [editor, setEditor] = useState<ComposeEditor | null>(null)
   const [to, setTo] = useState(initialTo ?? "")
-  const [cc, setCc] = useState("")
+  const [cc, setCc] = useState(initialCc ?? "")
   const [bcc, setBcc] = useState("")
   const [subject, setSubject] = useState(initialSubject ?? "")
   const [isEditorReady, setIsEditorReady] = useState(false)
   const [isEditorEmpty, setIsEditorEmpty] = useState(true)
   const [isPreparingPreview, setIsPreparingPreview] = useState(false)
   const [sendPreview, setSendPreview] = useState<ComposeSendPreviewData | null>(null)
-  const [showCc, setShowCc] = useState(false)
+  const [showCc, setShowCc] = useState(!!initialCc)
   const [showBcc, setShowBcc] = useState(false)
   const [attachments, setAttachments] = useState<File[]>([])
   const [inlineImages, setInlineImages] = useState<PendingInlineImage[]>([])
@@ -448,7 +450,7 @@ export function ComposeEmail({
         cc: parseMailAddressInput(cc),
         bcc: parseMailAddressInput(bcc),
         subject: subject.trim(),
-        content: emailContent.html,
+        content: sendContent.content,
         ...(messageId ? { messageId } : {}),
         attachments,
         inlineImages: sendContent.inlineImages,
