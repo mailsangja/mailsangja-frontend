@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { Link, useLocation } from "@tanstack/react-router"
 import { Plus } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -11,6 +12,9 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
+import { parseMailRouteSearch } from "@/lib/mail-routing"
+import { useCreateLabel } from "@/mutations/labels"
+import { useLabels } from "@/queries/labels"
 
 const LABEL_COLORS = [
   "#ef4444", // red
@@ -35,24 +39,27 @@ const LABEL_COLORS = [
   "#6b7280", // gray
 ]
 
-interface Label {
-  id: string
-  name: string
-  color: string
-}
-
 export function NavLabels({ className }: { className?: string }) {
-  const [labels, setLabels] = useState<Label[]>([])
+  const { data: labels = [] } = useLabels()
+  const createLabel = useCreateLabel()
   const [open, setOpen] = useState(false)
   const [name, setName] = useState("")
   const [selectedColor, setSelectedColor] = useState(LABEL_COLORS[0])
+  const location = useLocation()
+  const { labelId: activeLabelId } = parseMailRouteSearch(location.search)
 
   function handleCreate() {
     if (!name.trim()) return
-    setLabels((prev) => [...prev, { id: crypto.randomUUID(), name: name.trim(), color: selectedColor }])
-    setName("")
-    setSelectedColor(LABEL_COLORS[0])
-    setOpen(false)
+    createLabel.mutate(
+      { name: name.trim(), colorCode: selectedColor, notificationPolicy: "INHERIT", order: 0 },
+      {
+        onSuccess: () => {
+          setName("")
+          setSelectedColor(LABEL_COLORS[0])
+          setOpen(false)
+        },
+      }
+    )
   }
 
   return (
@@ -99,7 +106,7 @@ export function NavLabels({ className }: { className?: string }) {
               </div>
             </div>
             <DialogFooter>
-              <Button onClick={handleCreate} disabled={!name.trim()}>
+              <Button onClick={handleCreate} disabled={!name.trim() || createLabel.isPending}>
                 만들기
               </Button>
             </DialogFooter>
@@ -111,9 +118,17 @@ export function NavLabels({ className }: { className?: string }) {
         <SidebarMenu>
           {labels.map((label) => (
             <SidebarMenuItem key={label.id}>
-              <SidebarMenuButton tooltip={label.name}>
-                <span className="size-3 shrink-0 rounded-full" style={{ backgroundColor: label.color }} />
+              <SidebarMenuButton
+                tooltip={label.name}
+                isActive={activeLabelId === label.id}
+                size="sm"
+                render={<Link to="/mail/$mailbox" params={{ mailbox: "inbox" }} search={{ labelId: label.id }} />}
+              >
+                <span className="size-3 shrink-0 rounded-full" style={{ backgroundColor: label.colorCode }} />
                 <span className="truncate">{label.name}</span>
+                {label.unreadThreadCount > 0 && (
+                  <span className="ml-auto text-xs text-muted-foreground">{label.unreadThreadCount}</span>
+                )}
               </SidebarMenuButton>
             </SidebarMenuItem>
           ))}

@@ -1,5 +1,3 @@
-import { Link } from "@tanstack/react-router"
-
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -24,12 +22,7 @@ export function NavAccounts({ activeAccountId, onAccountToggle, className }: Nav
 
   return (
     <SidebarGroup className={cn("group-data-[collapsible=icon]:hidden", className)}>
-      <SidebarGroupLabel
-        render={<Link to="/settings/account" />}
-        className="transition-colors hover:text-sidebar-foreground"
-      >
-        계정
-      </SidebarGroupLabel>
+      <SidebarGroupLabel className="transition-colors hover:text-sidebar-foreground">계정</SidebarGroupLabel>
       <SidebarMenu>
         {accounts.map((account) => (
           <SidebarMenuItem key={account.id}>
