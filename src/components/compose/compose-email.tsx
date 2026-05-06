@@ -24,6 +24,7 @@ interface ComposeEmailProps {
 }
 
 interface PendingInlineImage extends ComposeInlineImage {
+  fileKey: string
   id: string
   objectUrl: string
 }
@@ -42,8 +43,16 @@ function getFilesSize(files: readonly File[]) {
   return files.reduce((total, file) => total + file.size, 0)
 }
 
+function getFileKey(file: File) {
+  return [file.name, file.type, file.size, file.lastModified].join(":")
+}
+
+function getInlineImagesSize(inlineImages: readonly PendingInlineImage[]) {
+  return getFilesSize(Array.from(new Map(inlineImages.map((image) => [image.fileKey, image.file])).values()))
+}
+
 function getSendFileSize(attachments: readonly File[], inlineImages: readonly PendingInlineImage[]) {
-  return getFilesSize(attachments) + getFilesSize(inlineImages.map((image) => image.file))
+  return getFilesSize(attachments) + getInlineImagesSize(inlineImages)
 }
 
 function normalizeImageAlignment(value: unknown): ComposeImageMetadata["alignment"] {
@@ -140,7 +149,7 @@ function buildMailContentWithImages(
   const document = parser.parseFromString(html, "text/html")
   const imageByObjectUrl = new Map(inlineImages.map((image) => [image.objectUrl, image]))
   const usedInlineImages: PendingInlineImage[] = []
-  const usedObjectUrls = new Set<string>()
+  const usedInlineImageCids = new Set<string>()
 
   for (const imageElement of Array.from(document.querySelectorAll<HTMLImageElement>("img[src]"))) {
     const src = imageElement.getAttribute("src")
@@ -155,9 +164,9 @@ function buildMailContentWithImages(
       imageElement.setAttribute("src", `cid:${inlineImage.cid}`)
     }
 
-    if (!usedObjectUrls.has(src)) {
+    if (!usedInlineImageCids.has(inlineImage.cid)) {
       usedInlineImages.push(inlineImage)
-      usedObjectUrls.add(src)
+      usedInlineImageCids.add(inlineImage.cid)
     }
   }
 
@@ -273,17 +282,24 @@ export function ComposeEmail({ fromAddress, onFromAddressChange }: ComposeEmailP
       throw new Error("Only image files can be inserted inline")
     }
 
-    if (getSendFileSize(attachmentsRef.current, inlineImagesRef.current) + file.size > MAX_SEND_FILE_BYTES) {
+    const fileKey = getFileKey(file)
+    const reusableInlineImage = inlineImagesRef.current.find((inlineImage) => inlineImage.fileKey === fileKey)
+    const inlineImagesSizeDelta = reusableInlineImage ? 0 : file.size
+
+    if (
+      getSendFileSize(attachmentsRef.current, inlineImagesRef.current) + inlineImagesSizeDelta >
+      MAX_SEND_FILE_BYTES
+    ) {
       showUploadLimitError()
       throw new Error("Inline image exceeds upload size limit")
     }
 
-    const cid = createInlineImageCid()
     const objectUrl = URL.createObjectURL(file)
     const inlineImage: PendingInlineImage = {
-      id: cid,
-      cid,
-      file,
+      fileKey,
+      id: objectUrl,
+      cid: reusableInlineImage?.cid ?? createInlineImageCid(),
+      file: reusableInlineImage?.file ?? file,
       objectUrl,
     }
 
@@ -571,35 +587,30 @@ export function ComposeEmail({ fromAddress, onFromAddressChange }: ComposeEmailP
           onChange={handleAttachmentInputChange}
         />
 
-        {(attachments.length > 0 || inlineImages.length > 0) && (
+        {attachments.length > 0 && (
           <div className="mb-3 flex flex-col gap-2">
-            {attachments.length > 0 && (
-              <ul className="flex flex-col gap-1.5">
-                {attachments.map((attachment, index) => (
-                  <li
-                    key={`${attachment.name}-${attachment.lastModified}-${index}`}
-                    className="flex min-h-9 items-center gap-2 rounded-md border bg-background px-3 text-sm"
+            <ul className="flex flex-col gap-1.5">
+              {attachments.map((attachment, index) => (
+                <li
+                  key={`${attachment.name}-${attachment.lastModified}-${index}`}
+                  className="flex min-h-9 items-center gap-2 rounded-md border bg-background px-3 text-sm"
+                >
+                  <FileText className="size-4 shrink-0 text-muted-foreground" />
+                  <span className="min-w-0 flex-1 truncate">{attachment.name}</span>
+                  <span className="shrink-0 text-xs text-muted-foreground">{formatFileSize(attachment.size)}</span>
+                  <Button
+                    type="button"
+                    variant="ghost"
+                    size="icon-sm"
+                    className="-mr-2"
+                    onClick={() => removeAttachment(index)}
+                    aria-label={`${attachment.name} 첨부파일 제거`}
                   >
-                    <FileText className="size-4 shrink-0 text-muted-foreground" />
-                    <span className="min-w-0 flex-1 truncate">{attachment.name}</span>
-                    <span className="shrink-0 text-xs text-muted-foreground">{formatFileSize(attachment.size)}</span>
-                    <Button
-                      type="button"
-                      variant="ghost"
-                      size="icon-sm"
-                      className="-mr-2"
-                      onClick={() => removeAttachment(index)}
-                      aria-label={`${attachment.name} 첨부파일 제거`}
-                    >
-                      <X className="size-4" />
-                    </Button>
-                  </li>
-                ))}
-              </ul>
-            )}
-            {inlineImages.length > 0 && (
-              <div className="text-xs text-muted-foreground">본문 이미지 {inlineImages.length}개가 포함됩니다</div>
-            )}
+                    <X className="size-4" />
+                  </Button>
+                </li>
+              ))}
+            </ul>
           </div>
         )}
 
