@@ -1,6 +1,7 @@
 import { useEffect, useRef, useState } from "react"
 import type { EmailEditorRef } from "@react-email/editor"
 import type {} from "@react-email/editor/extensions"
+import type {} from "@react-email/editor/plugins"
 import { defaultSlashCommands } from "@react-email/editor/ui"
 import { setTextAlignment } from "@react-email/editor/utils"
 import { useEditorState } from "@tiptap/react"
@@ -208,10 +209,9 @@ function insertLinkedText(editor: ComposeEditor, range: LinkSelectionRange, text
 interface ComposeEditorToolbarProps {
   editor: ComposeEditor | null
   disabled: boolean
-  onInsertImage?: () => void
 }
 
-export function ComposeEditorToolbar({ editor, disabled, onInsertImage }: ComposeEditorToolbarProps) {
+export function ComposeEditorToolbar({ editor, disabled }: ComposeEditorToolbarProps) {
   const linkTextInputRef = useRef<HTMLInputElement>(null)
   const linkSelectionRangeRef = useRef<LinkSelectionRange | null>(null)
   const [isLinkEditorOpen, setIsLinkEditorOpen] = useState(false)
@@ -356,8 +356,8 @@ export function ComposeEditorToolbar({ editor, disabled, onInsertImage }: Compos
         <ToolbarIconButton
           label="이미지 삽입"
           icon={ImageIcon}
-          disabled={isDisabled || !onInsertImage}
-          onClick={() => onInsertImage?.()}
+          disabled={isDisabled}
+          onClick={() => runCommand((editor) => editor.chain().focus().uploadImage().run())}
         />
 
         <ToolbarSeparator />

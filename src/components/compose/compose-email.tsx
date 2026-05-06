@@ -384,12 +384,6 @@ export function ComposeEmail({ fromAddress, onFromAddressChange }: ComposeEmailP
     setInlineImages(nextInlineImages)
   }
 
-  const handleInsertImage = () => {
-    editor?.chain().focus().run()
-    const commands = editor?.commands as { uploadImage?: () => boolean } | undefined
-    commands?.uploadImage?.()
-  }
-
   const createSendPreview = async () => {
     if (isFromAddressPending) {
       toast.error("발신 계정을 불러오는 중입니다")
@@ -599,7 +593,7 @@ export function ComposeEmail({ fromAddress, onFromAddressChange }: ComposeEmailP
         </Select>
       </div>
 
-      <ComposeEditorToolbar editor={editor} disabled={!isEditorReady} onInsertImage={handleInsertImage} />
+      <ComposeEditorToolbar editor={editor} disabled={!isEditorReady} />
 
       <div className="flex-1 overflow-hidden" aria-label="메일 본문">
         <EmailEditor
