@@ -34,7 +34,8 @@ export const Route = createFileRoute("/_authenticated/compose")({
     const lastMessage = thread.messages.at(-1)
     if (!lastMessage) return null
 
-    const replyTo = lastMessage.replyTo?.email ?? lastMessage.from.email
+    const replyToAddress = lastMessage.replyTo ?? lastMessage.from
+    const replyTo = replyToAddress.name ? `${replyToAddress.name} <${replyToAddress.email}>` : replyToAddress.email
     const currentSubject = thread.latestSubject
     const replySubject = /^re:/i.test(currentSubject) ? currentSubject : `Re: ${currentSubject}`
     const fromAccount = accounts.find((a) => a.id === thread.accountId)
