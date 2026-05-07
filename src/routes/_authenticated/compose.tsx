@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router"
 
 import { ComposeEmail } from "@/components/compose/compose-email"
-import { EmailDetail } from "@/components/inbox/email-detail"
+import { ComposeReference } from "@/components/compose/compose-reference"
 import { Separator } from "@/components/ui/separator"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { formatMailAddressList } from "@/lib/mail-address"
@@ -39,8 +39,7 @@ export const Route = createFileRoute("/_authenticated/compose")({
     const currentSubject = thread.latestSubject
     const replySubject = /^re:/i.test(currentSubject) ? currentSubject : `Re: ${currentSubject}`
     const fromAccount = accounts.find((a) => a.id === thread.accountId)
-    const ownEmails = new Set(accounts.map((a) => a.emailAddress))
-    const replyCcAddresses = lastMessage.cc.filter((addr) => !ownEmails.has(addr.email))
+    const replyCcAddresses = lastMessage.cc.filter((addr) => addr.email !== fromAccount?.emailAddress)
     const replyCc = replyCcAddresses.length > 0 ? formatMailAddressList(replyCcAddresses) : undefined
 
     return {
@@ -87,7 +86,7 @@ function ComposePage() {
   return (
     <div className="flex min-h-0 flex-1 overflow-hidden">
       <div className="min-h-0 min-w-0 basis-1/2 border-r-0">
-        <EmailDetail threadId={replyThreadId ?? null} readOnly />
+        <ComposeReference threadId={replyThreadId ?? null} />
       </div>
       <Separator orientation="vertical" />
       <div className="min-h-0 min-w-0 basis-2/3">
