@@ -1,40 +1,20 @@
 import { useState } from "react"
-import { Archive, ArrowLeft, Forward, MailOpen, MoreVertical, Reply, Star, Trash2 } from "lucide-react"
+import { Archive, ArrowLeft, Forward, MailOpen, Reply, Trash2 } from "lucide-react"
+import { useNavigate } from "@tanstack/react-router"
 import { toast } from "sonner"
 
-import { AttachmentChip } from "@/components/attachment-chip"
 import { EmailErrorState } from "@/components/inbox/email-error-state"
-import { Avatar, AvatarFallback } from "@/components/ui/avatar"
-import { Badge } from "@/components/ui/badge"
+import { ThreadHeader } from "@/components/thread-header"
+import { ThreadMessageList } from "@/components/thread-message-list"
 import { Button } from "@/components/ui/button"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { ScrollArea } from "@/components/ui/scroll-area"
+import { DropdownMenuItem } from "@/components/ui/dropdown-menu"
 import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
 import { getErrorMessage, getHttpStatus } from "@/lib/http-error"
-import { AccountIcon } from "@/lib/icon-entries"
-import { formatMailAddressList, getMailAddressLabel } from "@/lib/mail-address"
 import { useDeleteMessage, useDeleteThread, useRestoreTrashMessage, useRestoreTrashThread } from "@/mutations/trash"
 import { useThread } from "@/queries/emails"
 import { useMailAccounts } from "@/queries/mail-accounts"
-import type { InboxMessage, InboxThreadDetail } from "@/types/email"
-import type { MailAccount } from "@/types/mail-account"
-
-function formatDate(value: string) {
-  return new Date(value).toLocaleDateString("ko-KR", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  })
-}
-
-function getInitials(value: string) {
-  const localPart = value.split("@")[0]?.trim() ?? ""
-  return localPart.slice(0, 2).toUpperCase() || "?"
-}
+import type { InboxMessage } from "@/types/email"
 
 function getThreadDetailErrorCopy(error: unknown) {
   switch (getHttpStatus(error)) {
@@ -105,10 +85,11 @@ function LoadingState() {
 interface ThreadToolbarProps {
   onClose?: () => void
   onDelete: () => void
+  onReply: () => void
   isDeleting: boolean
 }
 
-function ThreadToolbar({ onClose, onDelete, isDeleting }: ThreadToolbarProps) {
+function ThreadToolbar({ onClose, onDelete, onReply, isDeleting }: ThreadToolbarProps) {
   return (
     <div className="flex h-11 shrink-0 items-center justify-between gap-2 px-4">
       {onClose ? (
@@ -119,7 +100,7 @@ function ThreadToolbar({ onClose, onDelete, isDeleting }: ThreadToolbarProps) {
         <span />
       )}
       <div className="ml-auto flex items-center gap-1">
-        <Button variant="ghost" size="icon-sm" disabled title="답장 기능은 아직 지원되지 않습니다.">
+        <Button variant="ghost" size="icon-sm" onClick={onReply} aria-label="답장" title="답장">
           <Reply className="size-4" />
         </Button>
         <Button variant="ghost" size="icon-sm" disabled title="전달 기능은 아직 지원되지 않습니다.">
@@ -143,180 +124,11 @@ function ThreadToolbar({ onClose, onDelete, isDeleting }: ThreadToolbarProps) {
   )
 }
 
-interface ThreadHeaderProps {
-  thread: InboxThreadDetail
-  account?: MailAccount
-}
-
-function ThreadHeader({ thread, account }: ThreadHeaderProps) {
-  const messageCount = thread.messages.length
-  const hasInbound = thread.messages.some((m) => m.direction === "INBOUND")
-  const hasOutbound = thread.messages.some((m) => m.direction === "OUTBOUND")
-
-  return (
-    <div className="shrink-0 border-b px-6 pt-2 pb-5">
-      <h2 className="text-xl leading-snug font-semibold wrap-break-word">{thread.latestSubject || "(제목 없음)"}</h2>
-      <div className="mt-2 flex flex-wrap items-center gap-1">
-        {account?.icon ? (
-          <span
-            className="inline-flex size-5 shrink-0 items-center justify-center rounded-full"
-            style={{ backgroundColor: account.color }}
-            aria-label={`${account.emailAddress} 계정`}
-            title={account.emailAddress}
-          >
-            <AccountIcon name={account.icon} className="size-3 text-white" />
-          </span>
-        ) : null}
-        {hasInbound && (
-          <Badge variant="outline" className="font-normal">
-            수신
-          </Badge>
-        )}
-        {hasOutbound && (
-          <Badge variant="outline" className="font-normal">
-            발신
-          </Badge>
-        )}
-        <Badge variant="secondary" className="font-normal">
-          메시지 {messageCount}개
-        </Badge>
-      </div>
-    </div>
-  )
-}
-
-function MessageBodyFrame({ html }: { html: string }) {
-  const [height, setHeight] = useState(0)
-
-  const srcDoc = `<!doctype html><html><head><meta charset="utf-8"><base target="_blank"><style>html,body{margin:0;padding:0;font-family:ui-sans-serif,system-ui,sans-serif;font-size:14px;color:#111;word-break:break-word;overflow-wrap:anywhere;overflow:hidden}img{max-width:100%;height:auto}</style></head><body>${html}</body></html>`
-
-  return (
-    <iframe
-      title="메일 본문"
-      sandbox="allow-same-origin allow-popups"
-      srcDoc={srcDoc}
-      className="w-full border-0 bg-white"
-      style={{ height: height || 200 }}
-      onLoad={(event) => {
-        const doc = event.currentTarget.contentDocument
-        if (!doc) return
-        const next = Math.max(doc.documentElement.scrollHeight, doc.body.scrollHeight)
-        setHeight(next)
-      }}
-    />
-  )
-}
-
-interface MessageItemProps {
-  message: InboxMessage
-  isExpanded: boolean
-  onToggle: () => void
-  onDelete: () => void
-}
-
-function MessageItem({ message, isExpanded, onToggle, onDelete }: MessageItemProps) {
-  const senderName = getMailAddressLabel(message.from)
-  const senderEmail = message.from.email
-
-  return (
-    <article className="w-full min-w-0 p-4">
-      <header
-        className="flex cursor-pointer items-start gap-3"
-        onClick={onToggle}
-        role="button"
-        tabIndex={0}
-        onKeyDown={(event) => {
-          if (event.key === "Enter" || event.key === " ") {
-            event.preventDefault()
-            onToggle()
-          }
-        }}
-        aria-expanded={isExpanded}
-      >
-        <Avatar>
-          <AvatarFallback>{getInitials(senderName)}</AvatarFallback>
-        </Avatar>
-
-        <div className="min-w-0 flex-1 overflow-hidden">
-          <div className="flex min-w-0 items-baseline gap-2">
-            <p className="shrink-0 truncate text-sm font-semibold">{senderName}</p>
-            {senderEmail && senderEmail !== senderName ? (
-              <p className="hidden min-w-0 flex-1 truncate text-xs text-muted-foreground sm:block">
-                &lt;{senderEmail}&gt;
-              </p>
-            ) : null}
-          </div>
-          {isExpanded ? (
-            <p className="mt-0.5 text-xs break-all text-muted-foreground">
-              받는 사람: {message.to.length > 0 ? formatMailAddressList(message.to) : "-"}
-            </p>
-          ) : (
-            <p className="mt-0.5 truncate text-xs text-muted-foreground">{message.snippet}</p>
-          )}
-          {isExpanded && message.cc.length > 0 ? (
-            <p className="mt-0.5 text-xs break-all text-muted-foreground">참조: {formatMailAddressList(message.cc)}</p>
-          ) : null}
-        </div>
-
-        <div
-          className="flex shrink-0 items-center gap-1"
-          onClick={(event) => event.stopPropagation()}
-          onKeyDown={(event) => event.stopPropagation()}
-        >
-          <span className="hidden truncate text-xs text-muted-foreground/80 sm:inline">
-            {formatDate(message.sentAt)}
-          </span>
-          <div className="flex shrink-0 items-center">
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              disabled
-              title="즐겨찾기는 아직 지원되지 않습니다."
-              aria-label="즐겨찾기"
-            >
-              <Star className="size-4" />
-            </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" aria-label="메시지 더보기" />}>
-                <MoreVertical className="size-4" />
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem onClick={onDelete}>
-                  <Trash2 className="size-4" />
-                  삭제
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </div>
-      </header>
-
-      {isExpanded ? (
-        <div className="mt-4 pl-0 sm:pl-13">
-          {message.bodyHtml ? (
-            <MessageBodyFrame html={message.bodyHtml} />
-          ) : (
-            <div className="prose prose-sm max-w-none text-sm whitespace-pre-wrap">{message.bodyText}</div>
-          )}
-
-          {message.attachments.length > 0 ? (
-            <div className="mt-4 flex flex-wrap gap-2">
-              {message.attachments.map((attachment) => (
-                <AttachmentChip key={attachment.id} attachment={attachment} />
-              ))}
-            </div>
-          ) : null}
-        </div>
-      ) : null}
-    </article>
-  )
-}
-
-function ThreadFooter() {
+function ThreadFooter({ onReply }: { onReply: () => void }) {
   return (
     <div className="shrink-0 border-t px-6 py-2">
       <div className="flex flex-wrap gap-2">
-        <Button variant="outline" size="sm" disabled title="답장 기능은 아직 지원되지 않습니다.">
+        <Button variant="outline" size="sm" onClick={onReply}>
           <Reply className="size-4" />
           답장
         </Button>
@@ -335,6 +147,7 @@ interface EmailDetailProps {
 }
 
 export function EmailDetail({ threadId, onClose }: EmailDetailProps) {
+  const navigate = useNavigate()
   const { data: thread, isLoading, isError, error, refetch } = useThread(threadId)
   const { data: accounts } = useMailAccounts()
   const { mutate: deleteThread, isPending: isDeleting } = useDeleteThread()
@@ -365,15 +178,15 @@ export function EmailDetail({ threadId, onClose }: EmailDetailProps) {
     })
   }
 
-  const handleDeleteMessage = (messageId: string, isLast: boolean) => {
-    deleteMessage(messageId, {
+  const handleDeleteMessage = (message: InboxMessage, isLast: boolean) => {
+    deleteMessage(message.id, {
       onSuccess: () => {
         if (isLast) onClose?.()
         toast("메시지를 휴지통으로 옮겼습니다", {
           action: {
             label: "실행 취소",
             onClick: () => {
-              restoreMessage(messageId, {
+              restoreMessage(message.id, {
                 onSuccess: () => {
                   toast.success("삭제가 취소되었습니다")
                 },
@@ -392,6 +205,14 @@ export function EmailDetail({ threadId, onClose }: EmailDetailProps) {
           description: getErrorMessage(err, "잠시 후 다시 시도해주세요."),
         })
       },
+    })
+  }
+
+  const handleReply = () => {
+    if (!thread) return
+    void navigate({
+      to: "/compose",
+      search: { replyThreadId: thread.threadId },
     })
   }
 
@@ -441,25 +262,20 @@ export function EmailDetail({ threadId, onClose }: EmailDetailProps) {
 
   return (
     <div className="flex h-full w-full min-w-0 flex-1 flex-col">
-      <ThreadToolbar onClose={onClose} onDelete={handleDeleteThread} isDeleting={isDeleting} />
+      <ThreadToolbar onClose={onClose} onDelete={handleDeleteThread} onReply={handleReply} isDeleting={isDeleting} />
       <ThreadHeader thread={thread} account={account} />
-
-      <ScrollArea className="min-h-0 flex-1">
-        <div className="p-2">
-          <div className="divide-y overflow-hidden rounded-lg border bg-card">
-            {messages.map((message) => (
-              <MessageItem
-                key={message.id}
-                message={message}
-                isExpanded={expandedIds.has(message.id)}
-                onToggle={() => toggleExpanded(message.id)}
-                onDelete={() => handleDeleteMessage(message.id, messages.length === 1)}
-              />
-            ))}
-          </div>
-        </div>
-      </ScrollArea>
-      <ThreadFooter />
+      <ThreadMessageList
+        messages={messages}
+        expandedIds={expandedIds}
+        onToggle={toggleExpanded}
+        renderMenuActions={(message) => (
+          <DropdownMenuItem onClick={() => handleDeleteMessage(message, messages.length === 1)}>
+            <Trash2 className="size-4" />
+            삭제
+          </DropdownMenuItem>
+        )}
+      />
+      <ThreadFooter onReply={handleReply} />
     </div>
   )
 }

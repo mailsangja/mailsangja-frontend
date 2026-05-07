@@ -4,9 +4,9 @@ import { ChevronDown, Mail, Pencil } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { buttonVariants } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { NavAccounts } from "@/components/nav-accounts"
-import { NavFolders } from "@/components/nav-folders"
-import { NavUser } from "@/components/nav-user"
+import { NavAccounts } from "@/components/nav/nav-accounts"
+import { NavFolders } from "@/components/nav/nav-folders"
+import { NavUser } from "@/components/nav/nav-user"
 import {
   Sidebar,
   SidebarContent,

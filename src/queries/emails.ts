@@ -10,6 +10,13 @@ export const emailKeys = {
   thread: (id: string) => [...emailKeys.all(), "thread", id] as const,
 }
 
+export const emailQueries = {
+  thread: (id: string) => ({
+    queryKey: emailKeys.thread(id),
+    queryFn: () => getThreadDetail(id),
+  }),
+}
+
 export function useMailboxThreads(mailbox: SupportedMailboxId | null, options: { size?: number } = {}) {
   const size = options.size ?? 50
 
@@ -30,8 +37,7 @@ export function useMailboxThreads(mailbox: SupportedMailboxId | null, options: {
 
 export function useThread(id: string | null) {
   return useQuery({
-    queryKey: emailKeys.thread(id ?? ""),
-    queryFn: () => getThreadDetail(id!),
+    ...emailQueries.thread(id ?? ""),
     enabled: id != null,
   })
 }
