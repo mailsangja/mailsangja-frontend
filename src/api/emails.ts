@@ -98,10 +98,6 @@ export async function sendMail(data: ComposeEmailData): Promise<void> {
   formData.append("subject", data.subject)
   formData.append("content", data.content)
 
-  if (data.messageId?.trim()) {
-    formData.append("messageId", data.messageId.trim())
-  }
-
   for (const attachment of data.attachments ?? []) {
     formData.append("attachments", attachment)
   }
