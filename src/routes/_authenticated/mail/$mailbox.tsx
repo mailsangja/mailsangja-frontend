@@ -87,6 +87,7 @@ function MailboxView({ mailbox }: { mailbox: PrimaryMailboxId }) {
     isError,
     error,
     refetch,
+    isRefetching,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
@@ -168,6 +169,7 @@ function MailboxView({ mailbox }: { mailbox: PrimaryMailboxId }) {
       isLoading={supportedMailbox != null && isLoading}
       isFetchingNextPage={isFetchingNextPage}
       hasNextPage={!!hasNextPage}
+      isRefreshing={isRefetching}
       selectedThreadId={visibleSelectedThreadId}
       filter={filter}
       onFilterChange={(nextFilter) => {
@@ -197,6 +199,7 @@ function MailboxView({ mailbox }: { mailbox: PrimaryMailboxId }) {
           void fetchNextPage()
         }
       }}
+      onRefresh={supportedMailbox ? () => void refetch() : undefined}
       getAccount={getAccount}
       emptyTitle={emptyTitle}
       emptyDescription={emptyDescription}

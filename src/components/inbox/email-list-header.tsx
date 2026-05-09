@@ -1,4 +1,4 @@
-import { Tag, Trash2, SquareMinus } from "lucide-react"
+import { RefreshCw, Tag, Trash2, SquareMinus } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Toggle } from "@/components/ui/toggle"
@@ -16,6 +16,8 @@ interface EmailListHeaderProps {
   totalCount?: number
   filter: EmailFilter
   onFilterChange: (filter: EmailFilter) => void
+  isRefreshing?: boolean
+  onRefresh?: () => void
   selectedCount: number
   onClearSelection: () => void
   onDeleteSelected: () => void
@@ -27,6 +29,8 @@ export function EmailListHeader({
   totalCount,
   filter,
   onFilterChange,
+  isRefreshing = false,
+  onRefresh,
   selectedCount,
   onClearSelection,
   onDeleteSelected,
@@ -58,6 +62,18 @@ export function EmailListHeader({
         {(totalCount ?? 0).toLocaleString()}개
       </span>
       <div className="ml-auto flex shrink-0 items-center gap-1">
+        {onRefresh ? (
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={onRefresh}
+            disabled={isRefreshing}
+            aria-label="메일 목록 새로고침"
+            title="새로고침"
+          >
+            <RefreshCw className={cn("size-4", isRefreshing && "animate-spin")} />
+          </Button>
+        ) : null}
         {filterOptions.map((option) => (
           <Toggle
             key={option.value}

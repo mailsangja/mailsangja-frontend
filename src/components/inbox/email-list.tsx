@@ -19,11 +19,13 @@ interface EmailListProps {
   isLoading: boolean
   isFetchingNextPage: boolean
   hasNextPage: boolean
+  isRefreshing?: boolean
   selectedThreadId: string | null
   filter: EmailFilter
   onFilterChange: (filter: EmailFilter) => void
   onSelectThread: (id: string) => void
   onLoadMore: () => void
+  onRefresh?: () => void
   getAccount: (accountId: string) => MailAccount | undefined
   emptyTitle?: string
   emptyDescription?: string
@@ -42,11 +44,13 @@ export function EmailList({
   isLoading,
   isFetchingNextPage,
   hasNextPage,
+  isRefreshing = false,
   selectedThreadId,
   filter,
   onFilterChange,
   onSelectThread,
   onLoadMore,
+  onRefresh,
   getAccount,
   emptyTitle = "메일이 없습니다",
   emptyDescription,
@@ -103,6 +107,8 @@ export function EmailList({
         totalCount={totalCount}
         filter={filter}
         onFilterChange={onFilterChange}
+        isRefreshing={isRefreshing}
+        onRefresh={onRefresh}
         selectedCount={selectedIds.size}
         onClearSelection={() => setSelectedIds(new Set())}
         onDeleteSelected={() => {
