@@ -15,6 +15,7 @@ import type { MailAccount } from "@/types/mail-account"
 interface EmailListProps {
   mailboxName: string
   threads: InboxThreadSummary[] | undefined
+  totalCount?: number
   isLoading: boolean
   isFetchingNextPage: boolean
   hasNextPage: boolean
@@ -37,6 +38,7 @@ interface EmailListProps {
 export function EmailList({
   mailboxName,
   threads,
+  totalCount,
   isLoading,
   isFetchingNextPage,
   hasNextPage,
@@ -97,7 +99,8 @@ export function EmailList({
     <div className="flex h-full flex-col overflow-hidden rounded-[inherit]">
       <EmailListHeader
         mailboxName={mailboxName}
-        threadCount={threads?.length ?? 0}
+        currentCount={threads?.length ?? 0}
+        totalCount={totalCount}
         filter={filter}
         onFilterChange={onFilterChange}
         selectedCount={selectedIds.size}

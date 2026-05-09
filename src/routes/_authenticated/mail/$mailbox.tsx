@@ -91,9 +91,12 @@ function MailboxView({ mailbox }: { mailbox: PrimaryMailboxId }) {
     hasNextPage,
     isFetchingNextPage,
     isFetchNextPageError,
-  } = useMailboxThreads(supportedMailbox)
+  } = useMailboxThreads(supportedMailbox, {
+    read: filter === "unread" ? false : undefined,
+  })
 
   const loadedThreads = data?.pages.flatMap((page) => page.content) ?? []
+  const totalThreadCount = data?.pages[0]?.totalCount ?? loadedThreads.length
   const searchTerms = query.trim().toLowerCase().split(/\s+/).filter(Boolean)
   const selectedAccount = accountId ? (accounts?.find((account) => account.id === accountId) ?? null) : null
 
@@ -116,10 +119,6 @@ function MailboxView({ mailbox }: { mailbox: PrimaryMailboxId }) {
   const threads = supportedMailbox
     ? loadedThreads.filter((thread) => {
         if (selectedAccount && thread.accountId !== selectedAccount.id) {
-          return false
-        }
-
-        if (filter === "unread" && thread.isRead) {
           return false
         }
 
@@ -165,6 +164,7 @@ function MailboxView({ mailbox }: { mailbox: PrimaryMailboxId }) {
     <EmailList
       mailboxName={MAILBOX_LABELS[mailbox]}
       threads={threads}
+      totalCount={totalThreadCount}
       isLoading={supportedMailbox != null && isLoading}
       isFetchingNextPage={isFetchingNextPage}
       hasNextPage={!!hasNextPage}
@@ -295,6 +295,7 @@ function TrashMailboxView() {
   } = useTrashThreads()
 
   const loadedThreads = data?.pages.flatMap((page) => page.content) ?? []
+  const totalThreadCount = data?.pages[0]?.totalCount ?? loadedThreads.length
   const searchTerms = query.trim().toLowerCase().split(/\s+/).filter(Boolean)
   const selectedAccount = accountId ? (accounts?.find((account) => account.id === accountId) ?? null) : null
 
@@ -347,6 +348,7 @@ function TrashMailboxView() {
     <TrashList
       mailboxName={MAILBOX_LABELS.trash}
       threads={threads}
+      totalCount={totalThreadCount}
       isLoading={isLoading}
       isFetchingNextPage={isFetchingNextPage}
       hasNextPage={!!hasNextPage}

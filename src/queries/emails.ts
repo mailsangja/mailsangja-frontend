@@ -1,12 +1,12 @@
 import { useInfiniteQuery, useQuery } from "@tanstack/react-query"
 
 import { getMailboxThreads, getThreadDetail } from "@/api/emails"
-import type { SupportedMailboxId } from "@/types/email"
+import type { ListThreadsParams, SupportedMailboxId } from "@/types/email"
 
 export const emailKeys = {
   all: () => ["emails"] as const,
-  mailbox: (mailbox: SupportedMailboxId | null, size: number) =>
-    [...emailKeys.all(), "mailbox", mailbox, size] as const,
+  mailbox: (mailbox: SupportedMailboxId | null, params: Omit<ListThreadsParams, "marker">) =>
+    [...emailKeys.all(), "mailbox", mailbox, params] as const,
   thread: (id: string) => [...emailKeys.all(), "thread", id] as const,
 }
 
@@ -17,18 +17,23 @@ export const emailQueries = {
   }),
 }
 
-export function useMailboxThreads(mailbox: SupportedMailboxId | null, options: { size?: number } = {}) {
+export function useMailboxThreads(mailbox: SupportedMailboxId | null, options: Omit<ListThreadsParams, "marker"> = {}) {
   const size = options.size ?? 50
+  const params = {
+    size,
+    labelId: options.labelId,
+    read: options.read,
+  }
 
   return useInfiniteQuery({
-    queryKey: emailKeys.mailbox(mailbox, size),
+    queryKey: emailKeys.mailbox(mailbox, params),
     initialPageParam: undefined as string | undefined,
     queryFn: ({ pageParam }) => {
       if (!mailbox) {
         throw new Error("Mailbox is required")
       }
 
-      return getMailboxThreads(mailbox, { marker: pageParam, size })
+      return getMailboxThreads(mailbox, { ...params, marker: pageParam })
     },
     getNextPageParam: (lastPage) => lastPage.nextMarker ?? undefined,
     enabled: mailbox != null,
