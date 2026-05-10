@@ -214,7 +214,7 @@ function MailboxView({ mailbox }: { mailbox: PrimaryMailboxId }) {
 
   if (isMobile) {
     return (
-      <div className="flex min-h-0 flex-1 overflow-hidden">
+      <div className="flex min-h-0 w-full min-w-0 flex-1 overflow-hidden">
         {hasSelection ? (
           <EmailDetail
             threadId={visibleSelectedThreadId}
@@ -236,7 +236,7 @@ function MailboxView({ mailbox }: { mailbox: PrimaryMailboxId }) {
   }
 
   return (
-    <div className="flex min-h-0 flex-1 overflow-hidden">
+    <div className="flex min-h-0 w-full min-w-0 flex-1 overflow-hidden">
       <div
         className={cn(
           "min-h-0 min-w-0 border-r-0 transition-[flex-basis,width] duration-300 ease-out",
@@ -393,14 +393,14 @@ function TrashMailboxView() {
 
   if (isMobile) {
     return (
-      <div className="flex min-h-0 flex-1 overflow-hidden">
+      <div className="flex min-h-0 w-full min-w-0 flex-1 overflow-hidden">
         {hasSelection ? <TrashDetail threadId={visibleSelectedThreadId} onClose={closeThread} /> : trashList}
       </div>
     )
   }
 
   return (
-    <div className="flex min-h-0 flex-1 overflow-hidden">
+    <div className="flex min-h-0 w-full min-w-0 flex-1 overflow-hidden">
       <div
         className={cn(
           "min-h-0 min-w-0 border-r-0 transition-[flex-basis,width] duration-300 ease-out",

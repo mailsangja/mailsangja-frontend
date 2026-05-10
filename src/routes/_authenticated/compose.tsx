@@ -70,7 +70,7 @@ function ComposePage() {
 
   if (isMobile) {
     return (
-      <div className="flex min-h-0 flex-1 overflow-hidden">
+      <div className="flex min-h-0 w-full min-w-0 flex-1 overflow-hidden">
         <ComposeEmail
           fromAddress={fromAddress}
           onFromAddressChange={handleFromAddressChange}
@@ -84,7 +84,7 @@ function ComposePage() {
   }
 
   return (
-    <div className="flex min-h-0 flex-1 overflow-hidden">
+    <div className="flex min-h-0 w-full min-w-0 flex-1 overflow-hidden">
       <div className="min-h-0 min-w-0 basis-1/2 border-r-0">
         <ComposeReference threadId={replyThreadId ?? null} />
       </div>

@@ -11,7 +11,7 @@ interface EmailErrorStateProps {
 
 export function EmailErrorState({ title, description, retryLabel = "다시 시도", onRetry }: EmailErrorStateProps) {
   return (
-    <div className="flex min-h-full flex-col items-center justify-center gap-3 px-6 py-16 text-center">
+    <div className="flex min-h-full w-full flex-col items-center justify-center gap-3 px-6 py-16 text-center">
       <div className="flex size-14 items-center justify-center rounded-full bg-destructive/10">
         <AlertTriangle className="size-7 text-destructive" />
       </div>

@@ -498,7 +498,7 @@ export function ComposeEmail({
   }
 
   return (
-    <div className="flex h-full w-full flex-col">
+    <div className="flex h-full w-full min-w-0 flex-1 flex-col">
       <div className="flex h-11 shrink-0 items-center justify-between border-b px-4">
         <h1 className="text-sm font-medium">{messageId ? "답장" : "새 메일 작성"}</h1>
         <Button variant="ghost" size="icon-sm" onClick={handleClose} className="-mr-2" aria-label="메일 작성 닫기">

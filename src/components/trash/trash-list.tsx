@@ -188,7 +188,7 @@ export function TrashList({
     )
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-[inherit]">
+    <div className="flex h-full w-full min-w-0 flex-1 flex-col overflow-hidden rounded-[inherit]">
       {header}
 
       <ScrollArea className="min-h-0 flex-1">
@@ -239,7 +239,7 @@ export function TrashList({
             <div ref={loadMoreRef} className="h-1" />
           </>
         ) : (
-          <div className="flex min-h-full flex-col items-center justify-center gap-3 px-6 py-16 text-center">
+          <div className="flex min-h-full w-full flex-col items-center justify-center gap-3 px-6 py-16 text-center">
             <div className="flex size-14 items-center justify-center rounded-full bg-muted">
               <Trash2 className="size-7 text-muted-foreground/60" />
             </div>
