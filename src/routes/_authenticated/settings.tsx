@@ -1,7 +1,16 @@
-import { createFileRoute, Outlet, useLocation, useNavigate } from "@tanstack/react-router"
+import { createFileRoute, Link, Outlet, useLocation, useMatch, useNavigate } from "@tanstack/react-router"
 import { Settings, Tag, User } from "lucide-react"
 
+import {
+  Breadcrumb,
+  BreadcrumbItem,
+  BreadcrumbLink,
+  BreadcrumbList,
+  BreadcrumbPage,
+  BreadcrumbSeparator,
+} from "@/components/ui/breadcrumb"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useLabels } from "@/queries/labels"
 
 export const Route = createFileRoute("/_authenticated/settings")({
   component: SettingsLayout,
@@ -22,11 +31,58 @@ function SettingsLayout() {
       ? "label"
       : "general"
 
+  const labelDetailMatch = useMatch({ from: "/_authenticated/settings/label/$labelId", shouldThrow: false })
+  const labelId = labelDetailMatch?.params.labelId
+
+  const { data: labels } = useLabels()
+  const labelName = labelId ? (labels?.find((l) => String(l.id) === labelId)?.name ?? labelId) : undefined
+
+  const isNested = activeTab !== "general"
+  const isLabelDetail = !!labelId
+
   return (
     <div className="flex min-h-0 flex-1 flex-col p-6">
       <div className="mx-auto flex min-h-0 w-full max-w-5xl flex-1 flex-col gap-6">
         <div className="flex flex-col gap-1">
-          <h1 className="text-2xl font-semibold">설정</h1>
+          <Breadcrumb>
+            <BreadcrumbList className="text-2xl font-semibold [&>li[role=presentation]>svg]:size-5">
+              <BreadcrumbItem>
+                {isNested ? (
+                  <BreadcrumbLink render={<Link to="/settings" />}>설정</BreadcrumbLink>
+                ) : (
+                  <BreadcrumbPage className="font-semibold">설정</BreadcrumbPage>
+                )}
+              </BreadcrumbItem>
+              {activeTab === "label" && (
+                <>
+                  <BreadcrumbSeparator />
+                  <BreadcrumbItem>
+                    {isLabelDetail ? (
+                      <BreadcrumbLink render={<Link to="/settings/label" />}>라벨</BreadcrumbLink>
+                    ) : (
+                      <BreadcrumbPage className="font-semibold">라벨</BreadcrumbPage>
+                    )}
+                  </BreadcrumbItem>
+                </>
+              )}
+              {activeTab === "account" && (
+                <>
+                  <BreadcrumbSeparator />
+                  <BreadcrumbItem>
+                    <BreadcrumbPage className="font-semibold">계정</BreadcrumbPage>
+                  </BreadcrumbItem>
+                </>
+              )}
+              {isLabelDetail && (
+                <>
+                  <BreadcrumbSeparator />
+                  <BreadcrumbItem>
+                    <BreadcrumbPage className="font-semibold">{labelName}</BreadcrumbPage>
+                  </BreadcrumbItem>
+                </>
+              )}
+            </BreadcrumbList>
+          </Breadcrumb>
           <p className="text-sm text-muted-foreground">메일상자 계정 및 메일 환경을 한 곳에서 관리합니다.</p>
         </div>
 

@@ -116,7 +116,7 @@ function SettingsAccountPage() {
                 updateDefaultAccountMutation.isPending
               }
             >
-              {updateDefaultAccountMutation.isPending ? "저장" : "저장"}
+              {updateDefaultAccountMutation.isPending ? "저장 중" : "저장"}
             </Button>
           </CardContent>
         </Card>
