@@ -1,6 +1,5 @@
 import { Inbox, Send, AlertTriangle, Trash2 } from "lucide-react"
 
-import { Badge } from "@/components/ui/badge"
 import {
   SidebarGroup,
   SidebarGroupLabel,
@@ -61,9 +60,7 @@ export function NavFolders({ mailbox, onMailboxChange }: NavFoldersProps) {
               </SidebarMenuButton>
               {unreadCount > 0 ? (
                 <SidebarMenuBadge aria-label={`${MAILBOX_LABELS[mailboxId]} 안읽음 ${unreadCount.toLocaleString()}개`}>
-                  <Badge variant="secondary" className="h-5 min-w-5 px-1.5 text-[11px]">
-                    {formatUnreadCount(unreadCount)}
-                  </Badge>
+                  <div className="h-4 min-w-5 px-1.5 text-[11px]">{formatUnreadCount(unreadCount)}</div>
                 </SidebarMenuBadge>
               ) : null}
             </SidebarMenuItem>
