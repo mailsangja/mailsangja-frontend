@@ -42,7 +42,7 @@ function getThreadDetailErrorCopy(error: unknown) {
 
 function EmptyState() {
   return (
-    <div className="flex h-full flex-col items-center justify-center gap-3">
+    <div className="flex h-full w-full min-w-0 flex-1 flex-col items-center justify-center gap-3">
       <div className="flex size-16 items-center justify-center rounded-full bg-muted">
         <MailOpen className="size-8 text-muted-foreground" />
       </div>
@@ -58,7 +58,7 @@ function EmptyState() {
 
 function LoadingState() {
   return (
-    <div className="flex h-full flex-col">
+    <div className="flex h-full w-full min-w-0 flex-1 flex-col">
       <div className="flex h-11 w-full min-w-0 shrink-0 items-center justify-between gap-2 px-4">
         <Skeleton className="h-4 w-24" />
         <div className="flex items-center gap-1">

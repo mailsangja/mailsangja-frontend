@@ -15,14 +15,17 @@ import type { MailAccount } from "@/types/mail-account"
 interface EmailListProps {
   mailboxName: string
   threads: InboxThreadSummary[] | undefined
+  totalCount?: number
   isLoading: boolean
   isFetchingNextPage: boolean
   hasNextPage: boolean
+  isRefreshing?: boolean
   selectedThreadId: string | null
   filter: EmailFilter
   onFilterChange: (filter: EmailFilter) => void
   onSelectThread: (id: string) => void
   onLoadMore: () => void
+  onRefresh?: () => void
   getAccount: (accountId: string) => MailAccount | undefined
   emptyTitle?: string
   emptyDescription?: string
@@ -37,14 +40,17 @@ interface EmailListProps {
 export function EmailList({
   mailboxName,
   threads,
+  totalCount,
   isLoading,
   isFetchingNextPage,
   hasNextPage,
+  isRefreshing = false,
   selectedThreadId,
   filter,
   onFilterChange,
   onSelectThread,
   onLoadMore,
+  onRefresh,
   getAccount,
   emptyTitle = "메일이 없습니다",
   emptyDescription,
@@ -94,12 +100,15 @@ export function EmailList({
   }, [hasNextPage, isFetchingNextPage, onLoadMore])
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-[inherit]">
+    <div className="flex h-full w-full min-w-0 flex-1 flex-col overflow-hidden rounded-[inherit]">
       <EmailListHeader
         mailboxName={mailboxName}
-        threadCount={threads?.length ?? 0}
+        currentCount={threads?.length ?? 0}
+        totalCount={totalCount}
         filter={filter}
         onFilterChange={onFilterChange}
+        isRefreshing={isRefreshing}
+        onRefresh={onRefresh}
         selectedCount={selectedIds.size}
         onClearSelection={() => setSelectedIds(new Set())}
         onDeleteSelected={() => {
@@ -172,7 +181,7 @@ export function EmailList({
             <div ref={loadMoreRef} className="h-1" />
           </>
         ) : (
-          <div className="flex min-h-full flex-col items-center justify-center gap-3 px-6 py-16 text-center">
+          <div className="flex min-h-full w-full flex-col items-center justify-center gap-3 px-6 py-16 text-center">
             <div className="flex size-14 items-center justify-center rounded-full bg-muted">
               <InboxIcon className="size-7 text-muted-foreground/60" />
             </div>

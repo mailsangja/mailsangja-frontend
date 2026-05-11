@@ -37,7 +37,7 @@ function getThreadDetailErrorCopy(error: unknown) {
 
 function ReferenceEmptyState() {
   return (
-    <div className="flex min-h-full flex-col items-center justify-center gap-3 px-6 py-16 text-center">
+    <div className="flex min-h-full w-full flex-col items-center justify-center gap-3 px-6 py-16 text-center">
       <div className="flex size-14 items-center justify-center rounded-full bg-muted">
         <Mail className="size-7 text-muted-foreground/60" />
       </div>
@@ -97,7 +97,7 @@ export function ComposeReference({ threadId }: ComposeReferenceProps) {
   const errorCopy = isError ? getThreadDetailErrorCopy(error) : null
 
   return (
-    <div className="flex h-full flex-col overflow-hidden">
+    <div className="flex h-full w-full min-w-0 flex-1 flex-col overflow-hidden">
       <div className="flex h-11 shrink-0 items-center border-b px-4">
         <h1 className="text-sm font-medium">참고 메일</h1>
       </div>

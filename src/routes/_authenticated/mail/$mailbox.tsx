@@ -87,13 +87,17 @@ function MailboxView({ mailbox }: { mailbox: PrimaryMailboxId }) {
     isError,
     error,
     refetch,
+    isRefetching,
     fetchNextPage,
     hasNextPage,
     isFetchingNextPage,
     isFetchNextPageError,
-  } = useMailboxThreads(supportedMailbox)
+  } = useMailboxThreads(supportedMailbox, {
+    read: filter === "unread" ? false : undefined,
+  })
 
   const loadedThreads = data?.pages.flatMap((page) => page.content) ?? []
+  const totalThreadCount = data?.pages[0]?.totalCount ?? loadedThreads.length
   const searchTerms = query.trim().toLowerCase().split(/\s+/).filter(Boolean)
   const selectedAccount = accountId ? (accounts?.find((account) => account.id === accountId) ?? null) : null
 
@@ -116,10 +120,6 @@ function MailboxView({ mailbox }: { mailbox: PrimaryMailboxId }) {
   const threads = supportedMailbox
     ? loadedThreads.filter((thread) => {
         if (selectedAccount && thread.accountId !== selectedAccount.id) {
-          return false
-        }
-
-        if (filter === "unread" && thread.isRead) {
           return false
         }
 
@@ -165,9 +165,11 @@ function MailboxView({ mailbox }: { mailbox: PrimaryMailboxId }) {
     <EmailList
       mailboxName={MAILBOX_LABELS[mailbox]}
       threads={threads}
+      totalCount={totalThreadCount}
       isLoading={supportedMailbox != null && isLoading}
       isFetchingNextPage={isFetchingNextPage}
       hasNextPage={!!hasNextPage}
+      isRefreshing={isRefetching}
       selectedThreadId={visibleSelectedThreadId}
       filter={filter}
       onFilterChange={(nextFilter) => {
@@ -197,6 +199,7 @@ function MailboxView({ mailbox }: { mailbox: PrimaryMailboxId }) {
           void fetchNextPage()
         }
       }}
+      onRefresh={supportedMailbox ? () => void refetch() : undefined}
       getAccount={getAccount}
       emptyTitle={emptyTitle}
       emptyDescription={emptyDescription}
@@ -211,7 +214,7 @@ function MailboxView({ mailbox }: { mailbox: PrimaryMailboxId }) {
 
   if (isMobile) {
     return (
-      <div className="flex min-h-0 flex-1 overflow-hidden">
+      <div className="flex min-h-0 w-full min-w-0 flex-1 overflow-hidden">
         {hasSelection ? (
           <EmailDetail
             threadId={visibleSelectedThreadId}
@@ -233,7 +236,7 @@ function MailboxView({ mailbox }: { mailbox: PrimaryMailboxId }) {
   }
 
   return (
-    <div className="flex min-h-0 flex-1 overflow-hidden">
+    <div className="flex min-h-0 w-full min-w-0 flex-1 overflow-hidden">
       <div
         className={cn(
           "min-h-0 min-w-0 border-r-0 transition-[flex-basis,width] duration-300 ease-out",
@@ -295,6 +298,7 @@ function TrashMailboxView() {
   } = useTrashThreads()
 
   const loadedThreads = data?.pages.flatMap((page) => page.content) ?? []
+  const totalThreadCount = data?.pages[0]?.totalCount ?? loadedThreads.length
   const searchTerms = query.trim().toLowerCase().split(/\s+/).filter(Boolean)
   const selectedAccount = accountId ? (accounts?.find((account) => account.id === accountId) ?? null) : null
 
@@ -347,6 +351,7 @@ function TrashMailboxView() {
     <TrashList
       mailboxName={MAILBOX_LABELS.trash}
       threads={threads}
+      totalCount={totalThreadCount}
       isLoading={isLoading}
       isFetchingNextPage={isFetchingNextPage}
       hasNextPage={!!hasNextPage}
@@ -388,14 +393,14 @@ function TrashMailboxView() {
 
   if (isMobile) {
     return (
-      <div className="flex min-h-0 flex-1 overflow-hidden">
+      <div className="flex min-h-0 w-full min-w-0 flex-1 overflow-hidden">
         {hasSelection ? <TrashDetail threadId={visibleSelectedThreadId} onClose={closeThread} /> : trashList}
       </div>
     )
   }
 
   return (
-    <div className="flex min-h-0 flex-1 overflow-hidden">
+    <div className="flex min-h-0 w-full min-w-0 flex-1 overflow-hidden">
       <div
         className={cn(
           "min-h-0 min-w-0 border-r-0 transition-[flex-basis,width] duration-300 ease-out",

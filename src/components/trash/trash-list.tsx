@@ -33,6 +33,7 @@ function toInboxSummary(thread: TrashThreadSummary): InboxThreadSummary {
 interface TrashListProps {
   mailboxName: string
   threads: TrashThreadSummary[] | undefined
+  totalCount?: number
   isLoading: boolean
   isFetchingNextPage: boolean
   hasNextPage: boolean
@@ -53,6 +54,7 @@ interface TrashListProps {
 export function TrashList({
   mailboxName,
   threads,
+  totalCount,
   isLoading,
   isFetchingNextPage,
   hasNextPage,
@@ -180,13 +182,13 @@ export function TrashList({
       <div className="flex h-11 shrink-0 items-center gap-3 border-b px-4">
         <h2 className="min-w-0 truncate text-sm font-medium">{mailboxName}</h2>
         <span className="hidden rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground sm:inline-flex">
-          {(threads?.length ?? 0).toLocaleString()}개
+          {(totalCount ?? 0).toLocaleString()}개
         </span>
       </div>
     )
 
   return (
-    <div className="flex h-full flex-col overflow-hidden rounded-[inherit]">
+    <div className="flex h-full w-full min-w-0 flex-1 flex-col overflow-hidden rounded-[inherit]">
       {header}
 
       <ScrollArea className="min-h-0 flex-1">
@@ -237,7 +239,7 @@ export function TrashList({
             <div ref={loadMoreRef} className="h-1" />
           </>
         ) : (
-          <div className="flex min-h-full flex-col items-center justify-center gap-3 px-6 py-16 text-center">
+          <div className="flex min-h-full w-full flex-col items-center justify-center gap-3 px-6 py-16 text-center">
             <div className="flex size-14 items-center justify-center rounded-full bg-muted">
               <Trash2 className="size-7 text-muted-foreground/60" />
             </div>

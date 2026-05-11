@@ -1,4 +1,4 @@
-import { Tag, Trash2, SquareMinus } from "lucide-react"
+import { RefreshCw, Tag, Trash2, SquareMinus } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Toggle } from "@/components/ui/toggle"
@@ -12,9 +12,12 @@ const filterOptions: Array<{ value: EmailFilter; label: string }> = [
 
 interface EmailListHeaderProps {
   mailboxName: string
-  threadCount: number
+  currentCount: number
+  totalCount?: number
   filter: EmailFilter
   onFilterChange: (filter: EmailFilter) => void
+  isRefreshing?: boolean
+  onRefresh?: () => void
   selectedCount: number
   onClearSelection: () => void
   onDeleteSelected: () => void
@@ -23,9 +26,11 @@ interface EmailListHeaderProps {
 
 export function EmailListHeader({
   mailboxName,
-  threadCount,
+  totalCount,
   filter,
   onFilterChange,
+  isRefreshing = false,
+  onRefresh,
   selectedCount,
   onClearSelection,
   onDeleteSelected,
@@ -54,9 +59,21 @@ export function EmailListHeader({
     <div className="flex h-11 shrink-0 items-center gap-3 border-b px-4">
       <h2 className="min-w-0 truncate text-sm font-medium">{mailboxName}</h2>
       <span className="hidden rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground sm:inline-flex">
-        {threadCount.toLocaleString()}개
+        {(totalCount ?? 0).toLocaleString()}개
       </span>
       <div className="ml-auto flex shrink-0 items-center gap-1">
+        {onRefresh ? (
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={onRefresh}
+            disabled={isRefreshing}
+            aria-label="메일 목록 새로고침"
+            title="새로고침"
+          >
+            <RefreshCw className={cn("size-4", isRefreshing && "animate-spin")} />
+          </Button>
+        ) : null}
         {filterOptions.map((option) => (
           <Toggle
             key={option.value}
