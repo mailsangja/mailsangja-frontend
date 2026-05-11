@@ -19,6 +19,7 @@ import { Route as AuthenticatedMailRouteImport } from './routes/_authenticated/m
 import { Route as AuthenticatedComposeRouteImport } from './routes/_authenticated/compose'
 import { Route as AuthenticatedSettingsIndexRouteImport } from './routes/_authenticated/settings/index'
 import { Route as AuthenticatedMailIndexRouteImport } from './routes/_authenticated/mail/index'
+import { Route as AuthenticatedSettingsLabelRouteImport } from './routes/_authenticated/settings/label'
 import { Route as AuthenticatedSettingsAccountRouteImport } from './routes/_authenticated/settings/account'
 import { Route as AuthenticatedMailMailboxRouteImport } from './routes/_authenticated/mail/$mailbox'
 
@@ -71,6 +72,12 @@ const AuthenticatedMailIndexRoute = AuthenticatedMailIndexRouteImport.update({
   path: '/',
   getParentRoute: () => AuthenticatedMailRoute,
 } as any)
+const AuthenticatedSettingsLabelRoute =
+  AuthenticatedSettingsLabelRouteImport.update({
+    id: '/label',
+    path: '/label',
+    getParentRoute: () => AuthenticatedSettingsRoute,
+  } as any)
 const AuthenticatedSettingsAccountRoute =
   AuthenticatedSettingsAccountRouteImport.update({
     id: '/account',
@@ -93,6 +100,7 @@ export interface FileRoutesByFullPath {
   '/signup': typeof GuestSignupRoute
   '/mail/$mailbox': typeof AuthenticatedMailMailboxRoute
   '/settings/account': typeof AuthenticatedSettingsAccountRoute
+  '/settings/label': typeof AuthenticatedSettingsLabelRoute
   '/mail/': typeof AuthenticatedMailIndexRoute
   '/settings/': typeof AuthenticatedSettingsIndexRoute
 }
@@ -103,6 +111,7 @@ export interface FileRoutesByTo {
   '/signup': typeof GuestSignupRoute
   '/mail/$mailbox': typeof AuthenticatedMailMailboxRoute
   '/settings/account': typeof AuthenticatedSettingsAccountRoute
+  '/settings/label': typeof AuthenticatedSettingsLabelRoute
   '/mail': typeof AuthenticatedMailIndexRoute
   '/settings': typeof AuthenticatedSettingsIndexRoute
 }
@@ -118,6 +127,7 @@ export interface FileRoutesById {
   '/_guest/signup': typeof GuestSignupRoute
   '/_authenticated/mail/$mailbox': typeof AuthenticatedMailMailboxRoute
   '/_authenticated/settings/account': typeof AuthenticatedSettingsAccountRoute
+  '/_authenticated/settings/label': typeof AuthenticatedSettingsLabelRoute
   '/_authenticated/mail/': typeof AuthenticatedMailIndexRoute
   '/_authenticated/settings/': typeof AuthenticatedSettingsIndexRoute
 }
@@ -132,6 +142,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/mail/$mailbox'
     | '/settings/account'
+    | '/settings/label'
     | '/mail/'
     | '/settings/'
   fileRoutesByTo: FileRoutesByTo
@@ -142,6 +153,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/mail/$mailbox'
     | '/settings/account'
+    | '/settings/label'
     | '/mail'
     | '/settings'
   id:
@@ -156,6 +168,7 @@ export interface FileRouteTypes {
     | '/_guest/signup'
     | '/_authenticated/mail/$mailbox'
     | '/_authenticated/settings/account'
+    | '/_authenticated/settings/label'
     | '/_authenticated/mail/'
     | '/_authenticated/settings/'
   fileRoutesById: FileRoutesById
@@ -238,6 +251,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMailIndexRouteImport
       parentRoute: typeof AuthenticatedMailRoute
     }
+    '/_authenticated/settings/label': {
+      id: '/_authenticated/settings/label'
+      path: '/label'
+      fullPath: '/settings/label'
+      preLoaderRoute: typeof AuthenticatedSettingsLabelRouteImport
+      parentRoute: typeof AuthenticatedSettingsRoute
+    }
     '/_authenticated/settings/account': {
       id: '/_authenticated/settings/account'
       path: '/account'
@@ -270,11 +290,13 @@ const AuthenticatedMailRouteWithChildren =
 
 interface AuthenticatedSettingsRouteChildren {
   AuthenticatedSettingsAccountRoute: typeof AuthenticatedSettingsAccountRoute
+  AuthenticatedSettingsLabelRoute: typeof AuthenticatedSettingsLabelRoute
   AuthenticatedSettingsIndexRoute: typeof AuthenticatedSettingsIndexRoute
 }
 
 const AuthenticatedSettingsRouteChildren: AuthenticatedSettingsRouteChildren = {
   AuthenticatedSettingsAccountRoute: AuthenticatedSettingsAccountRoute,
+  AuthenticatedSettingsLabelRoute: AuthenticatedSettingsLabelRoute,
   AuthenticatedSettingsIndexRoute: AuthenticatedSettingsIndexRoute,
 }
 

@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { Link, useLocation } from "@tanstack/react-router"
-import { Bell, BellOff, BellRing, ChevronDown, MoreVertical, Palette, Pencil, Trash2 } from "lucide-react"
+import { ChevronDown, MoreVertical } from "lucide-react"
 import { Plus } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -56,10 +56,10 @@ const LABEL_COLORS = [
   "#6b7280", // gray
 ]
 
-const NOTIFICATION_OPTIONS: { value: NotificationPolicy; label: string; icon: React.ReactNode }[] = [
-  { value: "URGENT", label: "긴급", icon: <BellRing className="size-4" /> },
-  { value: "INHERIT", label: "기본", icon: <Bell className="size-4" /> },
-  { value: "SILENT", label: "무음", icon: <BellOff className="size-4" /> },
+const NOTIFICATION_OPTIONS: { value: NotificationPolicy; label: string }[] = [
+  { value: "URGENT", label: "항상 알림" },
+  { value: "INHERIT", label: "기본" },
+  { value: "SILENT", label: "알림 안함" },
 ]
 
 function LabelItem({ label, isActive }: { label: LabelListItem; isActive: boolean }) {
@@ -107,7 +107,9 @@ function LabelItem({ label, isActive }: { label: LabelListItem; isActive: boolea
         <span className="size-3 shrink-0 rounded-sm" style={{ backgroundColor: label.colorCode }} />
         <span className="truncate">{label.name}</span>
         {label.unreadThreadCount > 0 && (
-          <span className="ml-auto text-xs text-muted-foreground">{label.unreadThreadCount}</span>
+          <span className="ml-auto rounded-full bg-muted px-1.5 py-0.5 text-[10px] leading-none font-medium text-muted-foreground tabular-nums group-hover/menu-item:hidden">
+            {label.unreadThreadCount}
+          </span>
         )}
       </SidebarMenuButton>
 
@@ -125,10 +127,7 @@ function LabelItem({ label, isActive }: { label: LabelListItem; isActive: boolea
         </DropdownMenuTrigger>
         <DropdownMenuContent side="right" align="start" className="min-w-44 ring-foreground/6">
           <DropdownMenuSub>
-            <DropdownMenuSubTrigger>
-              <Palette className="size-4" />
-              색상 변경
-            </DropdownMenuSubTrigger>
+            <DropdownMenuSubTrigger>색상 변경</DropdownMenuSubTrigger>
             <DropdownMenuSubContent className="w-auto min-w-0" sideOffset={6}>
               <div className="grid grid-cols-5 gap-1 p-0.5">
                 {LABEL_COLORS.map((color) => (
@@ -153,9 +152,8 @@ function LabelItem({ label, isActive }: { label: LabelListItem; isActive: boolea
 
           <DropdownMenuGroup>
             <DropdownMenuLabel>알림</DropdownMenuLabel>
-            {NOTIFICATION_OPTIONS.map(({ value, label: optLabel, icon }) => (
+            {NOTIFICATION_OPTIONS.map(({ value, label: optLabel }) => (
               <DropdownMenuItem key={value} onClick={() => handleNotificationChange(value)}>
-                {icon}
                 {optLabel}
               </DropdownMenuItem>
             ))}
@@ -170,8 +168,10 @@ function LabelItem({ label, isActive }: { label: LabelListItem; isActive: boolea
               setDropdownOpen(false)
             }}
           >
-            <Pencil className="size-4" />
             이름 수정
+          </DropdownMenuItem>
+          <DropdownMenuItem render={<Link to="/settings/label/$labelId" params={{ labelId: String(label.id) }} />}>
+            라벨 규칙 수정
           </DropdownMenuItem>
 
           <DropdownMenuSeparator className="my-0.5" />
@@ -183,7 +183,6 @@ function LabelItem({ label, isActive }: { label: LabelListItem; isActive: boolea
               setDropdownOpen(false)
             }}
           >
-            <Trash2 className="size-4" />
             삭제
           </DropdownMenuItem>
         </DropdownMenuContent>

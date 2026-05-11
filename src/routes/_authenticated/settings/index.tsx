@@ -10,7 +10,7 @@ export const Route = createFileRoute("/_authenticated/settings/")({
 
 function SettingsPage() {
   return (
-    <div className="flex flex-col gap-6">
+    <div className="flex flex-col gap-6 px-3 pt-1 pb-4">
       <Card>
         <CardHeader>
           <CardTitle>설정 홈</CardTitle>
