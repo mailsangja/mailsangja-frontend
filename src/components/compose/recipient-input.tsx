@@ -95,6 +95,14 @@ export function RecipientInput({
     recipientOptions.length === 0 &&
     !contactsQuery.isPending &&
     !contactsQuery.isError
+  const emptyState =
+    isDebouncing || contactsQuery.isPending || contactsQuery.isFetching
+      ? "loading"
+      : contactsQuery.isError
+        ? "error"
+        : hasInvalidDraft
+          ? "invalid"
+          : "empty"
 
   const updateRecipients = (nextRecipients: readonly MailAddress[]) => {
     onRecipientsChange(getUniqueMailAddresses(nextRecipients))
@@ -183,15 +191,14 @@ export function RecipientInput({
         />
       </ComboboxChips>
       <ComboboxContent anchor={anchorRef} side="bottom" align="start" className="min-w-72">
-        {isDebouncing || contactsQuery.isPending || contactsQuery.isFetching ? (
+        {emptyState === "loading" ? (
           <div className="flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground">
             <Loader2 className="size-4 animate-spin" />
             연락처를 불러오는 중
           </div>
-        ) : null}
-        {contactsQuery.isError ? (
+        ) : emptyState === "error" ? (
           <div className="px-3 py-2 text-sm text-muted-foreground">연락처를 불러오지 못했습니다</div>
-        ) : hasInvalidDraft ? (
+        ) : emptyState === "invalid" ? (
           <div className="px-3 py-2 text-sm text-muted-foreground">올바른 이메일 형식이 아닙니다</div>
         ) : (
           <ComboboxEmpty>일치하는 연락처가 없습니다</ComboboxEmpty>
