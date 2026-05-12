@@ -1,7 +1,24 @@
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { Link } from "@tanstack/react-router"
 import { useQuery } from "@tanstack/react-query"
-import { Check, ChevronDown, ListFilter, MoreVertical, Plus } from "lucide-react"
+import {
+  DndContext,
+  KeyboardSensor,
+  PointerSensor,
+  closestCenter,
+  useSensor,
+  useSensors,
+  type DragEndEvent,
+} from "@dnd-kit/core"
+import {
+  SortableContext,
+  arrayMove,
+  sortableKeyboardCoordinates,
+  useSortable,
+  verticalListSortingStrategy,
+} from "@dnd-kit/sortable"
+import { CSS } from "@dnd-kit/utilities"
+import { Check, ChevronDown, GripVertical, ListFilter, MoreVertical, Plus } from "lucide-react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -27,8 +44,7 @@ import {
 } from "@/components/ui/sidebar"
 import { cn } from "@/lib/utils"
 import { getErrorMessage, getHttpStatus } from "@/lib/http-error"
-import { useDeleteLabel, useUpdateLabel } from "@/mutations/labels"
-import { useCreateLabel } from "@/mutations/labels"
+import { useCreateLabel, useDeleteLabel, useUpdateLabel } from "@/mutations/labels"
 import { labelQueries, useLabels } from "@/queries/labels"
 import type { LabelListItem, NotificationPolicy } from "@/types/label"
 
@@ -79,6 +95,8 @@ function LabelItem({
   const deleteLabel = useDeleteLabel()
   const { data: labelDetail } = useQuery({ ...labelQueries.detail(label.id), enabled: dropdownOpen })
 
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: label.id })
+
   function handleColorChange(color: string) {
     updateLabel.mutate({ labelId: label.id, data: { colorCode: color } })
     setDropdownOpen(false)
@@ -116,13 +134,25 @@ function LabelItem({
   }
 
   return (
-    <SidebarMenuItem>
+    <SidebarMenuItem
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.4 : undefined }}
+    >
+      <button
+        type="button"
+        className="absolute top-1/2 left-1 z-10 -translate-y-1/2 cursor-grab touch-none rounded p-0.5 opacity-0 group-hover/menu-item:opacity-30 hover:!opacity-60 active:cursor-grabbing"
+        aria-label="드래그하여 순서 변경"
+        {...attributes}
+        {...listeners}
+      >
+        <GripVertical className="size-3.5" />
+      </button>
       <SidebarMenuButton
         type="button"
         tooltip={label.name}
         isActive={isActive}
         size="sm"
-        className="group-hover/menu-item:bg-sidebar-accent group-hover/menu-item:text-sidebar-accent-foreground"
+        className="pl-5 group-hover/menu-item:bg-sidebar-accent group-hover/menu-item:text-sidebar-accent-foreground"
         onClick={() => onLabelToggle(label.id)}
       >
         <span className="size-3 shrink-0 rounded-sm" style={{ backgroundColor: label.colorCode }} />
@@ -270,15 +300,49 @@ interface NavLabelsProps {
 }
 
 export function NavLabels({ activeLabelId, onLabelToggle, className }: NavLabelsProps) {
-  const { data: labels = [] } = useLabels()
+  const { data: serverLabels = [] } = useLabels()
+  const updateLabel = useUpdateLabel()
   const createLabel = useCreateLabel()
+  // labelOrder stores the user-defined ID sequence. New labels (not yet in labelOrder)
+  // are appended at the end in server order.
+  const [labelOrder, setLabelOrder] = useState<string[]>([])
   const [open, setOpen] = useState(false)
   const [name, setName] = useState("")
   const [selectedColor, setSelectedColor] = useState(LABEL_COLORS[0])
   const [showAll, setShowAll] = useState(false)
 
-  const visibleLabels = showAll ? labels : labels.slice(0, LABELS_LIMIT)
-  const hasMore = labels.length > LABELS_LIMIT
+  const orderedLabels = useMemo(() => {
+    const serverMap = new Map(serverLabels.map((l) => [l.id, l]))
+    const existing = labelOrder.filter((id) => serverMap.has(id)).map((id) => serverMap.get(id)!)
+    const newLabels = serverLabels.filter((l) => !labelOrder.includes(l.id))
+    return [...existing, ...newLabels]
+  }, [serverLabels, labelOrder])
+
+  const sensors = useSensors(
+    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+  )
+
+  const visibleLabels = showAll ? orderedLabels : orderedLabels.slice(0, LABELS_LIMIT)
+  const hasMore = orderedLabels.length > LABELS_LIMIT
+
+  function handleDragEnd(event: DragEndEvent) {
+    const { active, over } = event
+    if (!over || active.id === over.id) return
+
+    const oldIndex = orderedLabels.findIndex((l) => l.id === String(active.id))
+    const newIndex = orderedLabels.findIndex((l) => l.id === String(over.id))
+    if (oldIndex === -1 || newIndex === -1) return
+
+    const newLabels = arrayMove(orderedLabels, oldIndex, newIndex)
+    setLabelOrder(newLabels.map((l) => l.id))
+
+    newLabels.forEach((label, i) => {
+      if (orderedLabels[i]?.id !== label.id) {
+        updateLabel.mutate({ labelId: label.id, data: { order: i } })
+      }
+    })
+  }
 
   function handleCreate() {
     if (!name.trim()) return
@@ -364,16 +428,20 @@ export function NavLabels({ activeLabelId, onLabelToggle, className }: NavLabels
         </div>
       </SidebarGroupLabel>
 
-      {labels.length > 0 && (
+      {orderedLabels.length > 0 && (
         <SidebarMenu>
-          {visibleLabels.map((label) => (
-            <LabelItem
-              key={label.id}
-              label={label}
-              isActive={activeLabelId === label.id}
-              onLabelToggle={onLabelToggle}
-            />
-          ))}
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext items={visibleLabels.map((l) => l.id)} strategy={verticalListSortingStrategy}>
+              {visibleLabels.map((label) => (
+                <LabelItem
+                  key={label.id}
+                  label={label}
+                  isActive={activeLabelId === label.id}
+                  onLabelToggle={onLabelToggle}
+                />
+              ))}
+            </SortableContext>
+          </DndContext>
           {hasMore && (
             <SidebarMenuItem>
               <SidebarMenuButton size="sm" onClick={() => setShowAll((v) => !v)}>
