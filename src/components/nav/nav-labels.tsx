@@ -1,7 +1,6 @@
 import { useState } from "react"
 import { Link, useLocation } from "@tanstack/react-router"
-import { ChevronDown, MoreVertical } from "lucide-react"
-import { Plus } from "lucide-react"
+import { ChevronDown, MoreVertical, Plus } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"

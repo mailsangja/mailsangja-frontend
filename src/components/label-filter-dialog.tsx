@@ -77,7 +77,7 @@ export function LabelFilterDialog() {
 
   const conditions = buildConditions(criteria)
   const hasCriteria = conditions.length > 0
-  const canCreate = applyLabel && !!labelId && hasCriteria
+  const canCreate = !!labelId && hasCriteria
 
   function reset() {
     setStep(1)

@@ -3,7 +3,7 @@ import { Link, createFileRoute, Outlet, redirect, useLocation, useNavigate } fro
 import { Bell, BellOff, Mail, Search } from "lucide-react"
 
 import { AppSidebar } from "@/components/app-sidebar"
-import { LabelFilterDialog } from "@/components/inbox/label-filter-dialog"
+import { LabelFilterDialog } from "@/components/label-filter-dialog"
 import { LoadingLayout } from "@/components/layout/loading-layout"
 import { PushNotificationListener } from "@/components/push-notification-listener"
 import { buttonVariants } from "@/components/ui/button"
