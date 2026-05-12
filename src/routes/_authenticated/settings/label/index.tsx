@@ -1,5 +1,5 @@
-import { useState } from "react"
-import { createFileRoute, Link } from "@tanstack/react-router"
+import { useState, useRef, useEffect } from "react"
+import { createFileRoute, Link, useLocation } from "@tanstack/react-router"
 import { ChevronRight, Plus } from "lucide-react"
 import { toast } from "sonner"
 
@@ -8,6 +8,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { LabelFilterDialog } from "@/components/label-filter-dialog"
 import { getErrorMessage } from "@/lib/http-error"
 import { useCreateLabel } from "@/mutations/labels"
 import { useLabels } from "@/queries/labels"
@@ -139,6 +140,14 @@ function CreateLabelDialog() {
 
 function SettingsLabelPage() {
   const { data: labels = [], isPending, isError } = useLabels()
+  const location = useLocation()
+  const createFilterRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (location.hash === "create-filter") {
+      createFilterRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+    }
+  }, [location.hash])
 
   return (
     <ScrollArea className="min-h-0 flex-1">
@@ -196,6 +205,18 @@ function SettingsLabelPage() {
             <CreateLabelDialog />
           </CardContent>
         </Card>
+
+        <div ref={createFilterRef}>
+          <Card>
+            <CardHeader>
+              <CardTitle>필터 만들기</CardTitle>
+              <CardDescription>검색 기준에 맞는 메일에 자동으로 라벨을 적용합니다.</CardDescription>
+            </CardHeader>
+            <CardContent>
+              <LabelFilterDialog />
+            </CardContent>
+          </Card>
+        </div>
       </div>
     </ScrollArea>
   )

@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { Link, useLocation } from "@tanstack/react-router"
-import { ChevronDown, MoreVertical, Plus } from "lucide-react"
+import { useQuery } from "@tanstack/react-query"
+import { Check, ChevronDown, ListFilter, MoreVertical, Plus } from "lucide-react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -8,9 +9,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogT
 import {
   DropdownMenu,
   DropdownMenuContent,
-  DropdownMenuGroup,
   DropdownMenuItem,
-  DropdownMenuLabel,
   DropdownMenuSeparator,
   DropdownMenuSub,
   DropdownMenuSubContent,
@@ -31,7 +30,7 @@ import { getErrorMessage, getHttpStatus } from "@/lib/http-error"
 import { parseMailRouteSearch } from "@/lib/mail-routing"
 import { useDeleteLabel, useUpdateLabel } from "@/mutations/labels"
 import { useCreateLabel } from "@/mutations/labels"
-import { useLabels } from "@/queries/labels"
+import { labelQueries, useLabels } from "@/queries/labels"
 import type { LabelListItem, NotificationPolicy } from "@/types/label"
 
 const LABEL_COLORS = [
@@ -71,6 +70,7 @@ function LabelItem({ label, isActive }: { label: LabelListItem; isActive: boolea
 
   const updateLabel = useUpdateLabel()
   const deleteLabel = useDeleteLabel()
+  const { data: labelDetail } = useQuery({ ...labelQueries.detail(label.id), enabled: dropdownOpen })
 
   function handleColorChange(color: string) {
     updateLabel.mutate({ labelId: label.id, data: { colorCode: color } })
@@ -163,16 +163,21 @@ function LabelItem({ label, isActive }: { label: LabelListItem; isActive: boolea
 
           <DropdownMenuSeparator />
 
-          <DropdownMenuGroup>
-            <DropdownMenuLabel>알림</DropdownMenuLabel>
-            {NOTIFICATION_OPTIONS.map(({ value, label: optLabel }) => (
-              <DropdownMenuItem key={value} onClick={() => handleNotificationChange(value)}>
-                {optLabel}
-              </DropdownMenuItem>
-            ))}
-          </DropdownMenuGroup>
+          <DropdownMenuSub>
+            <DropdownMenuSubTrigger>알림</DropdownMenuSubTrigger>
+            <DropdownMenuSubContent sideOffset={6} className="min-w-36">
+              {NOTIFICATION_OPTIONS.map(({ value, label: optLabel }) => (
+                <DropdownMenuItem key={value} onClick={() => handleNotificationChange(value)}>
+                  <Check
+                    className={cn("size-3.5 shrink-0", labelDetail?.notificationPolicy !== value && "invisible")}
+                  />
+                  {optLabel}
+                </DropdownMenuItem>
+              ))}
+            </DropdownMenuSubContent>
+          </DropdownMenuSub>
 
-          <DropdownMenuSeparator />
+          <DropdownMenuSeparator className="my-0.5" />
 
           <DropdownMenuItem
             onClick={() => {
@@ -288,52 +293,63 @@ export function NavLabels({ className }: { className?: string }) {
     <SidebarGroup className={className}>
       <SidebarGroupLabel className="flex items-center justify-between pr-1">
         <span>라벨</span>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button variant="ghost" size="icon-xs" title="라벨 추가">
-              <Plus />
-              <span className="sr-only">라벨 추가</span>
-            </Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>새 라벨 만들기</DialogTitle>
-            </DialogHeader>
-            <div className="flex flex-col gap-4 py-2">
-              <Input
-                placeholder="라벨 이름"
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleCreate()}
-                autoFocus
-              />
-              <div>
-                <p className="mb-2 text-xs text-muted-foreground">색상 선택</p>
-                <div className="grid grid-cols-10 gap-1.5">
-                  {LABEL_COLORS.map((color) => (
-                    <button
-                      key={color}
-                      type="button"
-                      className="size-6 rounded-full ring-offset-2 transition-transform hover:scale-110 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-                      style={{
-                        backgroundColor: color,
-                        boxShadow: selectedColor === color ? `0 0 0 2px white, 0 0 0 4px ${color}` : undefined,
-                      }}
-                      onClick={() => setSelectedColor(color)}
-                      aria-label={color}
-                      aria-pressed={selectedColor === color}
-                    />
-                  ))}
+        <div className="flex items-center">
+          <Button
+            variant="ghost"
+            size="icon-xs"
+            title="필터 만들기"
+            render={<Link to="/settings/label" hash="create-filter" />}
+          >
+            <ListFilter />
+            <span className="sr-only">필터 만들기</span>
+          </Button>
+          <Dialog open={open} onOpenChange={setOpen}>
+            <DialogTrigger asChild>
+              <Button variant="ghost" size="icon-xs" title="라벨 추가">
+                <Plus />
+                <span className="sr-only">라벨 추가</span>
+              </Button>
+            </DialogTrigger>
+            <DialogContent>
+              <DialogHeader>
+                <DialogTitle>새 라벨 만들기</DialogTitle>
+              </DialogHeader>
+              <div className="flex flex-col gap-4 py-2">
+                <Input
+                  placeholder="라벨 이름"
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleCreate()}
+                  autoFocus
+                />
+                <div>
+                  <p className="mb-2 text-xs text-muted-foreground">색상 선택</p>
+                  <div className="grid grid-cols-10 gap-1.5">
+                    {LABEL_COLORS.map((color) => (
+                      <button
+                        key={color}
+                        type="button"
+                        className="size-6 rounded-full ring-offset-2 transition-transform hover:scale-110 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                        style={{
+                          backgroundColor: color,
+                          boxShadow: selectedColor === color ? `0 0 0 2px white, 0 0 0 4px ${color}` : undefined,
+                        }}
+                        onClick={() => setSelectedColor(color)}
+                        aria-label={color}
+                        aria-pressed={selectedColor === color}
+                      />
+                    ))}
+                  </div>
                 </div>
               </div>
-            </div>
-            <DialogFooter>
-              <Button onClick={handleCreate} disabled={!name.trim() || createLabel.isPending}>
-                만들기
-              </Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+              <DialogFooter>
+                <Button onClick={handleCreate} disabled={!name.trim() || createLabel.isPending}>
+                  만들기
+                </Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
       </SidebarGroupLabel>
 
       {labels.length > 0 && (

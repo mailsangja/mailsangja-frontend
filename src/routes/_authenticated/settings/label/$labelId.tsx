@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { createFileRoute } from "@tanstack/react-router"
-import { Plus, Trash2 } from "lucide-react"
+import { Pencil, Plus, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 
 import { Badge } from "@/components/ui/badge"
@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button"
 import { Card, CardAction, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { LabelFilterDialog } from "@/components/label-filter-dialog"
 import { getErrorMessage } from "@/lib/http-error"
 import { useUpdateLabelRule } from "@/mutations/labels"
 import { useLabelDetail } from "@/queries/labels"
@@ -35,23 +36,27 @@ const OPERATOR_LABELS: Record<ConditionOperator, string> = {
   BOOLEAN: "해당함 여부",
 }
 
-function AddConditionDialog() {
-  return (
-    <Button variant="outline" size="sm">
-      <Plus data-icon="inline-start" />
-      조건 추가
-    </Button>
-  )
-}
-
 function LabelDetailPage() {
   const { labelId } = Route.useParams()
   const { data: label, isPending, isError } = useLabelDetail(labelId)
   const updateRule = useUpdateLabelRule()
+  const [isEditing, setIsEditing] = useState(false)
   const [conditions, setConditions] = useState<LabelCondition[] | null>(null)
+  const [filterDialogOpen, setFilterDialogOpen] = useState(false)
 
-  const displayConditions = conditions ?? label?.rule?.groups[0]?.conditions ?? []
-  const isDirty = conditions !== null
+  const savedConditions = label?.rule?.groups[0]?.conditions ?? []
+  const displayConditions = conditions ?? savedConditions
+  const colSpan = isEditing ? 4 : 3
+
+  function startEditing() {
+    setConditions([...savedConditions])
+    setIsEditing(true)
+  }
+
+  function cancelEditing() {
+    setConditions(null)
+    setIsEditing(false)
+  }
 
   function handleRemove(index: number) {
     setConditions(displayConditions.filter((_, i) => i !== index))
@@ -67,6 +72,7 @@ function LabelDetailPage() {
       {
         onSuccess: () => {
           setConditions(null)
+          setIsEditing(false)
           toast.success("필터 규칙이 저장되었습니다.")
         },
         onError: (e) => toast.error(getErrorMessage(e, "필터 규칙 저장에 실패했습니다.")),
@@ -117,24 +123,33 @@ function LabelDetailPage() {
             </CardTitle>
             <CardDescription>이 라벨에 자동으로 분류될 메일의 조건을 설정합니다.</CardDescription>
             <CardAction>
-              <AddConditionDialog />
+              {!isEditing && (
+                <Button variant="outline" size="sm" onClick={startEditing} disabled={savedConditions.length === 0}>
+                  <Pencil data-icon="inline-start" />
+                  조건 수정
+                </Button>
+              )}
             </CardAction>
           </CardHeader>
           <CardContent className="px-0">
-            {displayConditions.length === 0 ? (
-              <p className="px-4 py-2 text-sm text-muted-foreground">설정된 필터 조건이 없습니다.</p>
-            ) : (
-              <Table>
-                <TableHeader>
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>필드</TableHead>
+                  <TableHead>연산자</TableHead>
+                  <TableHead>값</TableHead>
+                  {isEditing && <TableHead className="w-10" />}
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {displayConditions.length === 0 ? (
                   <TableRow>
-                    <TableHead>필드</TableHead>
-                    <TableHead>연산자</TableHead>
-                    <TableHead>값</TableHead>
-                    <TableHead className="w-10" />
+                    <TableCell colSpan={colSpan} className="text-center text-sm text-muted-foreground">
+                      설정된 필터 조건이 없습니다.
+                    </TableCell>
                   </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {displayConditions.map((condition, index) => (
+                ) : (
+                  displayConditions.map((condition, index) => (
                     <TableRow key={index}>
                       <TableCell>
                         <Badge variant="secondary" className="font-normal">
@@ -145,25 +160,41 @@ function LabelDetailPage() {
                         {OPERATOR_LABELS[condition.operator]}
                       </TableCell>
                       <TableCell className="font-mono text-sm">{condition.value}</TableCell>
-                      <TableCell>
-                        <Button
-                          variant="ghost"
-                          size="icon-sm"
-                          onClick={() => handleRemove(index)}
-                          aria-label="조건 삭제"
-                        >
-                          <Trash2 className="size-4" />
-                        </Button>
-                      </TableCell>
+                      {isEditing && (
+                        <TableCell>
+                          <Button
+                            variant="ghost"
+                            size="icon-sm"
+                            onClick={() => handleRemove(index)}
+                            aria-label="조건 삭제"
+                          >
+                            <Trash2 className="size-4" />
+                          </Button>
+                        </TableCell>
+                      )}
                     </TableRow>
-                  ))}
-                </TableBody>
-              </Table>
-            )}
+                  ))
+                )}
+                {!isEditing && (
+                  <TableRow className="hover:bg-transparent">
+                    <TableCell colSpan={colSpan} className="p-0">
+                      <button
+                        type="button"
+                        className="flex w-full cursor-pointer items-center justify-center py-2 text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+                        onClick={() => setFilterDialogOpen(true)}
+                        aria-label="조건 추가"
+                      >
+                        <Plus className="size-4" />
+                      </button>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
           </CardContent>
-          {isDirty && (
+          {isEditing && (
             <CardFooter className="justify-end gap-2">
-              <Button variant="ghost" onClick={() => setConditions(null)} disabled={updateRule.isPending}>
+              <Button variant="ghost" onClick={cancelEditing} disabled={updateRule.isPending}>
                 취소
               </Button>
               <Button onClick={handleSave} disabled={updateRule.isPending}>
@@ -173,6 +204,8 @@ function LabelDetailPage() {
           )}
         </Card>
       </div>
+
+      <LabelFilterDialog open={filterDialogOpen} onOpenChange={setFilterDialogOpen} defaultLabelId={labelId} />
     </ScrollArea>
   )
 }

@@ -3,7 +3,6 @@ import { Link, createFileRoute, Outlet, redirect, useLocation, useNavigate } fro
 import { Bell, BellOff, Mail, Search } from "lucide-react"
 
 import { AppSidebar } from "@/components/app-sidebar"
-import { LabelFilterDialog } from "@/components/label-filter-dialog"
 import { LoadingLayout } from "@/components/layout/loading-layout"
 import { PushNotificationListener } from "@/components/push-notification-listener"
 import { buttonVariants } from "@/components/ui/button"
@@ -136,9 +135,6 @@ function AuthenticatedRouteLayout() {
               className="h-9 rounded-md bg-muted/50 pr-9 pl-9 shadow-none"
             />
           )}
-          <div className="absolute top-1/2 right-1 -translate-y-1/2">
-            <LabelFilterDialog />
-          </div>
         </form>
 
         <div className="flex shrink-0 items-center gap-1">
