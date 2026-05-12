@@ -21,6 +21,8 @@ import { Route as AuthenticatedSettingsIndexRouteImport } from './routes/_authen
 import { Route as AuthenticatedMailIndexRouteImport } from './routes/_authenticated/mail/index'
 import { Route as AuthenticatedSettingsAccountRouteImport } from './routes/_authenticated/settings/account'
 import { Route as AuthenticatedMailMailboxRouteImport } from './routes/_authenticated/mail/$mailbox'
+import { Route as AuthenticatedSettingsLabelIndexRouteImport } from './routes/_authenticated/settings/label/index'
+import { Route as AuthenticatedSettingsLabelLabelIdRouteImport } from './routes/_authenticated/settings/label/$labelId'
 
 const GuestRoute = GuestRouteImport.update({
   id: '/_guest',
@@ -83,6 +85,18 @@ const AuthenticatedMailMailboxRoute =
     path: '/$mailbox',
     getParentRoute: () => AuthenticatedMailRoute,
   } as any)
+const AuthenticatedSettingsLabelIndexRoute =
+  AuthenticatedSettingsLabelIndexRouteImport.update({
+    id: '/label/',
+    path: '/label/',
+    getParentRoute: () => AuthenticatedSettingsRoute,
+  } as any)
+const AuthenticatedSettingsLabelLabelIdRoute =
+  AuthenticatedSettingsLabelLabelIdRouteImport.update({
+    id: '/label/$labelId',
+    path: '/label/$labelId',
+    getParentRoute: () => AuthenticatedSettingsRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -95,6 +109,8 @@ export interface FileRoutesByFullPath {
   '/settings/account': typeof AuthenticatedSettingsAccountRoute
   '/mail/': typeof AuthenticatedMailIndexRoute
   '/settings/': typeof AuthenticatedSettingsIndexRoute
+  '/settings/label/$labelId': typeof AuthenticatedSettingsLabelLabelIdRoute
+  '/settings/label/': typeof AuthenticatedSettingsLabelIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -105,6 +121,8 @@ export interface FileRoutesByTo {
   '/settings/account': typeof AuthenticatedSettingsAccountRoute
   '/mail': typeof AuthenticatedMailIndexRoute
   '/settings': typeof AuthenticatedSettingsIndexRoute
+  '/settings/label/$labelId': typeof AuthenticatedSettingsLabelLabelIdRoute
+  '/settings/label': typeof AuthenticatedSettingsLabelIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -120,6 +138,8 @@ export interface FileRoutesById {
   '/_authenticated/settings/account': typeof AuthenticatedSettingsAccountRoute
   '/_authenticated/mail/': typeof AuthenticatedMailIndexRoute
   '/_authenticated/settings/': typeof AuthenticatedSettingsIndexRoute
+  '/_authenticated/settings/label/$labelId': typeof AuthenticatedSettingsLabelLabelIdRoute
+  '/_authenticated/settings/label/': typeof AuthenticatedSettingsLabelIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -134,6 +154,8 @@ export interface FileRouteTypes {
     | '/settings/account'
     | '/mail/'
     | '/settings/'
+    | '/settings/label/$labelId'
+    | '/settings/label/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -144,6 +166,8 @@ export interface FileRouteTypes {
     | '/settings/account'
     | '/mail'
     | '/settings'
+    | '/settings/label/$labelId'
+    | '/settings/label'
   id:
     | '__root__'
     | '/'
@@ -158,6 +182,8 @@ export interface FileRouteTypes {
     | '/_authenticated/settings/account'
     | '/_authenticated/mail/'
     | '/_authenticated/settings/'
+    | '/_authenticated/settings/label/$labelId'
+    | '/_authenticated/settings/label/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -252,6 +278,20 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedMailMailboxRouteImport
       parentRoute: typeof AuthenticatedMailRoute
     }
+    '/_authenticated/settings/label/': {
+      id: '/_authenticated/settings/label/'
+      path: '/label'
+      fullPath: '/settings/label/'
+      preLoaderRoute: typeof AuthenticatedSettingsLabelIndexRouteImport
+      parentRoute: typeof AuthenticatedSettingsRoute
+    }
+    '/_authenticated/settings/label/$labelId': {
+      id: '/_authenticated/settings/label/$labelId'
+      path: '/label/$labelId'
+      fullPath: '/settings/label/$labelId'
+      preLoaderRoute: typeof AuthenticatedSettingsLabelLabelIdRouteImport
+      parentRoute: typeof AuthenticatedSettingsRoute
+    }
   }
 }
 
@@ -271,11 +311,16 @@ const AuthenticatedMailRouteWithChildren =
 interface AuthenticatedSettingsRouteChildren {
   AuthenticatedSettingsAccountRoute: typeof AuthenticatedSettingsAccountRoute
   AuthenticatedSettingsIndexRoute: typeof AuthenticatedSettingsIndexRoute
+  AuthenticatedSettingsLabelLabelIdRoute: typeof AuthenticatedSettingsLabelLabelIdRoute
+  AuthenticatedSettingsLabelIndexRoute: typeof AuthenticatedSettingsLabelIndexRoute
 }
 
 const AuthenticatedSettingsRouteChildren: AuthenticatedSettingsRouteChildren = {
   AuthenticatedSettingsAccountRoute: AuthenticatedSettingsAccountRoute,
   AuthenticatedSettingsIndexRoute: AuthenticatedSettingsIndexRoute,
+  AuthenticatedSettingsLabelLabelIdRoute:
+    AuthenticatedSettingsLabelLabelIdRoute,
+  AuthenticatedSettingsLabelIndexRoute: AuthenticatedSettingsLabelIndexRoute,
 }
 
 const AuthenticatedSettingsRouteWithChildren =

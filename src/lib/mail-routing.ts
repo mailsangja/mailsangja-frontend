@@ -5,6 +5,7 @@ export interface MailRouteSearch {
   filter?: EmailFilter
   accountId?: string
   thread?: string
+  labelId?: string
 }
 
 export function parseMailRouteSearch(search: unknown): MailRouteSearch {
@@ -17,11 +18,13 @@ export function parseMailRouteSearch(search: unknown): MailRouteSearch {
   const filter = values.filter === "unread" ? "unread" : values.filter === "all" ? "all" : undefined
   const accountId = typeof values.accountId === "string" ? values.accountId.trim() : undefined
   const thread = typeof values.thread === "string" ? values.thread.trim() : undefined
+  const labelId = typeof values.labelId === "string" ? values.labelId.trim() : undefined
 
   return {
     ...(query ? { query } : {}),
     ...(filter && filter !== "all" ? { filter } : {}),
     ...(accountId ? { accountId } : {}),
     ...(thread ? { thread } : {}),
+    ...(labelId ? { labelId } : {}),
   }
 }
