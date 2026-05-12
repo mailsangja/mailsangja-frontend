@@ -1,6 +1,7 @@
 import { useState } from "react"
 import { Link, useLocation } from "@tanstack/react-router"
 import { ChevronDown, MoreVertical, Plus } from "lucide-react"
+import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
@@ -26,6 +27,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 import { cn } from "@/lib/utils"
+import { getErrorMessage, getHttpStatus } from "@/lib/http-error"
 import { parseMailRouteSearch } from "@/lib/mail-routing"
 import { useDeleteLabel, useUpdateLabel } from "@/mutations/labels"
 import { useCreateLabel } from "@/mutations/labels"
@@ -87,7 +89,19 @@ function LabelItem({ label, isActive }: { label: LabelListItem; isActive: boolea
       setRenameOpen(false)
       return
     }
-    updateLabel.mutate({ labelId: label.id, data: { name: trimmed } }, { onSuccess: () => setRenameOpen(false) })
+    updateLabel.mutate(
+      { labelId: label.id, data: { name: trimmed } },
+      {
+        onSuccess: () => setRenameOpen(false),
+        onError: (e) => {
+          if (getHttpStatus(e) === 409) {
+            toast.error("이미 존재하는 라벨입니다.")
+          } else {
+            toast.error(getErrorMessage(e, "라벨 이름 수정에 실패했습니다."))
+          }
+        },
+      }
+    )
   }
 
   function handleDelete() {
@@ -251,13 +265,20 @@ export function NavLabels({ className }: { className?: string }) {
 
   function handleCreate() {
     if (!name.trim()) return
+    const nameToCreate = name.trim()
+    const colorToCreate = selectedColor
+    setName("")
+    setSelectedColor(LABEL_COLORS[0])
     createLabel.mutate(
-      { name: name.trim(), colorCode: selectedColor, notificationPolicy: "INHERIT", order: 0 },
+      { name: nameToCreate, colorCode: colorToCreate, notificationPolicy: "INHERIT", order: 0 },
       {
-        onSuccess: () => {
-          setName("")
-          setSelectedColor(LABEL_COLORS[0])
-          setOpen(false)
+        onSuccess: () => setOpen(false),
+        onError: (e) => {
+          if (getHttpStatus(e) === 409) {
+            toast.error("이미 존재하는 라벨입니다.")
+          } else {
+            toast.error(getErrorMessage(e, "라벨 생성에 실패했습니다."))
+          }
         },
       }
     )
