@@ -7,7 +7,16 @@ import { Button } from "@/components/ui/button"
 import { InputGroup, InputGroupAddon, InputGroupButton, InputGroupInput } from "@/components/ui/input-group"
 import { ChevronDownIcon, XIcon, CheckIcon } from "lucide-react"
 
-const Combobox = ComboboxPrimitive.Root
+type ComboboxRootProps<Value, Multiple extends boolean | undefined = false> = Omit<
+  ComboboxPrimitive.Root.Props<Value, Multiple>,
+  "autoHighlight"
+> & {
+  autoHighlight?: boolean | "always"
+}
+
+function Combobox<Value, Multiple extends boolean | undefined = false>(props: ComboboxRootProps<Value, Multiple>) {
+  return <ComboboxPrimitive.Root {...(props as ComboboxPrimitive.Root.Props<Value, Multiple>)} />
+}
 
 function ComboboxValue({ ...props }: ComboboxPrimitive.Value.Props) {
   return <ComboboxPrimitive.Value data-slot="combobox-value" {...props} />

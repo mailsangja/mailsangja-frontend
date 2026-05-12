@@ -1,4 +1,4 @@
-import { useDeferredValue, useMemo, useState, type ClipboardEvent, type KeyboardEvent } from "react"
+import { useMemo, useState, type ClipboardEvent, type KeyboardEvent } from "react"
 import { Loader2, UserRound } from "lucide-react"
 
 import {
@@ -21,6 +21,7 @@ import {
   parseMailAddressEntry,
   parseMailRecipients,
 } from "@/lib/mail-address"
+import { useDebounce } from "@/hooks/use-debounce"
 import { useContacts } from "@/queries/contacts"
 import type { Contact } from "@/types/contact"
 import type { MailAddress } from "@/types/email"
@@ -64,9 +65,10 @@ export function RecipientInput({
   const [draft, setDraft] = useState("")
   const [isOpen, setIsOpen] = useState(false)
   const [isFocused, setIsFocused] = useState(false)
-  const deferredDraft = useDeferredValue(draft)
-  const keyword = deferredDraft.trim()
-  const contactsQuery = useContacts({ keyword }, isFocused || isOpen)
+  const keyword = draft.trim()
+  const debouncedKeyword = useDebounce(keyword)
+  const isDebouncing = keyword !== debouncedKeyword
+  const contactsQuery = useContacts({ keyword: debouncedKeyword }, isFocused || isOpen)
   const selectedEmails = useMemo(
     () => new Set(recipients.map((recipient) => recipient.email.toLowerCase())),
     [recipients]
@@ -87,7 +89,12 @@ export function RecipientInput({
     return [...draftOption, ...contactOptions]
   }, [contactsQuery.data, draftRecipient, selectedEmails])
   const hasInvalidDraft =
-    !!keyword && !draftRecipient && recipientOptions.length === 0 && !contactsQuery.isPending && !contactsQuery.isError
+    !!keyword &&
+    !draftRecipient &&
+    !isDebouncing &&
+    recipientOptions.length === 0 &&
+    !contactsQuery.isPending &&
+    !contactsQuery.isError
 
   const updateRecipients = (nextRecipients: readonly MailAddress[]) => {
     onRecipientsChange(getUniqueMailAddresses(nextRecipients))
@@ -137,7 +144,7 @@ export function RecipientInput({
       multiple
       value={recipients}
       inputValue={draft}
-      autoHighlight
+      autoHighlight="always"
       itemToStringLabel={getMailAddressSearchText}
       itemToStringValue={(recipient) => recipient.email}
       isItemEqualToValue={(item, value) => item.email.toLowerCase() === value.email.toLowerCase()}
@@ -176,7 +183,7 @@ export function RecipientInput({
         />
       </ComboboxChips>
       <ComboboxContent anchor={anchorRef} side="bottom" align="start" className="min-w-72">
-        {contactsQuery.isPending ? (
+        {isDebouncing || contactsQuery.isPending || contactsQuery.isFetching ? (
           <div className="flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground">
             <Loader2 className="size-4 animate-spin" />
             연락처를 불러오는 중
