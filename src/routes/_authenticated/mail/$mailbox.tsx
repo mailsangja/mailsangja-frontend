@@ -15,6 +15,7 @@ import { cn } from "@/lib/utils"
 import { useMarkThreadAsRead } from "@/mutations/emails"
 import { useMailAccounts } from "@/queries/mail-accounts"
 import { useMailboxThreads } from "@/queries/emails"
+import { useLabels } from "@/queries/labels"
 import { useTrashThreads } from "@/queries/trash"
 import { isSupportedMailboxId, MAILBOX_LABELS, parseMailboxId, type PrimaryMailboxId } from "@/types/email"
 import type { TrashThreadSummary } from "@/types/trash"
@@ -72,12 +73,14 @@ function MailboxPage() {
 }
 
 function MailboxView({ mailbox }: { mailbox: PrimaryMailboxId }) {
-  const { query = "", filter = "all", accountId, thread: selectedThreadId = null } = Route.useSearch()
+  const { query = "", filter = "all", accountId, labelId, thread: selectedThreadId = null } = Route.useSearch()
   const navigate = Route.useNavigate()
   const isMobile = useIsMobile()
   const { data: accounts } = useMailAccounts()
+  const { data: labels } = useLabels()
   const { mutate: markAsRead } = useMarkThreadAsRead()
   const supportedMailbox = isSupportedMailboxId(mailbox) ? mailbox : null
+  const selectedLabel = labelId ? (labels?.find((label) => label.id === labelId) ?? null) : null
   const {
     data,
     isLoading,
@@ -91,6 +94,7 @@ function MailboxView({ mailbox }: { mailbox: PrimaryMailboxId }) {
     isFetchNextPageError,
   } = useMailboxThreads(supportedMailbox, {
     read: filter === "unread" ? false : undefined,
+    labelId: labelId ? [labelId] : undefined,
   })
 
   const loadedThreads = data?.pages.flatMap((page) => page.content) ?? []
@@ -113,6 +117,22 @@ function MailboxView({ mailbox }: { mailbox: PrimaryMailboxId }) {
       replace: true,
     })
   }, [accounts, navigate, selectedAccount, accountId])
+
+  useEffect(() => {
+    if (!labelId || labels === undefined || selectedLabel) {
+      return
+    }
+
+    toast.error("유효하지 않은 라벨입니다")
+
+    void navigate({
+      search: (previous) => ({
+        ...previous,
+        labelId: undefined,
+      }),
+      replace: true,
+    })
+  }, [labels, navigate, selectedLabel, labelId])
 
   const threads = supportedMailbox
     ? loadedThreads.filter((thread) => {
@@ -153,6 +173,9 @@ function MailboxView({ mailbox }: { mailbox: PrimaryMailboxId }) {
     emptyDescription = "현재까지 불러온 메일에서 검색 결과를 찾지 못했습니다."
   } else if (filter === "unread") {
     emptyTitle = "안 읽은 메일이 없습니다"
+  } else if (selectedLabel?.id) {
+    emptyTitle = "선택한 라벨의 메일이 없습니다"
+    emptyDescription = `"${selectedLabel.name}" 라벨이 적용된 메일이 없습니다.`
   } else if (selectedAccount?.id) {
     emptyTitle = "선택한 계정의 메일이 없습니다"
     emptyDescription = `${selectedAccount.alias} (${selectedAccount.emailAddress}) 계정에서 불러온 메일이 없습니다.`

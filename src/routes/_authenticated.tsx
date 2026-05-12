@@ -29,13 +29,14 @@ export const Route = createFileRoute("/_authenticated")({
 
 function getMailRouteState(pathname: string, search: unknown) {
   const [, section, mailbox] = pathname.split("/")
-  const { query = "", filter = "all", accountId } = parseMailRouteSearch(search)
+  const { query = "", filter = "all", accountId, labelId } = parseMailRouteSearch(search)
 
   return {
     mailbox: section === "mail" && mailbox ? parseMailboxId(mailbox) : null,
     query,
     filter,
     accountId,
+    labelId,
   }
 }
 
@@ -60,7 +61,7 @@ function NotificationSettingsLink() {
 function AuthenticatedRouteLayout() {
   const isMobile = useIsMobile()
   const navigate = useNavigate()
-  const { mailbox, query, filter, accountId } = useLocation({
+  const { mailbox, query, filter, accountId, labelId } = useLocation({
     select: (currentLocation) => getMailRouteState(currentLocation.pathname, currentLocation.search),
   })
 
@@ -146,6 +147,7 @@ function AuthenticatedRouteLayout() {
         <AppSidebar
           mailbox={mailbox}
           activeAccountId={accountId}
+          activeLabelId={labelId}
           onMailboxChange={(nextMailbox) => {
             void navigate({
               to: "/mail/$mailbox",
@@ -164,6 +166,18 @@ function AuthenticatedRouteLayout() {
               search: (previous) => ({
                 ...previous,
                 accountId: previous.accountId === nextAccountId ? undefined : nextAccountId,
+                thread: undefined,
+              }),
+              replace: true,
+            })
+          }}
+          onLabelToggle={(nextLabelId) => {
+            void navigate({
+              to: "/mail/$mailbox",
+              params: { mailbox: mailbox ?? "inbox" },
+              search: (previous) => ({
+                ...previous,
+                labelId: previous.labelId === nextLabelId ? undefined : nextLabelId,
                 thread: undefined,
               }),
               replace: true,

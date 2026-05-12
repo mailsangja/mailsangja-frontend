@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Link, useLocation } from "@tanstack/react-router"
+import { Link } from "@tanstack/react-router"
 import { useQuery } from "@tanstack/react-query"
 import { Check, ChevronDown, ListFilter, MoreVertical, Plus } from "lucide-react"
 import { toast } from "sonner"
@@ -27,7 +27,6 @@ import {
 } from "@/components/ui/sidebar"
 import { cn } from "@/lib/utils"
 import { getErrorMessage, getHttpStatus } from "@/lib/http-error"
-import { parseMailRouteSearch } from "@/lib/mail-routing"
 import { useDeleteLabel, useUpdateLabel } from "@/mutations/labels"
 import { useCreateLabel } from "@/mutations/labels"
 import { labelQueries, useLabels } from "@/queries/labels"
@@ -62,7 +61,15 @@ const NOTIFICATION_OPTIONS: { value: NotificationPolicy; label: string }[] = [
   { value: "SILENT", label: "알림 안함" },
 ]
 
-function LabelItem({ label, isActive }: { label: LabelListItem; isActive: boolean }) {
+function LabelItem({
+  label,
+  isActive,
+  onLabelToggle,
+}: {
+  label: LabelListItem
+  isActive: boolean
+  onLabelToggle: (labelId: string) => void
+}) {
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [renameOpen, setRenameOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
@@ -111,11 +118,12 @@ function LabelItem({ label, isActive }: { label: LabelListItem; isActive: boolea
   return (
     <SidebarMenuItem>
       <SidebarMenuButton
+        type="button"
         tooltip={label.name}
         isActive={isActive}
         size="sm"
         className="group-hover/menu-item:bg-sidebar-accent group-hover/menu-item:text-sidebar-accent-foreground"
-        render={<Link to="/mail/$mailbox" params={{ mailbox: "inbox" }} search={{ labelId: label.id }} />}
+        onClick={() => onLabelToggle(label.id)}
       >
         <span className="size-3 shrink-0 rounded-sm" style={{ backgroundColor: label.colorCode }} />
         <span className="truncate">{label.name}</span>
@@ -255,15 +263,19 @@ function LabelItem({ label, isActive }: { label: LabelListItem; isActive: boolea
 
 const LABELS_LIMIT = 4
 
-export function NavLabels({ className }: { className?: string }) {
+interface NavLabelsProps {
+  activeLabelId?: string
+  onLabelToggle: (labelId: string) => void
+  className?: string
+}
+
+export function NavLabels({ activeLabelId, onLabelToggle, className }: NavLabelsProps) {
   const { data: labels = [] } = useLabels()
   const createLabel = useCreateLabel()
   const [open, setOpen] = useState(false)
   const [name, setName] = useState("")
   const [selectedColor, setSelectedColor] = useState(LABEL_COLORS[0])
   const [showAll, setShowAll] = useState(false)
-  const location = useLocation()
-  const { labelId: activeLabelId } = parseMailRouteSearch(location.search)
 
   const visibleLabels = showAll ? labels : labels.slice(0, LABELS_LIMIT)
   const hasMore = labels.length > LABELS_LIMIT
@@ -355,7 +367,12 @@ export function NavLabels({ className }: { className?: string }) {
       {labels.length > 0 && (
         <SidebarMenu>
           {visibleLabels.map((label) => (
-            <LabelItem key={label.id} label={label} isActive={activeLabelId === label.id} />
+            <LabelItem
+              key={label.id}
+              label={label}
+              isActive={activeLabelId === label.id}
+              onLabelToggle={onLabelToggle}
+            />
           ))}
           {hasMore && (
             <SidebarMenuItem>
