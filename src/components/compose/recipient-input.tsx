@@ -18,6 +18,7 @@ import {
   getMailAddressDisplayName,
   getMailAddressSearchText,
   getUniqueMailAddresses,
+  parseMailAddressEntry,
   parseMailRecipients,
 } from "@/lib/mail-address"
 import { useContacts } from "@/queries/contacts"
@@ -33,6 +34,7 @@ interface RecipientInputProps {
 
 interface RecipientOption extends MailAddress {
   id: string
+  source: "contact" | "manual"
 }
 
 function createRecipientOption(contact: Contact): RecipientOption {
@@ -40,6 +42,7 @@ function createRecipientOption(contact: Contact): RecipientOption {
     id: contact.id,
     name: contact.name.trim(),
     email: contact.email.trim(),
+    source: "contact",
   }
 }
 
@@ -68,14 +71,23 @@ export function RecipientInput({
     () => new Set(recipients.map((recipient) => recipient.email.toLowerCase())),
     [recipients]
   )
-  const recipientOptions = useMemo<RecipientOption[]>(
-    () =>
-      (contactsQuery.data ?? [])
-        .filter((contact) => !selectedEmails.has(contact.email.trim().toLowerCase()))
-        .map(createRecipientOption)
-        .slice(0, 8),
-    [contactsQuery.data, selectedEmails]
-  )
+  const draftRecipient = useMemo(() => parseMailAddressEntry(draft), [draft])
+  const recipientOptions = useMemo<RecipientOption[]>(() => {
+    const contactOptions = (contactsQuery.data ?? [])
+      .filter((contact) => !selectedEmails.has(contact.email.trim().toLowerCase()))
+      .map(createRecipientOption)
+      .slice(0, 8)
+    const optionEmails = new Set(contactOptions.map((recipient) => recipient.email.toLowerCase()))
+    const draftEmail = draftRecipient?.email.toLowerCase()
+    const draftOption =
+      draftRecipient && draftEmail && !selectedEmails.has(draftEmail) && !optionEmails.has(draftEmail)
+        ? [{ ...draftRecipient, id: `manual:${draftRecipient.email}`, source: "manual" as const }]
+        : []
+
+    return [...draftOption, ...contactOptions]
+  }, [contactsQuery.data, draftRecipient, selectedEmails])
+  const hasInvalidDraft =
+    !!keyword && !draftRecipient && recipientOptions.length === 0 && !contactsQuery.isPending && !contactsQuery.isError
 
   const updateRecipients = (nextRecipients: readonly MailAddress[]) => {
     onRecipientsChange(getUniqueMailAddresses(nextRecipients))
@@ -94,7 +106,7 @@ export function RecipientInput({
   }
 
   const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
-    if (event.key === "Enter" || event.key === "Tab" || event.key === "," || event.key === ";") {
+    if (event.key === "Tab" || event.key === "," || event.key === ";") {
       if (!draft.trim()) {
         return
       }
@@ -125,6 +137,7 @@ export function RecipientInput({
       multiple
       value={recipients}
       inputValue={draft}
+      autoHighlight
       itemToStringLabel={getMailAddressSearchText}
       itemToStringValue={(recipient) => recipient.email}
       isItemEqualToValue={(item, value) => item.email.toLowerCase() === value.email.toLowerCase()}
@@ -171,6 +184,8 @@ export function RecipientInput({
         ) : null}
         {contactsQuery.isError ? (
           <div className="px-3 py-2 text-sm text-muted-foreground">연락처를 불러오지 못했습니다</div>
+        ) : hasInvalidDraft ? (
+          <div className="px-3 py-2 text-sm text-muted-foreground">올바른 이메일 형식이 아닙니다</div>
         ) : (
           <ComboboxEmpty>일치하는 연락처가 없습니다</ComboboxEmpty>
         )}
@@ -182,7 +197,9 @@ export function RecipientInput({
               </span>
               <span className="min-w-0 flex-1">
                 <span className="block truncate font-medium">{getMailAddressDisplayName(recipient)}</span>
-                <span className="block truncate text-xs text-muted-foreground">{recipient.email}</span>
+                <span className="block truncate text-xs text-muted-foreground">
+                  {recipient.source === "manual" ? `${recipient.email} 직접 추가` : recipient.email}
+                </span>
               </span>
             </ComboboxItem>
           )}

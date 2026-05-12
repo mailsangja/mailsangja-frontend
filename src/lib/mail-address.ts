@@ -26,13 +26,7 @@ export function getMailAddressDisplayName(address?: MailAddress | null) {
   const name = normalize(address?.name)
   const email = normalize(address?.email)
 
-  if (name) {
-    return name
-  }
-
-  const [localPart] = email.split("@")
-
-  return localPart || email || "알 수 없음"
+  return name || email || "알 수 없음"
 }
 
 export function getMailAddressSearchText(address?: MailAddress | null) {
@@ -123,6 +117,10 @@ function unescapeQuotedName(value: string) {
   return value.replace(/\\(["\\])/g, "$1")
 }
 
+export function isValidEmailAddress(value: string) {
+  return /^[^\s@<>"]+@[^\s@<>"]+\.[^\s@<>"]+$/.test(value.trim())
+}
+
 export function parseMailAddressEntry(value: string): MailAddress | null {
   const entry = value.trim()
 
@@ -133,16 +131,25 @@ export function parseMailAddressEntry(value: string): MailAddress | null {
   const angleMatch = entry.match(/^(.*?)<([^<>]+)>\s*$/)
 
   if (!angleMatch) {
-    return { email: entry }
+    return isValidEmailAddress(entry) ? { email: entry } : null
   }
 
   const rawName = angleMatch[1].trim()
   const email = angleMatch[2].trim()
+
+  if (!rawName || !isValidEmailAddress(email)) {
+    return null
+  }
+
   const quotedName = rawName.match(/^"((?:\\.|[^"])*)"$/)
   const name = (quotedName ? unescapeQuotedName(quotedName[1]) : rawName).trim()
 
+  if (!name) {
+    return null
+  }
+
   return {
-    ...(name ? { name } : {}),
+    name,
     email,
   }
 }
