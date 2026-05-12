@@ -6,7 +6,11 @@ import { toast } from "sonner"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardAction, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { getErrorMessage } from "@/lib/http-error"
 import { useUpdateLabelRule } from "@/mutations/labels"
@@ -35,12 +39,117 @@ const OPERATOR_LABELS: Record<ConditionOperator, string> = {
   BOOLEAN: "해당함 여부",
 }
 
-function AddConditionDialog() {
+const FIELD_OPTIONS: { value: ConditionField; label: string }[] = [
+  { value: "MAIL_ACCOUNT", label: "메일 계정" },
+  { value: "FROM_ADDRESS", label: "보낸 사람 (주소)" },
+  { value: "FROM_DOMAIN", label: "보낸 사람 (도메인)" },
+  { value: "TO_ADDRESS", label: "받는 사람" },
+  { value: "CC_ADDRESS", label: "참조" },
+  { value: "SUBJECT", label: "제목" },
+  { value: "BODY_TEXT", label: "본문" },
+  { value: "HAS_ATTACHMENT", label: "첨부파일" },
+]
+
+const OPERATOR_OPTIONS: { value: ConditionOperator; label: string }[] = [
+  { value: "CONTAINS", label: "포함" },
+  { value: "EQUALS", label: "같음" },
+  { value: "NOT_CONTAINS", label: "미포함" },
+]
+
+function AddConditionDialog({ onAdd }: { onAdd: (condition: LabelCondition) => void }) {
+  const [open, setOpen] = useState(false)
+  const [field, setField] = useState<ConditionField>("FROM_ADDRESS")
+  const [operator, setOperator] = useState<ConditionOperator>("CONTAINS")
+  const [value, setValue] = useState("")
+
+  const isAttachment = field === "HAS_ATTACHMENT"
+
+  function handleFieldChange(newField: ConditionField) {
+    setField(newField)
+    if (newField === "HAS_ATTACHMENT") {
+      setOperator("BOOLEAN")
+      setValue("true")
+    } else {
+      if (operator === "BOOLEAN") setOperator("CONTAINS")
+      setValue("")
+    }
+  }
+
+  function handleAdd() {
+    if (!isAttachment && !value.trim()) return
+    onAdd({ field, operator: isAttachment ? "BOOLEAN" : operator, value: isAttachment ? "true" : value.trim() })
+    setField("FROM_ADDRESS")
+    setOperator("CONTAINS")
+    setValue("")
+    setOpen(false)
+  }
+
   return (
-    <Button variant="outline" size="sm">
-      <Plus data-icon="inline-start" />
-      조건 추가
-    </Button>
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger render={<Button variant="outline" size="sm" />}>
+        <Plus data-icon="inline-start" />
+        조건 추가
+      </DialogTrigger>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>조건 추가</DialogTitle>
+        </DialogHeader>
+        <div className="flex flex-col gap-4 py-2">
+          <div className="flex flex-col gap-1.5">
+            <Label>필드</Label>
+            <Select value={field} onValueChange={(v) => handleFieldChange(v as ConditionField)}>
+              <SelectTrigger>
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {FIELD_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          {!isAttachment && (
+            <>
+              <div className="flex flex-col gap-1.5">
+                <Label>연산자</Label>
+                <Select value={operator} onValueChange={(v) => setOperator(v as ConditionOperator)}>
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {OPERATOR_OPTIONS.map((opt) => (
+                      <SelectItem key={opt.value} value={opt.value}>
+                        {opt.label}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+              <div className="flex flex-col gap-1.5">
+                <Label>값</Label>
+                <Input
+                  value={value}
+                  onChange={(e) => setValue(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleAdd()}
+                  placeholder="조건 값을 입력하세요"
+                  autoFocus
+                />
+              </div>
+            </>
+          )}
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => setOpen(false)}>
+            취소
+          </Button>
+          <Button onClick={handleAdd} disabled={!isAttachment && !value.trim()}>
+            추가
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
   )
 }
 
@@ -52,6 +161,10 @@ function LabelDetailPage() {
 
   const displayConditions = conditions ?? label?.rule?.groups[0]?.conditions ?? []
   const isDirty = conditions !== null
+
+  function handleAdd(condition: LabelCondition) {
+    setConditions([...displayConditions, condition])
+  }
 
   function handleRemove(index: number) {
     setConditions(displayConditions.filter((_, i) => i !== index))
@@ -117,11 +230,11 @@ function LabelDetailPage() {
             </CardTitle>
             <CardDescription>이 라벨에 자동으로 분류될 메일의 조건을 설정합니다.</CardDescription>
             <CardAction>
-              <AddConditionDialog />
+              <AddConditionDialog onAdd={handleAdd} />
             </CardAction>
           </CardHeader>
           <CardContent className="px-0">
-            {displayConditions.length === 0 ? (
+
               <p className="px-4 py-2 text-sm text-muted-foreground">설정된 필터 조건이 없습니다.</p>
             ) : (
               <Table>
