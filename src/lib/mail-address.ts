@@ -44,8 +44,12 @@ function escapeDisplayName(value: string) {
   return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"')
 }
 
+function sanitizeHeaderDisplayName(value: string) {
+  return value.replace(/[\r\n]+/g, " ").trim()
+}
+
 export function formatMailAddressForSend(address: MailAddress) {
-  const name = normalize(address.name)
+  const name = sanitizeHeaderDisplayName(normalize(address.name))
   const email = normalize(address.email)
 
   if (name && name !== email) {
