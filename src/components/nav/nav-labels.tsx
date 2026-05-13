@@ -130,19 +130,19 @@ function LabelItem({
     >
       <button
         type="button"
-        className="absolute top-1/2 left-1 z-10 -translate-y-1/2 cursor-grab touch-none rounded p-0.5 opacity-0 group-hover/menu-item:opacity-30 hover:opacity-60 active:cursor-grabbing"
+        className="absolute top-1/2 -left-3.5 z-10 -translate-y-1/2 cursor-grab touch-none rounded p-0.5 opacity-0 group-hover/menu-item:opacity-30 hover:opacity-60 active:cursor-grabbing"
         aria-label="드래그하여 순서 변경"
         {...attributes}
         {...listeners}
       >
-        <GripVertical className="size-3.5" />
+        <GripVertical className="size-3" />
       </button>
       <SidebarMenuButton
         type="button"
         tooltip={label.name}
         isActive={isActive}
         size="sm"
-        className="pl-5 group-hover/menu-item:bg-sidebar-accent group-hover/menu-item:text-sidebar-accent-foreground"
+        className="group-hover/menu-item:bg-sidebar-accent group-hover/menu-item:text-sidebar-accent-foreground"
         onClick={() => onLabelToggle(label.id)}
       >
         <span className="size-3 shrink-0 rounded-sm" style={{ backgroundColor: label.colorCode }} />
