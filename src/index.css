@@ -5,6 +5,25 @@
 
 @custom-variant dark (&:is(.dark *));
 
+@keyframes shake {
+  0%,
+  100% {
+    transform: translateX(0);
+  }
+  15%,
+  55% {
+    transform: translateX(-5px);
+  }
+  35%,
+  75% {
+    transform: translateX(5px);
+  }
+}
+
+.animate-shake {
+  animation: shake 0.45s ease-in-out;
+}
+
 .compose-email-editor {
   --re-bg: var(--popover);
   --re-bg-active: var(--accent);

@@ -1,21 +1,7 @@
-import { useState, useRef, useEffect, useMemo } from "react"
+import { useState, useRef, useEffect } from "react"
 import { createFileRoute, Link, useLocation } from "@tanstack/react-router"
-import {
-  DndContext,
-  KeyboardSensor,
-  PointerSensor,
-  closestCenter,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-} from "@dnd-kit/core"
-import {
-  SortableContext,
-  arrayMove,
-  sortableKeyboardCoordinates,
-  useSortable,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable"
+import { DndContext, closestCenter } from "@dnd-kit/core"
+import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import { ChevronRight, GripVertical, Plus } from "lucide-react"
 import { toast } from "sonner"
 
@@ -26,8 +12,9 @@ import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { LabelFilterDialog } from "@/components/label-filter-dialog"
 import { getErrorMessage } from "@/lib/http-error"
-import { useCreateLabel, useUpdateLabel } from "@/mutations/labels"
+import { useCreateLabel } from "@/mutations/labels"
 import { useLabels } from "@/queries/labels"
+import { useLabelOrder } from "@/hooks/use-label-order"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import type { LabelListItem } from "@/types/label"
 
@@ -176,46 +163,19 @@ function CreateLabelDialog() {
 
 function SettingsLabelPage() {
   const { data: serverLabels = [], isPending, isError } = useLabels()
-  const updateLabel = useUpdateLabel()
+  const { orderedLabels, sensors, handleDragEnd } = useLabelOrder(serverLabels)
   const location = useLocation()
   const createFilterRef = useRef<HTMLDivElement>(null)
-  const [labelOrder, setLabelOrder] = useState<string[]>([])
-
-  const orderedLabels = useMemo(() => {
-    const serverMap = new Map(serverLabels.map((l) => [l.id, l]))
-    const existing = labelOrder.filter((id) => serverMap.has(id)).map((id) => serverMap.get(id)!)
-    const newLabels = serverLabels.filter((l) => !labelOrder.includes(l.id))
-    return [...existing, ...newLabels]
-  }, [serverLabels, labelOrder])
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
-  )
 
   useEffect(() => {
     if (location.hash === "create-filter") {
-      createFilterRef.current?.scrollIntoView({ behavior: "smooth", block: "start" })
+      const el = createFilterRef.current
+      if (!el) return
+      el.scrollIntoView({ behavior: "smooth", block: "start" })
+      el.classList.add("animate-shake")
+      el.addEventListener("animationend", () => el.classList.remove("animate-shake"), { once: true })
     }
   }, [location.hash])
-
-  function handleDragEnd(event: DragEndEvent) {
-    const { active, over } = event
-    if (!over || active.id === over.id) return
-
-    const oldIndex = orderedLabels.findIndex((l) => l.id === String(active.id))
-    const newIndex = orderedLabels.findIndex((l) => l.id === String(over.id))
-    if (oldIndex === -1 || newIndex === -1) return
-
-    const newLabels = arrayMove(orderedLabels, oldIndex, newIndex)
-    setLabelOrder(newLabels.map((l) => l.id))
-
-    newLabels.forEach((label, i) => {
-      if (orderedLabels[i]?.id !== label.id) {
-        updateLabel.mutate({ labelId: label.id, data: { order: i } })
-      }
-    })
-  }
 
   return (
     <ScrollArea className="min-h-0 flex-1">

@@ -1,22 +1,8 @@
-import { useMemo, useState } from "react"
+import { useState } from "react"
 import { Link } from "@tanstack/react-router"
 import { useQuery } from "@tanstack/react-query"
-import {
-  DndContext,
-  KeyboardSensor,
-  PointerSensor,
-  closestCenter,
-  useSensor,
-  useSensors,
-  type DragEndEvent,
-} from "@dnd-kit/core"
-import {
-  SortableContext,
-  arrayMove,
-  sortableKeyboardCoordinates,
-  useSortable,
-  verticalListSortingStrategy,
-} from "@dnd-kit/sortable"
+import { DndContext, closestCenter } from "@dnd-kit/core"
+import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
 import { Check, ChevronDown, GripVertical, ListFilter, MoreVertical, Plus } from "lucide-react"
 import { toast } from "sonner"
@@ -46,6 +32,7 @@ import { cn } from "@/lib/utils"
 import { getErrorMessage, getHttpStatus } from "@/lib/http-error"
 import { useCreateLabel, useDeleteLabel, useUpdateLabel } from "@/mutations/labels"
 import { labelQueries, useLabels } from "@/queries/labels"
+import { useLabelOrder } from "@/hooks/use-label-order"
 import type { LabelListItem, NotificationPolicy } from "@/types/label"
 
 const LABEL_COLORS = [
@@ -299,48 +286,15 @@ interface NavLabelsProps {
 
 export function NavLabels({ activeLabelId, onLabelToggle, className }: NavLabelsProps) {
   const { data: serverLabels = [] } = useLabels()
-  const updateLabel = useUpdateLabel()
   const createLabel = useCreateLabel()
-  // labelOrder stores the user-defined ID sequence. New labels (not yet in labelOrder)
-  // are appended at the end in server order.
-  const [labelOrder, setLabelOrder] = useState<string[]>([])
+  const { orderedLabels, sensors, handleDragEnd } = useLabelOrder(serverLabels)
   const [open, setOpen] = useState(false)
   const [name, setName] = useState("")
   const [selectedColor, setSelectedColor] = useState(LABEL_COLORS[0])
   const [showAll, setShowAll] = useState(false)
 
-  const orderedLabels = useMemo(() => {
-    const serverMap = new Map(serverLabels.map((l) => [l.id, l]))
-    const existing = labelOrder.filter((id) => serverMap.has(id)).map((id) => serverMap.get(id)!)
-    const newLabels = serverLabels.filter((l) => !labelOrder.includes(l.id))
-    return [...existing, ...newLabels]
-  }, [serverLabels, labelOrder])
-
-  const sensors = useSensors(
-    useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
-    useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
-  )
-
   const visibleLabels = showAll ? orderedLabels : orderedLabels.slice(0, LABELS_LIMIT)
   const hasMore = orderedLabels.length > LABELS_LIMIT
-
-  function handleDragEnd(event: DragEndEvent) {
-    const { active, over } = event
-    if (!over || active.id === over.id) return
-
-    const oldIndex = orderedLabels.findIndex((l) => l.id === String(active.id))
-    const newIndex = orderedLabels.findIndex((l) => l.id === String(over.id))
-    if (oldIndex === -1 || newIndex === -1) return
-
-    const newLabels = arrayMove(orderedLabels, oldIndex, newIndex)
-    setLabelOrder(newLabels.map((l) => l.id))
-
-    newLabels.forEach((label, i) => {
-      if (orderedLabels[i]?.id !== label.id) {
-        updateLabel.mutate({ labelId: label.id, data: { order: i } })
-      }
-    })
-  }
 
   function handleCreate() {
     if (!name.trim()) return
