@@ -140,7 +140,7 @@ export function LabelFilterDialog({
               autoFocus
             />
           </CriteriaRow>
-          <CriteriaRow label="보낸사람">
+          <CriteriaRow label="보낸 주소">
             <Input
               value={criteria.fromAddress}
               onChange={(e) => setCriteria((c) => ({ ...c, fromAddress: e.target.value }))}
@@ -154,7 +154,7 @@ export function LabelFilterDialog({
               className="h-8"
             />
           </CriteriaRow>
-          <CriteriaRow label="받는사람">
+          <CriteriaRow label="받는 주소">
             <Input
               value={criteria.toAddress}
               onChange={(e) => setCriteria((c) => ({ ...c, toAddress: e.target.value }))}

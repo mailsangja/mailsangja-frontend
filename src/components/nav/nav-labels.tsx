@@ -86,6 +86,7 @@ function LabelItem({
   isActive: boolean
   onLabelToggle: (labelId: string) => void
 }) {
+  const [isHovered, setIsHovered] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [renameOpen, setRenameOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
@@ -137,6 +138,8 @@ function LabelItem({
     <SidebarMenuItem
       ref={setNodeRef}
       style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.4 : undefined }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
     >
       <button
         type="button"
@@ -157,24 +160,19 @@ function LabelItem({
       >
         <span className="size-3 shrink-0 rounded-sm" style={{ backgroundColor: label.colorCode }} />
         <span className="truncate">{label.name}</span>
-        {label.unreadThreadCount > 0 && (
-          <span className="ml-auto rounded-full bg-muted px-1.5 py-0.5 text-[10px] leading-none font-medium text-muted-foreground tabular-nums group-hover/menu-item:hidden">
-            {label.unreadThreadCount}
-          </span>
-        )}
       </SidebarMenuButton>
 
       <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
         <DropdownMenuTrigger
-          render={
-            <SidebarMenuAction
-              showOnHover
-              aria-label="라벨 메뉴"
-              className="size-5 hover:bg-sidebar-accent-foreground/15"
-            />
-          }
+          render={<SidebarMenuAction aria-label="라벨 메뉴" className="size-5 hover:bg-sidebar-accent-foreground/15" />}
         >
-          <MoreVertical />
+          {isHovered || dropdownOpen ? (
+            <MoreVertical />
+          ) : label.unreadThreadCount > 0 ? (
+            <span className="px-1.5 py-0.5 text-[10px] leading-none font-medium text-muted-foreground tabular-nums">
+              {label.unreadThreadCount}
+            </span>
+          ) : null}
         </DropdownMenuTrigger>
         <DropdownMenuContent side="right" align="start" className="min-w-44 ring-foreground/6">
           <DropdownMenuSub>
