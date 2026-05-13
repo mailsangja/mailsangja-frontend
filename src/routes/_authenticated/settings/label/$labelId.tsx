@@ -1,11 +1,11 @@
 import { useState } from "react"
-import { createFileRoute } from "@tanstack/react-router"
-import { Pencil, Plus, Trash2 } from "lucide-react"
+import { Link, createFileRoute } from "@tanstack/react-router"
+import { ArrowLeft, Minus, Plus } from "lucide-react"
 import { toast } from "sonner"
 
 import { Badge } from "@/components/ui/badge"
-import { Button } from "@/components/ui/button"
-import { Card, CardAction, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button, buttonVariants } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { LabelFilterDialog } from "@/components/label-filter-dialog"
@@ -41,37 +41,40 @@ function LabelDetailPage() {
   const { data: label, isPending, isError } = useLabelDetail(labelId)
   const updateRule = useUpdateLabelRule()
   const [isEditing, setIsEditing] = useState(false)
-  const [conditions, setConditions] = useState<LabelCondition[] | null>(null)
+  const [editGroups, setEditGroups] = useState<{ conditions: LabelCondition[] }[] | null>(null)
   const [filterDialogOpen, setFilterDialogOpen] = useState(false)
 
-  const savedConditions = label?.rule?.groups[0]?.conditions ?? []
-  const displayConditions = conditions ?? savedConditions
-  const colSpan = isEditing ? 4 : 3
+  const savedGroups = label?.rule?.groups ?? []
+  const displayGroups = editGroups ?? savedGroups
+  const totalConditions = savedGroups.reduce((sum, g) => sum + g.conditions.length, 0)
 
   function startEditing() {
-    setConditions([...savedConditions])
+    setEditGroups(savedGroups.map((g) => ({ conditions: [...g.conditions] })))
     setIsEditing(true)
   }
 
   function cancelEditing() {
-    setConditions(null)
+    setEditGroups(null)
     setIsEditing(false)
   }
 
-  function handleRemove(index: number) {
-    setConditions(displayConditions.filter((_, i) => i !== index))
+  function handleRemove(groupIndex: number, conditionIndex: number) {
+    setEditGroups((prev) =>
+      prev!.map((g, gi) =>
+        gi === groupIndex ? { conditions: g.conditions.filter((_, ci) => ci !== conditionIndex) } : g
+      )
+    )
   }
 
   function handleSave() {
-    const otherGroups = label?.rule?.groups.slice(1) ?? []
     updateRule.mutate(
       {
         labelId,
-        data: { rule: { groups: [{ conditions: displayConditions }, ...otherGroups] } },
+        data: { rule: { groups: editGroups! } },
       },
       {
         onSuccess: () => {
-          setConditions(null)
+          setEditGroups(null)
           setIsEditing(false)
           toast.success("필터 규칙이 저장되었습니다.")
         },
@@ -112,6 +115,12 @@ function LabelDetailPage() {
   return (
     <ScrollArea className="min-h-0 flex-1">
       <div className="flex flex-col gap-6 px-3 pt-1 pb-4">
+        <div>
+          <Link to="/settings/label" className={buttonVariants({ variant: "ghost", size: "sm" })}>
+            <ArrowLeft className="size-4" />
+            라벨 목록
+          </Link>
+        </div>
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
@@ -122,14 +131,6 @@ function LabelDetailPage() {
               {label.name}
             </CardTitle>
             <CardDescription>이 라벨에 자동으로 분류될 메일의 조건을 설정합니다.</CardDescription>
-            <CardAction>
-              {!isEditing && (
-                <Button variant="outline" size="sm" onClick={startEditing} disabled={savedConditions.length === 0}>
-                  <Pencil data-icon="inline-start" />
-                  조건 수정
-                </Button>
-              )}
-            </CardAction>
           </CardHeader>
           <CardContent className="px-0">
             <Table>
@@ -138,46 +139,57 @@ function LabelDetailPage() {
                   <TableHead>필드</TableHead>
                   <TableHead>연산자</TableHead>
                   <TableHead>값</TableHead>
-                  {isEditing && <TableHead className="w-10" />}
+                  <TableHead className="w-10" />
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {displayConditions.length === 0 ? (
+                {totalConditions === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={colSpan} className="text-center text-sm text-muted-foreground">
+                    <TableCell colSpan={4} className="text-center text-sm text-muted-foreground">
                       설정된 필터 조건이 없습니다.
                     </TableCell>
                   </TableRow>
                 ) : (
-                  displayConditions.map((condition, index) => (
-                    <TableRow key={index}>
-                      <TableCell>
-                        <Badge variant="secondary" className="font-normal">
-                          {FIELD_LABELS[condition.field]}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="text-sm text-muted-foreground">
-                        {OPERATOR_LABELS[condition.operator]}
-                      </TableCell>
-                      <TableCell className="font-mono text-sm">{condition.value}</TableCell>
-                      {isEditing && (
+                  displayGroups.flatMap((group, groupIndex) => [
+                    ...(groupIndex > 0
+                      ? [
+                          <TableRow key={`sep-${groupIndex}`} className="hover:bg-transparent">
+                            <TableCell colSpan={4} className="py-1 text-center text-xs text-muted-foreground">
+                              또는
+                            </TableCell>
+                          </TableRow>,
+                        ]
+                      : []),
+                    ...group.conditions.map((condition, conditionIndex) => (
+                      <TableRow key={`${groupIndex}-${conditionIndex}`}>
                         <TableCell>
-                          <Button
-                            variant="ghost"
-                            size="icon-sm"
-                            onClick={() => handleRemove(index)}
-                            aria-label="조건 삭제"
-                          >
-                            <Trash2 className="size-4" />
-                          </Button>
+                          <Badge variant="secondary" className="font-normal">
+                            {FIELD_LABELS[condition.field]}
+                          </Badge>
                         </TableCell>
-                      )}
-                    </TableRow>
-                  ))
+                        <TableCell className="text-sm text-muted-foreground">
+                          {OPERATOR_LABELS[condition.operator]}
+                        </TableCell>
+                        <TableCell className="font-mono text-sm">{condition.value}</TableCell>
+                        <TableCell>
+                          {isEditing && (
+                            <Button
+                              variant="ghost"
+                              size="icon-sm"
+                              onClick={() => handleRemove(groupIndex, conditionIndex)}
+                              aria-label="조건 삭제"
+                            >
+                              <Minus className="size-4" />
+                            </Button>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    )),
+                  ])
                 )}
                 {!isEditing && (
                   <TableRow className="hover:bg-transparent">
-                    <TableCell colSpan={colSpan} className="p-0">
+                    <TableCell colSpan={4} className="p-0">
                       <button
                         type="button"
                         className="flex w-full cursor-pointer items-center justify-center py-2 text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
@@ -191,6 +203,13 @@ function LabelDetailPage() {
                 )}
               </TableBody>
             </Table>
+            {!isEditing && (
+              <div className="flex justify-end px-4 pt-3">
+                <Button variant="outline" size="sm" onClick={startEditing} disabled={totalConditions === 0}>
+                  수정하기
+                </Button>
+              </div>
+            )}
           </CardContent>
           {isEditing && (
             <CardFooter className="justify-end gap-2">
