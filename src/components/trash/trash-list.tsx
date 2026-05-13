@@ -7,7 +7,6 @@ import { EmailListItem } from "@/components/inbox/email-list-item"
 import { EmailListLoadingRows } from "@/components/inbox/email-list-loading-rows"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Table, TableBody } from "@/components/ui/table"
 import { getErrorMessage } from "@/lib/http-error"
 import { useRestoreTrashThread } from "@/mutations/trash"
 import { useLabels } from "@/queries/labels"
@@ -126,6 +125,7 @@ export function TrashList({
 
     return next.size === selectedIds.size ? selectedIds : next
   }, [selectedIds, threads])
+  const isSelectionMode = visibleSelectedIds.size > 0
 
   const header =
     visibleSelectedIds.size > 0 ? (
@@ -196,40 +196,29 @@ export function TrashList({
 
       <ScrollArea className="min-h-0 flex-1">
         {isLoading ? (
-          <Table className="table-fixed">
-            <TableBody>
-              <EmailListLoadingRows />
-            </TableBody>
-          </Table>
+          <div role="list" aria-label={`${mailboxName} 메일 목록`} className="min-w-0">
+            <EmailListLoadingRows />
+          </div>
         ) : errorTitle && errorDescription ? (
           <EmailErrorState title={errorTitle} description={errorDescription} onRetry={onRetry} />
         ) : threads && threads.length > 0 ? (
           <>
-            <Table className="table-fixed">
-              <colgroup>
-                <col className="w-10" />
-                <col className="w-10" />
-                <col className="w-[28%] md:w-[22%]" />
-                <col className="w-[52%] md:w-[58%]" />
-                <col className="hidden w-14 md:table-column" />
-                <col className="w-24" />
-              </colgroup>
-              <TableBody>
-                {threads.map((thread) => (
-                  <EmailListItem
-                    key={thread.threadId}
-                    thread={toInboxSummary(thread)}
-                    isSelected={selectedThreadId === thread.threadId}
-                    isChecked={visibleSelectedIds.has(thread.threadId)}
-                    account={getAccount(thread.accountId)}
-                    labelsColorMap={labelsColorMap}
-                    onSelect={() => onSelectThread(thread.threadId)}
-                    onToggleCheck={() => toggleSelected(thread.threadId)}
-                  />
-                ))}
-                {isFetchingNextPage ? <EmailListLoadingRows /> : null}
-              </TableBody>
-            </Table>
+            <div role="list" aria-label={`${mailboxName} 메일 목록`} className="min-w-0">
+              {threads.map((thread) => (
+                <EmailListItem
+                  key={thread.threadId}
+                  thread={toInboxSummary(thread)}
+                  isSelected={selectedThreadId === thread.threadId}
+                  isChecked={visibleSelectedIds.has(thread.threadId)}
+                  isSelectionMode={isSelectionMode}
+                  account={getAccount(thread.accountId)}
+                  labelsColorMap={labelsColorMap}
+                  onSelect={() => onSelectThread(thread.threadId)}
+                  onToggleCheck={() => toggleSelected(thread.threadId)}
+                />
+              ))}
+              {isFetchingNextPage ? <EmailListLoadingRows /> : null}
+            </div>
             {loadMoreErrorTitle && loadMoreErrorDescription ? (
               <div className="border-t px-4 py-3">
                 <EmailErrorState
