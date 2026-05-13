@@ -46,7 +46,7 @@ function LabelDetailPage() {
 
   const savedGroups = label?.rule?.groups ?? []
   const displayGroups = editGroups ?? savedGroups
-  const totalConditions = savedGroups.reduce((sum, g) => sum + g.conditions.length, 0)
+  const totalConditions = displayGroups.reduce((sum, g) => sum + g.conditions.length, 0)
 
   function startEditing() {
     setEditGroups(savedGroups.map((g) => ({ conditions: [...g.conditions] })))
@@ -60,17 +60,18 @@ function LabelDetailPage() {
 
   function handleRemove(groupIndex: number, conditionIndex: number) {
     setEditGroups((prev) =>
-      prev!.map((g, gi) =>
-        gi === groupIndex ? { conditions: g.conditions.filter((_, ci) => ci !== conditionIndex) } : g
-      )
+      prev!
+        .map((g, gi) => (gi === groupIndex ? { conditions: g.conditions.filter((_, ci) => ci !== conditionIndex) } : g))
+        .filter((g) => g.conditions.length > 0)
     )
   }
 
   function handleSave() {
+    const groups = editGroups!.filter((g) => g.conditions.length > 0)
     updateRule.mutate(
       {
         labelId,
-        data: { rule: { groups: editGroups! } },
+        data: { rule: { groups } },
       },
       {
         onSuccess: () => {

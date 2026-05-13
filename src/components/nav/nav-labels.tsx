@@ -130,7 +130,7 @@ function LabelItem({
     >
       <button
         type="button"
-        className="absolute top-1/2 left-1 z-10 -translate-y-1/2 cursor-grab touch-none rounded p-0.5 opacity-0 group-hover/menu-item:opacity-30 hover:!opacity-60 active:cursor-grabbing"
+        className="absolute top-1/2 left-1 z-10 -translate-y-1/2 cursor-grab touch-none rounded p-0.5 opacity-0 group-hover/menu-item:opacity-30 hover:opacity-60 active:cursor-grabbing"
         aria-label="드래그하여 순서 변경"
         {...attributes}
         {...listeners}
