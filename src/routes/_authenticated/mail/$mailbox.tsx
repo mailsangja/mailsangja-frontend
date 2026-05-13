@@ -1,5 +1,4 @@
-import { useEffect } from "react"
-import { createFileRoute } from "@tanstack/react-router"
+import { createFileRoute, redirect } from "@tanstack/react-router"
 import { toast } from "sonner"
 
 import { EmailDetail } from "@/components/inbox/email-detail"
@@ -13,9 +12,9 @@ import { parseMailRouteSearch } from "@/lib/mail-routing"
 import { getMailAddressSearchText } from "@/lib/mail-address"
 import { cn } from "@/lib/utils"
 import { useMarkThreadAsRead } from "@/mutations/emails"
-import { useMailAccounts } from "@/queries/mail-accounts"
+import { useMailAccounts, mailAccountQueries } from "@/queries/mail-accounts"
 import { useMailboxThreads } from "@/queries/emails"
-import { useLabels } from "@/queries/labels"
+import { useLabels, labelQueries } from "@/queries/labels"
 import { useTrashThreads } from "@/queries/trash"
 import { isSupportedMailboxId, MAILBOX_LABELS, parseMailboxId, type PrimaryMailboxId } from "@/types/email"
 import type { TrashThreadSummary } from "@/types/trash"
@@ -33,6 +32,35 @@ export const Route = createFileRoute("/_authenticated/mail/$mailbox")({
     },
   },
   validateSearch: parseMailRouteSearch,
+  beforeLoad: async ({ context, params, search }) => {
+    const { labelId, accountId } = search
+
+    if (!labelId && !accountId) return
+
+    const [labels, accounts] = await Promise.all([
+      labelId !== undefined ? context.queryClient.ensureQueryData(labelQueries.list()) : null,
+      accountId !== undefined ? context.queryClient.ensureQueryData(mailAccountQueries.list()) : null,
+    ])
+
+    const isLabelInvalid = labels !== null && !labels.some((l) => l.id === labelId)
+    const isAccountInvalid = accounts !== null && !accounts.some((a) => a.id === accountId)
+
+    if (!isLabelInvalid && !isAccountInvalid) return
+
+    if (isLabelInvalid) toast.error("유효하지 않은 라벨입니다")
+    if (isAccountInvalid) toast.error("유효하지 않은 계정입니다")
+
+    throw redirect({
+      to: "/mail/$mailbox",
+      params: { mailbox: params.mailbox },
+      search: {
+        ...search,
+        labelId: isLabelInvalid ? undefined : search.labelId,
+        accountId: isAccountInvalid ? undefined : search.accountId,
+      },
+      replace: true,
+    })
+  },
   component: MailboxPage,
 })
 
@@ -101,38 +129,6 @@ function MailboxView({ mailbox }: { mailbox: PrimaryMailboxId }) {
   const totalThreadCount = data?.pages[0]?.totalCount ?? loadedThreads.length
   const searchTerms = query.trim().toLowerCase().split(/\s+/).filter(Boolean)
   const selectedAccount = accountId ? (accounts?.find((account) => account.id === accountId) ?? null) : null
-
-  useEffect(() => {
-    if (!accountId || accounts === undefined || selectedAccount) {
-      return
-    }
-
-    toast.error("유효하지 않은 계정입니다")
-
-    void navigate({
-      search: (previous) => ({
-        ...previous,
-        accountId: undefined,
-      }),
-      replace: true,
-    })
-  }, [accounts, navigate, selectedAccount, accountId])
-
-  useEffect(() => {
-    if (!labelId || labels === undefined || selectedLabel) {
-      return
-    }
-
-    toast.error("유효하지 않은 라벨입니다")
-
-    void navigate({
-      search: (previous) => ({
-        ...previous,
-        labelId: undefined,
-      }),
-      replace: true,
-    })
-  }, [labels, navigate, selectedLabel, labelId])
 
   const threads = supportedMailbox
     ? loadedThreads.filter((thread) => {
@@ -321,22 +317,6 @@ function TrashMailboxView() {
   const totalThreadCount = data?.pages[0]?.totalCount ?? loadedThreads.length
   const searchTerms = query.trim().toLowerCase().split(/\s+/).filter(Boolean)
   const selectedAccount = accountId ? (accounts?.find((account) => account.id === accountId) ?? null) : null
-
-  useEffect(() => {
-    if (!accountId || accounts === undefined || selectedAccount) {
-      return
-    }
-
-    toast.error("유효하지 않은 계정입니다")
-
-    void navigate({
-      search: (previous) => ({
-        ...previous,
-        accountId: undefined,
-      }),
-      replace: true,
-    })
-  }, [accounts, navigate, selectedAccount, accountId])
 
   const threads = loadedThreads.filter((thread) => {
     if (selectedAccount && thread.accountId !== selectedAccount.id) {
