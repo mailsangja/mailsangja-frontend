@@ -1,5 +1,9 @@
+import { useMemo } from "react"
+
 import { Badge } from "@/components/ui/badge"
 import { AccountIcon } from "@/lib/icon-entries"
+import { useLabels } from "@/queries/labels"
+import type { LabelSummary } from "@/types/email"
 import type { MailAccount } from "@/types/mail-account"
 
 interface ThreadHeaderData {
@@ -10,12 +14,15 @@ interface ThreadHeaderData {
 interface ThreadHeaderProps {
   thread: ThreadHeaderData
   account?: MailAccount
+  labels?: LabelSummary[]
 }
 
-export function ThreadHeader({ thread, account }: ThreadHeaderProps) {
+export function ThreadHeader({ thread, account, labels }: ThreadHeaderProps) {
   const messageCount = thread.messages.length
   const hasInbound = thread.messages.some((m) => m.direction === "INBOUND")
   const hasOutbound = thread.messages.some((m) => m.direction === "OUTBOUND")
+  const { data: labelsList } = useLabels()
+  const labelsColorMap = useMemo(() => new Map(labelsList?.map((l) => [l.id, l.colorCode]) ?? []), [labelsList])
 
   return (
     <div className="shrink-0 border-b px-6 pt-2 pb-5">
@@ -44,6 +51,15 @@ export function ThreadHeader({ thread, account }: ThreadHeaderProps) {
         <Badge variant="secondary" className="font-normal">
           메시지 {messageCount}개
         </Badge>
+        {labels?.map((label) => (
+          <span
+            key={label.labelId}
+            className="inline-flex items-center rounded-full px-1.5 py-0.5 text-xs font-medium text-white"
+            style={{ backgroundColor: labelsColorMap.get(label.labelId) ?? label.colorCode }}
+          >
+            {label.name}
+          </span>
+        ))}
       </div>
     </div>
   )
