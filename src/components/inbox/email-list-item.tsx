@@ -1,11 +1,9 @@
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useRef } from "react"
 import { Paperclip } from "lucide-react"
-import { Popover as PopoverPrimitive } from "@base-ui/react/popover"
 
 import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Separator } from "@/components/ui/separator"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { formatFullDateTime, formatRelativeDate } from "@/lib/date"
 import { AccountIcon } from "@/lib/icon-entries"
@@ -27,12 +25,6 @@ interface EmailListItemProps {
   onToggleCheck: () => void
 }
 
-interface EmailListItemPreviewProps {
-  thread: InboxThreadSummary
-  participantLabel: string
-  labelsColorMap: LabelsColorMap
-}
-
 function LabelChips({ labels, labelsColorMap }: { labels: LabelSummary[]; labelsColorMap: LabelsColorMap }) {
   if (labels.length === 0) return null
   return (
@@ -50,15 +42,32 @@ function LabelChips({ labels, labelsColorMap }: { labels: LabelSummary[]; labels
   )
 }
 
-function createCursorAnchor(
-  clientX: number,
-  clientY: number,
-  contextElement: Element
-): NonNullable<PopoverPrimitive.Positioner.Props["anchor"]> {
-  return {
-    contextElement,
-    getBoundingClientRect: () => new DOMRect(clientX, clientY, 0, 0),
+function SenderTooltipContent({ participant }: { participant: InboxThreadSummary["participant"] }) {
+  const name = participant.name?.trim()
+  const email = participant.email.trim()
+
+  return (
+    <span className="flex min-w-0 flex-col items-start gap-1">
+      <span className="flex min-w-0 items-center gap-2">
+        <span className="shrink-0 text-background/70">이름</span>
+        <span className="min-w-0 truncate">{name || email || "알 수 없음"}</span>
+      </span>
+      {name && email ? (
+        <span className="flex min-w-0 items-center gap-2">
+          <span className="shrink-0 text-background/70">이메일</span>
+          <span className="min-w-0 truncate">{email}</span>
+        </span>
+      ) : null}
+    </span>
+  )
+}
+
+function AccountTooltipContent({ account }: { account?: MailAccount }) {
+  if (!account) {
+    return <span>계정 정보 없음</span>
   }
+
+  return <span>{account.alias ? `${account.alias} (${account.emailAddress})` : account.emailAddress}</span>
 }
 
 function EmailListItemContent({
@@ -85,10 +94,15 @@ function EmailListItemContent({
   const hasAttachments = thread.attachments.length > 0
 
   const renderTime = (className?: string) => (
-    <span className={cn("flex shrink-0 items-center gap-1.5 text-xs text-muted-foreground", className)}>
-      <span>{formatRelativeDate(thread.lastMessageAt)}</span>
-      {isUnread ? <span className="ml-0.5 size-1.5 rounded-full bg-primary" aria-hidden="true" /> : null}
-    </span>
+    <Tooltip>
+      <TooltipTrigger
+        render={<span className={cn("flex shrink-0 items-center gap-1.5 text-xs text-muted-foreground", className)} />}
+      >
+        <span>{formatRelativeDate(thread.lastMessageAt)}</span>
+        {isUnread ? <span className="ml-0.5 size-1.5 rounded-full bg-primary" aria-hidden="true" /> : null}
+      </TooltipTrigger>
+      <TooltipContent>{formatFullDateTime(thread.lastMessageAt)}</TooltipContent>
+    </Tooltip>
   )
 
   return (
@@ -108,15 +122,29 @@ function EmailListItemContent({
             isUnread ? "text-foreground" : "text-muted-foreground"
           )}
         >
-          <span
-            className="flex size-5 shrink-0 items-center justify-center rounded-full"
-            style={{ backgroundColor: account?.color || "#6B7280" }}
-            aria-hidden="true"
-          >
-            <AccountIcon name={account?.icon ?? "mail"} className="size-3.5 text-white" />
-          </span>
+          <Tooltip>
+            <TooltipTrigger
+              aria-label="계정 정보"
+              render={
+                <span
+                  className="flex size-5 shrink-0 items-center justify-center rounded-full"
+                  style={{ backgroundColor: account?.color || "#6B7280" }}
+                />
+              }
+            >
+              <AccountIcon name={account?.icon ?? "mail"} className="size-3.5 text-white" />
+            </TooltipTrigger>
+            <TooltipContent side="bottom" align="start" className="max-w-72 items-start">
+              <AccountTooltipContent account={account} />
+            </TooltipContent>
+          </Tooltip>
 
-          <span className="min-w-0 truncate">{participantLabel}</span>
+          <Tooltip>
+            <TooltipTrigger render={<span className="min-w-0 truncate" />}>{participantLabel}</TooltipTrigger>
+            <TooltipContent side="bottom" align="start" className="max-w-72 items-start">
+              <SenderTooltipContent participant={thread.participant} />
+            </TooltipContent>
+          </Tooltip>
 
           {showThreadCount ? (
             <Badge variant="outline" className="-ml-0.5 text-xs text-muted-foreground">
@@ -147,40 +175,32 @@ function EmailListItemContent({
 
           {hasLabels || hasAttachments ? (
             <span className="flex min-w-0 items-center justify-between gap-1.5 md:shrink-0 md:justify-end">
-              {hasAttachments ? <Paperclip className="mx-auto size-4 text-muted-foreground" /> : null}
+              {hasAttachments ? (
+                <Tooltip>
+                  <TooltipTrigger render={<span className="flex shrink-0 items-center" />}>
+                    <Paperclip className="mx-auto size-4 text-muted-foreground" />
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" align="end" className="max-w-72 items-start">
+                    <span className="flex min-w-0 flex-col items-start gap-1">
+                      <span>첨부파일 {thread.attachments.length}개</span>
+                      {thread.attachments.slice(0, 3).map((attachment) => (
+                        <span key={attachment.id} className="max-w-64 truncate text-background/80">
+                          {attachment.filename}
+                        </span>
+                      ))}
+                      {thread.attachments.length > 3 ? (
+                        <span className="text-background/70">외 {thread.attachments.length - 3}개</span>
+                      ) : null}
+                    </span>
+                  </TooltipContent>
+                </Tooltip>
+              ) : null}
               <LabelChips labels={thread.labels} labelsColorMap={labelsColorMap} />
             </span>
           ) : null}
         </div>
       </div>
     </>
-  )
-}
-
-function EmailListItemPreview({ thread, participantLabel, labelsColorMap }: EmailListItemPreviewProps) {
-  const hasAttachments = thread.attachments.length > 0
-
-  return (
-    <div className="flex flex-col gap-2.5">
-      <p className="text-sm leading-snug font-semibold">{thread.latestSubject || "(제목 없음)"}</p>
-      <p className="line-clamp-3 text-sm leading-relaxed text-muted-foreground">{thread.snippet}</p>
-      <Separator />
-      <div className="flex flex-wrap items-center gap-1.5">
-        <Badge variant="secondary" className="rounded font-normal">
-          {participantLabel}
-        </Badge>
-        <LabelChips labels={thread.labels} labelsColorMap={labelsColorMap} />
-      </div>
-      <div className="flex items-center gap-3 text-xs text-muted-foreground">
-        {hasAttachments ? (
-          <span className="flex items-center gap-1">
-            <Paperclip className="size-3" />
-            첨부 {thread.attachments.length}개
-          </span>
-        ) : null}
-        <span>{formatFullDateTime(thread.lastMessageAt)}</span>
-      </div>
-    </div>
   )
 }
 
@@ -195,8 +215,6 @@ export function EmailListItem({
   onToggleCheck,
 }: EmailListItemProps) {
   const isMobile = useIsMobile()
-  const [open, setOpen] = useState(false)
-  const [anchor, setAnchor] = useState<PopoverPrimitive.Positioner.Props["anchor"]>(null)
   const longPressTimerRef = useRef<ReturnType<typeof window.setTimeout> | null>(null)
   const ignoreNextClickRef = useRef(false)
   const isUnread = !thread.isRead
@@ -208,10 +226,6 @@ export function EmailListItem({
     isSelected && isUnread && "bg-accent",
     isChecked && !isSelected && "bg-accent/70"
   )
-
-  const updateAnchor = (event: React.PointerEvent<HTMLDivElement>) => {
-    setAnchor(createCursorAnchor(event.clientX, event.clientY, event.currentTarget))
-  }
 
   const clearLongPressTimer = () => {
     if (longPressTimerRef.current !== null) {
@@ -258,23 +272,9 @@ export function EmailListItem({
     onSelect()
   }
 
-  const renderRow = (triggerProps: React.HTMLAttributes<HTMLDivElement> = {}) => {
-    const {
-      onClick,
-      onKeyDown,
-      onPointerCancel,
-      onPointerDown,
-      onPointerEnter,
-      onPointerLeave,
-      onPointerMove,
-      onPointerUp,
-      className,
-      ...rowProps
-    } = triggerProps
-
+  const renderRow = () => {
     return (
       <div
-        {...rowProps}
         role="listitem"
         data-state={isSelected ? "selected" : undefined}
         onClick={(event) => {
@@ -285,41 +285,26 @@ export function EmailListItem({
           }
 
           handleRowAction()
-          onClick?.(event)
         }}
         onKeyDown={(event) => {
           if (event.key === "Enter" || event.key === " ") {
             event.preventDefault()
             handleRowAction()
           }
-          onKeyDown?.(event)
         }}
         onPointerDown={(event) => {
           startLongPressSelection(event)
-          onPointerDown?.(event)
-        }}
-        onPointerEnter={(event) => {
-          if (!isMobile) {
-            updateAnchor(event)
-          }
-          onPointerEnter?.(event)
         }}
         onPointerLeave={(event) => {
-          handlePointerEnd(event, onPointerLeave)
-        }}
-        onPointerMove={(event) => {
-          if (!isMobile && !open) {
-            updateAnchor(event)
-          }
-          onPointerMove?.(event)
+          handlePointerEnd(event)
         }}
         onPointerUp={(event) => {
-          handlePointerEnd(event, onPointerUp)
+          handlePointerEnd(event)
         }}
         onPointerCancel={(event) => {
-          handlePointerEnd(event, onPointerCancel)
+          handlePointerEnd(event)
         }}
-        className={cn(className, rowClassName)}
+        className={rowClassName}
       >
         <EmailListItemContent
           thread={thread}
@@ -335,28 +320,5 @@ export function EmailListItem({
     )
   }
 
-  if (isMobile) {
-    return renderRow()
-  }
-
-  return (
-    <Popover
-      open={open}
-      onOpenChange={(nextOpen, details) => {
-        if (details.reason === "trigger-press") return
-        setOpen(nextOpen)
-      }}
-    >
-      <PopoverTrigger
-        openOnHover
-        delay={300}
-        closeDelay={150}
-        nativeButton={false}
-        render={(triggerProps) => renderRow(triggerProps)}
-      />
-      <PopoverContent anchor={anchor} side="bottom" align="start" sideOffset={20} className="w-80 p-4">
-        <EmailListItemPreview thread={thread} participantLabel={participantLabel} labelsColorMap={labelsColorMap} />
-      </PopoverContent>
-    </Popover>
-  )
+  return renderRow()
 }
