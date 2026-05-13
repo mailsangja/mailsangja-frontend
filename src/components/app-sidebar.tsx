@@ -24,15 +24,19 @@ import type { PrimaryMailboxId } from "@/types/email"
 interface AppSidebarProps {
   mailbox: PrimaryMailboxId | null
   activeAccountId?: string
+  activeLabelId?: string
   onMailboxChange: (mailbox: PrimaryMailboxId) => void
   onAccountToggle: (accountId: string) => void
+  onLabelToggle: (labelId: string) => void
 }
 
 export function AppSidebar({
   mailbox,
   activeAccountId,
+  activeLabelId,
   onMailboxChange,
   onAccountToggle,
+  onLabelToggle,
   ...props
 }: AppSidebarProps & React.ComponentProps<typeof Sidebar>) {
   const { data: user } = useUser()
@@ -91,7 +95,7 @@ export function AppSidebar({
         </div>
 
         <NavFolders mailbox={mailbox} onMailboxChange={onMailboxChange} />
-        <NavLabels className="mt-4" />
+        <NavLabels activeLabelId={activeLabelId} onLabelToggle={onLabelToggle} className="mt-4" />
         <NavAccounts activeAccountId={activeAccountId} onAccountToggle={onAccountToggle} className="mt-auto" />
       </SidebarContent>
 

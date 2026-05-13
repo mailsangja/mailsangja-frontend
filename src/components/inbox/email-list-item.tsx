@@ -12,14 +12,17 @@ import { formatFullDateTime, formatRelativeDate } from "@/lib/date"
 import { AccountIcon } from "@/lib/icon-entries"
 import { getMailAddressLabel } from "@/lib/mail-address"
 import { cn } from "@/lib/utils"
-import type { InboxThreadSummary } from "@/types/email"
+import type { InboxThreadSummary, LabelSummary } from "@/types/email"
 import type { MailAccount } from "@/types/mail-account"
+
+type LabelsColorMap = Map<string, string>
 
 interface EmailListItemProps {
   thread: InboxThreadSummary
   isSelected: boolean
   isChecked: boolean
   account?: MailAccount
+  labelsColorMap: LabelsColorMap
   onSelect: () => void
   onToggleCheck: () => void
 }
@@ -30,12 +33,31 @@ interface EmailListItemCellsProps {
   isChecked: boolean
   account?: MailAccount
   participantLabel: string
+  labelsColorMap: LabelsColorMap
   onToggleCheck: () => void
 }
 
 interface EmailListItemPreviewProps {
   thread: InboxThreadSummary
   participantLabel: string
+  labelsColorMap: LabelsColorMap
+}
+
+function LabelChips({ labels, labelsColorMap }: { labels: LabelSummary[]; labelsColorMap: LabelsColorMap }) {
+  if (labels.length === 0) return null
+  return (
+    <>
+      {labels.map((label) => (
+        <span
+          key={label.labelId}
+          className="inline-flex items-center rounded-full px-1.5 py-0.5 text-xs font-medium text-white"
+          style={{ backgroundColor: labelsColorMap.get(label.labelId) ?? label.colorCode }}
+        >
+          {label.name}
+        </span>
+      ))}
+    </>
+  )
 }
 
 function createCursorAnchor(
@@ -55,6 +77,7 @@ function EmailListItemCells({
   isChecked,
   account,
   participantLabel,
+  labelsColorMap,
   onToggleCheck,
 }: EmailListItemCellsProps) {
   const hasAttachments = thread.attachments.length > 0
@@ -87,6 +110,11 @@ function EmailListItemCells({
       </TableCell>
       <TableCell className="min-w-0">
         <div className="flex min-w-0 items-center gap-2">
+          {thread.labels.length > 0 && (
+            <div className="flex shrink-0 items-center gap-1">
+              <LabelChips labels={thread.labels} labelsColorMap={labelsColorMap} />
+            </div>
+          )}
           <span className={cn("truncate", isUnread ? "text-foreground" : "text-muted-foreground")}>
             {thread.latestSubject || "(제목 없음)"}
           </span>
@@ -103,7 +131,7 @@ function EmailListItemCells({
   )
 }
 
-function EmailListItemPreview({ thread, participantLabel }: EmailListItemPreviewProps) {
+function EmailListItemPreview({ thread, participantLabel, labelsColorMap }: EmailListItemPreviewProps) {
   const hasAttachments = thread.attachments.length > 0
 
   return (
@@ -112,9 +140,10 @@ function EmailListItemPreview({ thread, participantLabel }: EmailListItemPreview
       <p className="line-clamp-3 text-sm leading-relaxed text-muted-foreground">{thread.snippet}</p>
       <Separator />
       <div className="flex flex-wrap items-center gap-1.5">
-        <Badge variant="secondary" className="font-normal">
+        <Badge variant="secondary" className="rounded font-normal">
           {participantLabel}
         </Badge>
+        <LabelChips labels={thread.labels} labelsColorMap={labelsColorMap} />
       </div>
       <div className="flex items-center gap-3 text-xs text-muted-foreground">
         {hasAttachments ? (
@@ -129,7 +158,15 @@ function EmailListItemPreview({ thread, participantLabel }: EmailListItemPreview
   )
 }
 
-export function EmailListItem({ thread, isSelected, isChecked, account, onSelect, onToggleCheck }: EmailListItemProps) {
+export function EmailListItem({
+  thread,
+  isSelected,
+  isChecked,
+  account,
+  labelsColorMap,
+  onSelect,
+  onToggleCheck,
+}: EmailListItemProps) {
   const isMobile = useIsMobile()
   const [open, setOpen] = useState(false)
   const [anchor, setAnchor] = useState<PopoverPrimitive.Positioner.Props["anchor"]>(null)
@@ -175,6 +212,7 @@ export function EmailListItem({ thread, isSelected, isChecked, account, onSelect
           isChecked={isChecked}
           account={account}
           participantLabel={participantLabel}
+          labelsColorMap={labelsColorMap}
           onToggleCheck={onToggleCheck}
         />
       </TableRow>
@@ -201,7 +239,7 @@ export function EmailListItem({ thread, isSelected, isChecked, account, onSelect
         render={(triggerProps) => renderRow(triggerProps)}
       />
       <PopoverContent anchor={anchor} side="bottom" align="start" sideOffset={20} className="w-80 p-4">
-        <EmailListItemPreview thread={thread} participantLabel={participantLabel} />
+        <EmailListItemPreview thread={thread} participantLabel={participantLabel} labelsColorMap={labelsColorMap} />
       </PopoverContent>
     </Popover>
   )

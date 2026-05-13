@@ -1,7 +1,10 @@
 import { useState } from "react"
-import { Link, useLocation } from "@tanstack/react-router"
+import { Link } from "@tanstack/react-router"
 import { useQuery } from "@tanstack/react-query"
-import { Check, ChevronDown, ListFilter, MoreVertical, Plus } from "lucide-react"
+import { DndContext, closestCenter } from "@dnd-kit/core"
+import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable"
+import { CSS } from "@dnd-kit/utilities"
+import { Check, ChevronDown, GripVertical, ListFilter, MoreVertical, Plus } from "lucide-react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -27,10 +30,9 @@ import {
 } from "@/components/ui/sidebar"
 import { cn } from "@/lib/utils"
 import { getErrorMessage, getHttpStatus } from "@/lib/http-error"
-import { parseMailRouteSearch } from "@/lib/mail-routing"
-import { useDeleteLabel, useUpdateLabel } from "@/mutations/labels"
-import { useCreateLabel } from "@/mutations/labels"
+import { useCreateLabel, useDeleteLabel, useUpdateLabel } from "@/mutations/labels"
 import { labelQueries, useLabels } from "@/queries/labels"
+import { useLabelOrder } from "@/hooks/use-label-order"
 import type { LabelListItem, NotificationPolicy } from "@/types/label"
 
 const LABEL_COLORS = [
@@ -62,7 +64,16 @@ const NOTIFICATION_OPTIONS: { value: NotificationPolicy; label: string }[] = [
   { value: "SILENT", label: "알림 안함" },
 ]
 
-function LabelItem({ label, isActive }: { label: LabelListItem; isActive: boolean }) {
+function LabelItem({
+  label,
+  isActive,
+  onLabelToggle,
+}: {
+  label: LabelListItem
+  isActive: boolean
+  onLabelToggle: (labelId: string) => void
+}) {
+  const [isHovered, setIsHovered] = useState(false)
   const [dropdownOpen, setDropdownOpen] = useState(false)
   const [renameOpen, setRenameOpen] = useState(false)
   const [deleteOpen, setDeleteOpen] = useState(false)
@@ -71,6 +82,8 @@ function LabelItem({ label, isActive }: { label: LabelListItem; isActive: boolea
   const updateLabel = useUpdateLabel()
   const deleteLabel = useDeleteLabel()
   const { data: labelDetail } = useQuery({ ...labelQueries.detail(label.id), enabled: dropdownOpen })
+
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: label.id })
 
   function handleColorChange(color: string) {
     updateLabel.mutate({ labelId: label.id, data: { colorCode: color } })
@@ -109,34 +122,44 @@ function LabelItem({ label, isActive }: { label: LabelListItem; isActive: boolea
   }
 
   return (
-    <SidebarMenuItem>
+    <SidebarMenuItem
+      ref={setNodeRef}
+      style={{ transform: CSS.Transform.toString(transform), transition, opacity: isDragging ? 0.4 : undefined }}
+      onMouseEnter={() => setIsHovered(true)}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      <button
+        type="button"
+        className="absolute top-1/2 -left-3.5 z-10 -translate-y-1/2 cursor-grab touch-none rounded p-0.5 opacity-0 group-hover/menu-item:opacity-30 hover:opacity-60 active:cursor-grabbing"
+        aria-label="드래그하여 순서 변경"
+        {...attributes}
+        {...listeners}
+      >
+        <GripVertical className="size-3" />
+      </button>
       <SidebarMenuButton
+        type="button"
         tooltip={label.name}
         isActive={isActive}
         size="sm"
         className="group-hover/menu-item:bg-sidebar-accent group-hover/menu-item:text-sidebar-accent-foreground"
-        render={<Link to="/mail/$mailbox" params={{ mailbox: "inbox" }} search={{ labelId: label.id }} />}
+        onClick={() => onLabelToggle(label.id)}
       >
         <span className="size-3 shrink-0 rounded-sm" style={{ backgroundColor: label.colorCode }} />
         <span className="truncate">{label.name}</span>
-        {label.unreadThreadCount > 0 && (
-          <span className="ml-auto rounded-full bg-muted px-1.5 py-0.5 text-[10px] leading-none font-medium text-muted-foreground tabular-nums group-hover/menu-item:hidden">
-            {label.unreadThreadCount}
-          </span>
-        )}
       </SidebarMenuButton>
 
       <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
         <DropdownMenuTrigger
-          render={
-            <SidebarMenuAction
-              showOnHover
-              aria-label="라벨 메뉴"
-              className="size-5 hover:bg-sidebar-accent-foreground/15"
-            />
-          }
+          render={<SidebarMenuAction aria-label="라벨 메뉴" className="size-5 hover:bg-sidebar-accent-foreground/15" />}
         >
-          <MoreVertical />
+          {isHovered || dropdownOpen ? (
+            <MoreVertical />
+          ) : label.unreadThreadCount > 0 ? (
+            <span className="px-1.5 py-0.5 text-[10px] leading-none font-medium text-muted-foreground tabular-nums">
+              {label.unreadThreadCount}
+            </span>
+          ) : null}
         </DropdownMenuTrigger>
         <DropdownMenuContent side="right" align="start" className="min-w-44 ring-foreground/6">
           <DropdownMenuSub>
@@ -255,18 +278,23 @@ function LabelItem({ label, isActive }: { label: LabelListItem; isActive: boolea
 
 const LABELS_LIMIT = 4
 
-export function NavLabels({ className }: { className?: string }) {
-  const { data: labels = [] } = useLabels()
+interface NavLabelsProps {
+  activeLabelId?: string
+  onLabelToggle: (labelId: string) => void
+  className?: string
+}
+
+export function NavLabels({ activeLabelId, onLabelToggle, className }: NavLabelsProps) {
+  const { data: serverLabels = [] } = useLabels()
   const createLabel = useCreateLabel()
+  const { orderedLabels, sensors, handleDragEnd } = useLabelOrder(serverLabels)
   const [open, setOpen] = useState(false)
   const [name, setName] = useState("")
   const [selectedColor, setSelectedColor] = useState(LABEL_COLORS[0])
   const [showAll, setShowAll] = useState(false)
-  const location = useLocation()
-  const { labelId: activeLabelId } = parseMailRouteSearch(location.search)
 
-  const visibleLabels = showAll ? labels : labels.slice(0, LABELS_LIMIT)
-  const hasMore = labels.length > LABELS_LIMIT
+  const visibleLabels = showAll ? orderedLabels : orderedLabels.slice(0, LABELS_LIMIT)
+  const hasMore = orderedLabels.length > LABELS_LIMIT
 
   function handleCreate() {
     if (!name.trim()) return
@@ -352,11 +380,20 @@ export function NavLabels({ className }: { className?: string }) {
         </div>
       </SidebarGroupLabel>
 
-      {labels.length > 0 && (
+      {orderedLabels.length > 0 && (
         <SidebarMenu>
-          {visibleLabels.map((label) => (
-            <LabelItem key={label.id} label={label} isActive={activeLabelId === label.id} />
-          ))}
+          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
+            <SortableContext items={visibleLabels.map((l) => l.id)} strategy={verticalListSortingStrategy}>
+              {visibleLabels.map((label) => (
+                <LabelItem
+                  key={label.id}
+                  label={label}
+                  isActive={activeLabelId === label.id}
+                  onLabelToggle={onLabelToggle}
+                />
+              ))}
+            </SortableContext>
+          </DndContext>
           {hasMore && (
             <SidebarMenuItem>
               <SidebarMenuButton size="sm" onClick={() => setShowAll((v) => !v)}>

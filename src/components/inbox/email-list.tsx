@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { InboxIcon } from "lucide-react"
 import { toast } from "sonner"
 
@@ -9,6 +9,7 @@ import { EmailListLoadingRows } from "@/components/inbox/email-list-loading-rows
 import { useDeleteThread, useRestoreTrashThread } from "@/mutations/trash"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Table, TableBody } from "@/components/ui/table"
+import { useLabels } from "@/queries/labels"
 import type { EmailFilter, InboxThreadSummary } from "@/types/email"
 import type { MailAccount } from "@/types/mail-account"
 
@@ -65,6 +66,8 @@ export function EmailList({
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const { mutate: deleteThread } = useDeleteThread()
   const { mutate: restoreThread } = useRestoreTrashThread()
+  const { data: labelsList } = useLabels()
+  const labelsColorMap = useMemo(() => new Map(labelsList?.map((l) => [l.id, l.colorCode]) ?? []), [labelsList])
 
   const toggleSelected = (id: string) => {
     setSelectedIds((prev) => {
@@ -160,6 +163,7 @@ export function EmailList({
                       isSelected={selectedThreadId === thread.threadId}
                       isChecked={selectedIds.has(thread.threadId)}
                       account={getAccount(thread.accountId)}
+                      labelsColorMap={labelsColorMap}
                       onSelect={() => onSelectThread(thread.threadId)}
                       onToggleCheck={() => toggleSelected(thread.threadId)}
                     />

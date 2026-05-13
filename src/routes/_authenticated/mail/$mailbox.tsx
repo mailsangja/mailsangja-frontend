@@ -1,5 +1,4 @@
-import { useEffect } from "react"
-import { createFileRoute } from "@tanstack/react-router"
+import { createFileRoute, redirect } from "@tanstack/react-router"
 import { toast } from "sonner"
 
 import { EmailDetail } from "@/components/inbox/email-detail"
@@ -13,8 +12,9 @@ import { parseMailRouteSearch } from "@/lib/mail-routing"
 import { getMailAddressSearchText } from "@/lib/mail-address"
 import { cn } from "@/lib/utils"
 import { useMarkThreadAsRead } from "@/mutations/emails"
-import { useMailAccounts } from "@/queries/mail-accounts"
+import { useMailAccounts, mailAccountQueries } from "@/queries/mail-accounts"
 import { useMailboxThreads } from "@/queries/emails"
+import { useLabels, labelQueries } from "@/queries/labels"
 import { useTrashThreads } from "@/queries/trash"
 import { isSupportedMailboxId, MAILBOX_LABELS, parseMailboxId, type PrimaryMailboxId } from "@/types/email"
 import type { TrashThreadSummary } from "@/types/trash"
@@ -32,6 +32,35 @@ export const Route = createFileRoute("/_authenticated/mail/$mailbox")({
     },
   },
   validateSearch: parseMailRouteSearch,
+  beforeLoad: async ({ context, params, search }) => {
+    const { labelId, accountId } = search
+
+    if (!labelId && !accountId) return
+
+    const [labels, accounts] = await Promise.all([
+      labelId !== undefined ? context.queryClient.ensureQueryData(labelQueries.list()) : null,
+      accountId !== undefined ? context.queryClient.ensureQueryData(mailAccountQueries.list()) : null,
+    ])
+
+    const isLabelInvalid = labels !== null && !labels.some((l) => l.id === labelId)
+    const isAccountInvalid = accounts !== null && !accounts.some((a) => a.id === accountId)
+
+    if (!isLabelInvalid && !isAccountInvalid) return
+
+    if (isLabelInvalid) toast.error("유효하지 않은 라벨입니다")
+    if (isAccountInvalid) toast.error("유효하지 않은 계정입니다")
+
+    throw redirect({
+      to: "/mail/$mailbox",
+      params: { mailbox: params.mailbox },
+      search: {
+        ...search,
+        labelId: isLabelInvalid ? undefined : search.labelId,
+        accountId: isAccountInvalid ? undefined : search.accountId,
+      },
+      replace: true,
+    })
+  },
   component: MailboxPage,
 })
 
@@ -72,12 +101,14 @@ function MailboxPage() {
 }
 
 function MailboxView({ mailbox }: { mailbox: PrimaryMailboxId }) {
-  const { query = "", filter = "all", accountId, thread: selectedThreadId = null } = Route.useSearch()
+  const { query = "", filter = "all", accountId, labelId, thread: selectedThreadId = null } = Route.useSearch()
   const navigate = Route.useNavigate()
   const isMobile = useIsMobile()
   const { data: accounts } = useMailAccounts()
+  const { data: labels } = useLabels()
   const { mutate: markAsRead } = useMarkThreadAsRead()
   const supportedMailbox = isSupportedMailboxId(mailbox) ? mailbox : null
+  const selectedLabel = labelId ? (labels?.find((label) => label.id === labelId) ?? null) : null
   const {
     data,
     isLoading,
@@ -91,28 +122,13 @@ function MailboxView({ mailbox }: { mailbox: PrimaryMailboxId }) {
     isFetchNextPageError,
   } = useMailboxThreads(supportedMailbox, {
     read: filter === "unread" ? false : undefined,
+    labelId: labelId ? [labelId] : undefined,
   })
 
   const loadedThreads = data?.pages.flatMap((page) => page.content) ?? []
   const totalThreadCount = data?.pages[0]?.totalCount ?? loadedThreads.length
   const searchTerms = query.trim().toLowerCase().split(/\s+/).filter(Boolean)
   const selectedAccount = accountId ? (accounts?.find((account) => account.id === accountId) ?? null) : null
-
-  useEffect(() => {
-    if (!accountId || accounts === undefined || selectedAccount) {
-      return
-    }
-
-    toast.error("유효하지 않은 계정입니다")
-
-    void navigate({
-      search: (previous) => ({
-        ...previous,
-        accountId: undefined,
-      }),
-      replace: true,
-    })
-  }, [accounts, navigate, selectedAccount, accountId])
 
   const threads = supportedMailbox
     ? loadedThreads.filter((thread) => {
@@ -153,6 +169,9 @@ function MailboxView({ mailbox }: { mailbox: PrimaryMailboxId }) {
     emptyDescription = "현재까지 불러온 메일에서 검색 결과를 찾지 못했습니다."
   } else if (filter === "unread") {
     emptyTitle = "안 읽은 메일이 없습니다"
+  } else if (selectedLabel?.id) {
+    emptyTitle = "선택한 라벨의 메일이 없습니다"
+    emptyDescription = `"${selectedLabel.name}" 라벨이 적용된 메일이 없습니다.`
   } else if (selectedAccount?.id) {
     emptyTitle = "선택한 계정의 메일이 없습니다"
     emptyDescription = `${selectedAccount.alias} (${selectedAccount.emailAddress}) 계정에서 불러온 메일이 없습니다.`
@@ -298,22 +317,6 @@ function TrashMailboxView() {
   const totalThreadCount = data?.pages[0]?.totalCount ?? loadedThreads.length
   const searchTerms = query.trim().toLowerCase().split(/\s+/).filter(Boolean)
   const selectedAccount = accountId ? (accounts?.find((account) => account.id === accountId) ?? null) : null
-
-  useEffect(() => {
-    if (!accountId || accounts === undefined || selectedAccount) {
-      return
-    }
-
-    toast.error("유효하지 않은 계정입니다")
-
-    void navigate({
-      search: (previous) => ({
-        ...previous,
-        accountId: undefined,
-      }),
-      replace: true,
-    })
-  }, [accounts, navigate, selectedAccount, accountId])
 
   const threads = loadedThreads.filter((thread) => {
     if (selectedAccount && thread.accountId !== selectedAccount.id) {

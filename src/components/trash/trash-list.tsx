@@ -10,6 +10,7 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Table, TableBody } from "@/components/ui/table"
 import { getErrorMessage } from "@/lib/http-error"
 import { useRestoreTrashThread } from "@/mutations/trash"
+import { useLabels } from "@/queries/labels"
 import type { InboxThreadSummary } from "@/types/email"
 import type { MailAccount } from "@/types/mail-account"
 import type { TrashThreadSummary } from "@/types/trash"
@@ -74,6 +75,8 @@ export function TrashList({
   const loadMoreRef = useRef<HTMLDivElement | null>(null)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const { mutateAsync: restoreThread } = useRestoreTrashThread()
+  const { data: labelsList } = useLabels()
+  const labelsColorMap = useMemo(() => new Map(labelsList?.map((l) => [l.id, l.colorCode]) ?? []), [labelsList])
 
   const toggleSelected = (id: string) => {
     setSelectedIds((prev) => {
@@ -219,6 +222,7 @@ export function TrashList({
                     isSelected={selectedThreadId === thread.threadId}
                     isChecked={visibleSelectedIds.has(thread.threadId)}
                     account={getAccount(thread.accountId)}
+                    labelsColorMap={labelsColorMap}
                     onSelect={() => onSelectThread(thread.threadId)}
                     onToggleCheck={() => toggleSelected(thread.threadId)}
                   />
