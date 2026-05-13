@@ -25,14 +25,11 @@ export const Route = createFileRoute("/_authenticated/mail/$mailbox")({
       const mailbox = parseMailboxId(rawParams.mailbox)
 
       if (!mailbox) {
-        throw new Error("Unknown mailbox")
+        return false
       }
 
       return { mailbox }
     },
-  },
-  skipRouteOnParseError: {
-    params: true,
   },
   validateSearch: parseMailRouteSearch,
   component: MailboxPage,

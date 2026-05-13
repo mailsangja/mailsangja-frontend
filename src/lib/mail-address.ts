@@ -22,6 +22,13 @@ export function getMailAddressFullLabel(address?: MailAddress | null) {
   return name || email || "알 수 없음"
 }
 
+export function getMailAddressDisplayName(address?: MailAddress | null) {
+  const name = normalize(address?.name)
+  const email = normalize(address?.email)
+
+  return name || email || "알 수 없음"
+}
+
 export function getMailAddressSearchText(address?: MailAddress | null) {
   const name = normalize(address?.name)
   const email = normalize(address?.email)
@@ -31,6 +38,29 @@ export function getMailAddressSearchText(address?: MailAddress | null) {
 
 export function formatMailAddressList(addresses: MailAddress[]) {
   return addresses.map((address) => getMailAddressFullLabel(address)).join(", ")
+}
+
+function escapeDisplayName(value: string) {
+  return value.replace(/\\/g, "\\\\").replace(/"/g, '\\"')
+}
+
+function sanitizeHeaderDisplayName(value: string) {
+  return value.replace(/[\r\n]+/g, " ").trim()
+}
+
+export function formatMailAddressForSend(address: MailAddress) {
+  const name = sanitizeHeaderDisplayName(normalize(address.name))
+  const email = normalize(address.email)
+
+  if (name && name !== email) {
+    return `"${escapeDisplayName(name)}" <${email}>`
+  }
+
+  return email
+}
+
+export function formatMailAddressesForSend(addresses: MailAddress[]) {
+  return addresses.map(formatMailAddressForSend)
 }
 
 export function parseMailAddressInput(value: string) {
@@ -85,4 +115,76 @@ export function parseMailAddressInput(value: string) {
   }
 
   return entries
+}
+
+function unescapeQuotedName(value: string) {
+  return value.replace(/\\(["\\])/g, "$1")
+}
+
+export function isValidEmailAddress(value: string) {
+  return /^[^\s@<>"]+@[^\s@<>"]+\.[^\s@<>"]+$/.test(value.trim())
+}
+
+export function parseMailAddressEntry(value: string): MailAddress | null {
+  const entry = value.trim()
+
+  if (!entry) {
+    return null
+  }
+
+  const angleMatch = entry.match(/^(.*?)<([^<>]+)>\s*$/)
+
+  if (!angleMatch) {
+    return isValidEmailAddress(entry) ? { email: entry } : null
+  }
+
+  const rawName = angleMatch[1].trim()
+  const email = angleMatch[2].trim()
+
+  if (!rawName || !isValidEmailAddress(email)) {
+    return null
+  }
+
+  const quotedName = rawName.match(/^"((?:\\.|[^"])*)"$/)
+  const name = (quotedName ? unescapeQuotedName(quotedName[1]) : rawName).trim()
+
+  if (!name) {
+    return null
+  }
+
+  return {
+    name,
+    email,
+  }
+}
+
+export function parseMailRecipients(value: string) {
+  return parseMailAddressInput(value).flatMap((entry) => {
+    const address = parseMailAddressEntry(entry)
+
+    return address ? [address] : []
+  })
+}
+
+export function getUniqueMailAddresses(addresses: readonly MailAddress[]) {
+  const seen = new Set<string>()
+  const uniqueAddresses: MailAddress[] = []
+
+  for (const address of addresses) {
+    const email = normalize(address.email)
+    const key = email.toLowerCase()
+
+    if (!email || seen.has(key)) {
+      continue
+    }
+
+    seen.add(key)
+    uniqueAddresses.push({
+      ...address,
+      email,
+      ...(normalize(address.name) ? { name: normalize(address.name) } : {}),
+    })
+  }
+
+  return uniqueAddresses
 }

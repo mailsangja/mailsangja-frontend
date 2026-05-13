@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent } from "react"
+import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type ReactNode } from "react"
 import { EmailEditor, type EmailEditorRef } from "@react-email/editor"
 import {
   EDITOR_THEMES,
@@ -15,15 +15,16 @@ import { toast } from "sonner"
 import { FileAttachmentChip } from "@/components/attachment-chip"
 import { ComposeEditorToolbar, type ComposeEditor } from "@/components/compose/compose-editor-toolbar"
 import { ComposeSendPreviewDialog, type ComposeSendPreviewData } from "@/components/compose/compose-send-preview-dialog"
+import { RecipientInput } from "@/components/compose/recipient-input"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { getErrorMessage } from "@/lib/http-error"
-import { parseMailAddressInput } from "@/lib/mail-address"
+import { formatMailAddressesForSend, parseMailRecipients } from "@/lib/mail-address"
 import { useSendMail } from "@/mutations/emails"
 import { useActiveMailAccounts } from "@/queries/mail-accounts"
 import { useUser } from "@/queries/user"
-import type { ComposeInlineImage } from "@/types/email"
+import type { ComposeInlineImage, MailAddress } from "@/types/email"
 
 interface ComposeEmailProps {
   fromAddress: string | null
@@ -42,6 +43,14 @@ interface PendingInlineImage extends ComposeInlineImage {
 
 interface ComposeImageMetadata {
   alignment: "left" | "center" | "right" | null
+}
+
+interface RecipientFieldProps {
+  id: string
+  label: string
+  recipients: MailAddress[]
+  onRecipientsChange: (recipients: MailAddress[]) => void
+  children?: ReactNode
 }
 
 const MAX_SEND_FILE_BYTES = 20 * 1024 * 1024
@@ -236,6 +245,25 @@ function buildMailContentWithImages(
   }
 }
 
+function RecipientField({ id, label, recipients, onRecipientsChange, children }: RecipientFieldProps) {
+  return (
+    <div className="flex min-h-10 items-start border-b px-4 py-2">
+      <label htmlFor={id} className="w-20 shrink-0 pt-1 text-sm text-muted-foreground">
+        {label}
+      </label>
+      <div className="min-w-0 flex-1">
+        <RecipientInput
+          id={id}
+          recipients={recipients}
+          onRecipientsChange={onRecipientsChange}
+          placeholder="이름 또는 이메일 입력"
+        />
+      </div>
+      {children ? <div className="ml-2 flex shrink-0 items-center gap-1">{children}</div> : null}
+    </div>
+  )
+}
+
 export function ComposeEmail({
   fromAddress,
   onFromAddressChange,
@@ -253,9 +281,9 @@ export function ComposeEmail({
   const { data: activeMailAccounts, isPending: isMailAccountsPending } = useActiveMailAccounts()
   const sendMailMutation = useSendMail()
   const [editor, setEditor] = useState<ComposeEditor | null>(null)
-  const [to, setTo] = useState(initialTo ?? "")
-  const [cc, setCc] = useState(initialCc ?? "")
-  const [bcc, setBcc] = useState("")
+  const [to, setTo] = useState<MailAddress[]>(() => parseMailRecipients(initialTo ?? ""))
+  const [cc, setCc] = useState<MailAddress[]>(() => parseMailRecipients(initialCc ?? ""))
+  const [bcc, setBcc] = useState<MailAddress[]>([])
   const [subject, setSubject] = useState(initialSubject ?? "")
   const [isEditorReady, setIsEditorReady] = useState(false)
   const [isEditorEmpty, setIsEditorEmpty] = useState(true)
@@ -411,9 +439,7 @@ export function ComposeEmail({
       return null
     }
 
-    const toRecipients = parseMailAddressInput(to)
-
-    if (toRecipients.length === 0) {
+    if (to.length === 0) {
       toast.error("받는 사람을 입력해주세요")
       return null
     }
@@ -446,9 +472,9 @@ export function ComposeEmail({
     return {
       mail: {
         from: selectedFromAddress,
-        to: toRecipients,
-        cc: parseMailAddressInput(cc),
-        bcc: parseMailAddressInput(bcc),
+        to: formatMailAddressesForSend(to),
+        cc: formatMailAddressesForSend(cc),
+        bcc: formatMailAddressesForSend(bcc),
         subject: subject.trim(),
         content: sendContent.content,
         ...(messageId ? { messageId } : {}),
@@ -506,18 +532,7 @@ export function ComposeEmail({
         </Button>
       </div>
 
-      <div className="flex h-10 items-center border-b px-4 py-2">
-        <label htmlFor="compose-to" className="w-20 shrink-0 text-sm text-muted-foreground">
-          받는 사람
-        </label>
-        <input
-          id="compose-to"
-          type="text"
-          value={to}
-          onChange={(e) => setTo(e.target.value)}
-          placeholder="이메일 주소 입력"
-          className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
-        />
+      <RecipientField id="compose-to" label="받는 사람" recipients={to} onRecipientsChange={setTo}>
         {!showCc && (
           <Button variant="ghost" size="xs" onClick={() => setShowCc(true)}>
             참조
@@ -528,39 +543,11 @@ export function ComposeEmail({
             숨은참조
           </Button>
         )}
-      </div>
+      </RecipientField>
 
-      {showCc && (
-        <div className="flex h-10 items-center border-b px-4 py-2">
-          <label htmlFor="compose-cc" className="w-20 shrink-0 text-sm text-muted-foreground">
-            참조
-          </label>
-          <input
-            id="compose-cc"
-            type="text"
-            value={cc}
-            onChange={(e) => setCc(e.target.value)}
-            placeholder="이메일 주소 입력"
-            className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
-          />
-        </div>
-      )}
+      {showCc && <RecipientField id="compose-cc" label="참조" recipients={cc} onRecipientsChange={setCc} />}
 
-      {showBcc && (
-        <div className="flex h-10 items-center border-b px-4 py-2">
-          <label htmlFor="compose-bcc" className="w-20 shrink-0 text-sm text-muted-foreground">
-            숨은 참조
-          </label>
-          <input
-            id="compose-bcc"
-            type="text"
-            value={bcc}
-            onChange={(e) => setBcc(e.target.value)}
-            placeholder="이메일 주소 입력"
-            className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
-          />
-        </div>
-      )}
+      {showBcc && <RecipientField id="compose-bcc" label="숨은 참조" recipients={bcc} onRecipientsChange={setBcc} />}
 
       <div className="flex h-10 items-center border-b px-4 py-2">
         <label htmlFor="compose-subject" className="w-20 shrink-0 text-sm text-muted-foreground">
