@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react"
+import { useState } from "react"
 import { Paperclip } from "lucide-react"
 import { Popover as PopoverPrimitive } from "@base-ui/react/popover"
 
@@ -12,7 +12,6 @@ import { formatFullDateTime, formatRelativeDate } from "@/lib/date"
 import { AccountIcon } from "@/lib/icon-entries"
 import { getMailAddressLabel } from "@/lib/mail-address"
 import { cn } from "@/lib/utils"
-import { useLabels } from "@/queries/labels"
 import type { InboxThreadSummary, LabelSummary } from "@/types/email"
 import type { MailAccount } from "@/types/mail-account"
 
@@ -23,6 +22,7 @@ interface EmailListItemProps {
   isSelected: boolean
   isChecked: boolean
   account?: MailAccount
+  labelsColorMap: LabelsColorMap
   onSelect: () => void
   onToggleCheck: () => void
 }
@@ -158,12 +158,18 @@ function EmailListItemPreview({ thread, participantLabel, labelsColorMap }: Emai
   )
 }
 
-export function EmailListItem({ thread, isSelected, isChecked, account, onSelect, onToggleCheck }: EmailListItemProps) {
+export function EmailListItem({
+  thread,
+  isSelected,
+  isChecked,
+  account,
+  labelsColorMap,
+  onSelect,
+  onToggleCheck,
+}: EmailListItemProps) {
   const isMobile = useIsMobile()
   const [open, setOpen] = useState(false)
   const [anchor, setAnchor] = useState<PopoverPrimitive.Positioner.Props["anchor"]>(null)
-  const { data: labelsList } = useLabels()
-  const labelsColorMap = useMemo(() => new Map(labelsList?.map((l) => [l.id, l.colorCode]) ?? []), [labelsList])
   const isUnread = !thread.isRead
   const participantLabel = getMailAddressLabel(thread.participant)
   const rowClassName = cn(
