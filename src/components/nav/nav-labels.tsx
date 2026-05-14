@@ -289,7 +289,7 @@ function LabelItem({
             <DialogTitle>라벨 삭제</DialogTitle>
           </DialogHeader>
           <div className="space-y-3">
-            {threadCountData?.totalCount != null && threadCountData.totalCount > 0 && (
+            {threadCountData?.totalCount != null && (
               <p className="text-base text-muted-foreground">
                 {label.name} 라벨을 대화 {threadCountData.totalCount}개에서 제거하고 삭제하시겠습니까?
               </p>
