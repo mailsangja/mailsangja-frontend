@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Link } from "@tanstack/react-router"
+import { Link, useNavigate, useSearch } from "@tanstack/react-router"
 import { useQuery } from "@tanstack/react-query"
 import { DndContext, closestCenter } from "@dnd-kit/core"
 import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable"
@@ -79,6 +79,8 @@ function LabelItem({
   const [deleteOpen, setDeleteOpen] = useState(false)
   const [renameName, setRenameName] = useState(label.name)
 
+  const navigate = useNavigate()
+  const search = useSearch({ strict: false })
   const updateLabel = useUpdateLabel()
   const deleteLabel = useDeleteLabel()
   const { data: labelDetail } = useQuery({ ...labelQueries.detail(label.id), enabled: dropdownOpen })
@@ -118,7 +120,15 @@ function LabelItem({
   }
 
   function handleDelete() {
-    deleteLabel.mutate(label.id, { onSuccess: () => setDeleteOpen(false) })
+    deleteLabel.mutate(label.id, {
+      onSuccess: () => {
+        setDeleteOpen(false)
+        toast.success(`${label.name} 라벨이 삭제되었습니다`)
+        if ("labelId" in search && search.labelId === label.id) {
+          void navigate({ to: "/mail/$mailbox", params: { mailbox: "inbox" }, replace: true })
+        }
+      },
+    })
   }
 
   return (
