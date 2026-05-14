@@ -1,12 +1,8 @@
-import { useState } from "react"
+import { useEffect, useRef } from "react"
 import { Paperclip } from "lucide-react"
-import { Popover as PopoverPrimitive } from "@base-ui/react/popover"
 
-import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Separator } from "@/components/ui/separator"
-import { TableCell, TableRow } from "@/components/ui/table"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { formatFullDateTime, formatRelativeDate } from "@/lib/date"
 import { AccountIcon } from "@/lib/icon-entries"
@@ -21,26 +17,11 @@ interface EmailListItemProps {
   thread: InboxThreadSummary
   isSelected: boolean
   isChecked: boolean
+  isSelectionMode: boolean
   account?: MailAccount
   labelsColorMap: LabelsColorMap
   onSelect: () => void
   onToggleCheck: () => void
-}
-
-interface EmailListItemCellsProps {
-  thread: InboxThreadSummary
-  isUnread: boolean
-  isChecked: boolean
-  account?: MailAccount
-  participantLabel: string
-  labelsColorMap: LabelsColorMap
-  onToggleCheck: () => void
-}
-
-interface EmailListItemPreviewProps {
-  thread: InboxThreadSummary
-  participantLabel: string
-  labelsColorMap: LabelsColorMap
 }
 
 function LabelChips({ labels, labelsColorMap }: { labels: LabelSummary[]; labelsColorMap: LabelsColorMap }) {
@@ -50,7 +31,7 @@ function LabelChips({ labels, labelsColorMap }: { labels: LabelSummary[]; labels
       {labels.map((label) => (
         <span
           key={label.labelId}
-          className="inline-flex items-center rounded-full px-1.5 py-0.5 text-xs font-medium text-white"
+          className="inline-flex max-w-24 shrink-0 items-center truncate rounded-full px-1.5 py-0.5 text-xs font-medium text-white"
           style={{ backgroundColor: labelsColorMap.get(label.labelId) ?? label.colorCode }}
         >
           {label.name}
@@ -60,101 +41,163 @@ function LabelChips({ labels, labelsColorMap }: { labels: LabelSummary[]; labels
   )
 }
 
-function createCursorAnchor(
-  clientX: number,
-  clientY: number,
-  contextElement: Element
-): NonNullable<PopoverPrimitive.Positioner.Props["anchor"]> {
-  return {
-    contextElement,
-    getBoundingClientRect: () => new DOMRect(clientX, clientY, 0, 0),
-  }
+function SenderTooltipContent({ participant }: { participant: InboxThreadSummary["participant"] }) {
+  const name = participant.name?.trim()
+  const email = participant.email.trim()
+
+  return (
+    <span className="flex min-w-0 flex-col items-start gap-1">
+      <span className="flex min-w-0 items-center gap-2">
+        <span className="shrink-0 text-background/70">이름</span>
+        <span className="min-w-0 truncate">{name || email || "알 수 없음"}</span>
+      </span>
+      {name && email ? (
+        <span className="flex min-w-0 items-center gap-2">
+          <span className="shrink-0 text-background/70">이메일</span>
+          <span className="min-w-0 truncate">{email}</span>
+        </span>
+      ) : null}
+    </span>
+  )
 }
 
-function EmailListItemCells({
+function AccountTooltipContent({ account }: { account?: MailAccount }) {
+  if (!account) {
+    return <span>계정 정보 없음</span>
+  }
+
+  return <span>{account.alias ? `${account.alias} (${account.emailAddress})` : account.emailAddress}</span>
+}
+
+function EmailListItemContent({
   thread,
   isUnread,
   isChecked,
+  isSelectionMode,
   account,
   participantLabel,
   labelsColorMap,
   onToggleCheck,
-}: EmailListItemCellsProps) {
+}: {
+  thread: InboxThreadSummary
+  isUnread: boolean
+  isChecked: boolean
+  isSelectionMode: boolean
+  account?: MailAccount
+  participantLabel: string
+  labelsColorMap: LabelsColorMap
+  onToggleCheck: () => void
+}) {
+  const showThreadCount = thread.messageCount > 1
+  const hasLabels = thread.labels.length > 0
   const hasAttachments = thread.attachments.length > 0
+
+  const renderTime = (className?: string) => (
+    <Tooltip>
+      <TooltipTrigger
+        render={<span className={cn("flex shrink-0 items-center gap-1.5 text-xs text-muted-foreground", className)} />}
+      >
+        <span>{formatRelativeDate(thread.lastMessageAt)}</span>
+        {isUnread ? <span className="ml-0.5 size-1.5 rounded-full bg-primary" aria-hidden="true" /> : null}
+      </TooltipTrigger>
+      <TooltipContent>{formatFullDateTime(thread.lastMessageAt)}</TooltipContent>
+    </Tooltip>
+  )
 
   return (
     <>
-      <TableCell onClick={(event) => event.stopPropagation()}>
-        <div className="flex justify-center">
+      <div className="flex min-w-0 items-center gap-2.5 md:w-48 md:shrink-0">
+        <div
+          className={cn("mr-0.5", isSelectionMode ? "flex" : "hidden", "md:flex")}
+          onClick={(event) => event.stopPropagation()}
+          onKeyDown={(event) => event.stopPropagation()}
+        >
           <Checkbox checked={isChecked} onCheckedChange={onToggleCheck} aria-label="메일 선택" />
         </div>
-      </TableCell>
-      <TableCell>
-        <div className="flex justify-center">
-          {account?.icon ? (
-            <div
-              className="flex size-6 shrink-0 items-center justify-center rounded-full"
-              style={{ backgroundColor: account.color || "#6B7280" }}
+
+        <span
+          className={cn(
+            "flex min-w-0 items-center gap-2 text-sm font-medium",
+            isUnread ? "text-foreground" : "text-muted-foreground"
+          )}
+        >
+          <Tooltip>
+            <TooltipTrigger
+              aria-label="계정 정보"
+              render={
+                <span
+                  className="flex size-5 shrink-0 items-center justify-center rounded-full"
+                  style={{ backgroundColor: account?.color || "#6B7280" }}
+                />
+              }
             >
-              <AccountIcon name={account.icon} className="size-3.5 text-white" />
-            </div>
-          ) : (
-            <span className={cn("size-2.5 rounded-full", isUnread ? "bg-primary" : "bg-transparent")} />
-          )}
-        </div>
-      </TableCell>
-      <TableCell className="truncate">
-        <span className={cn("truncate", isUnread ? "text-foreground" : "text-muted-foreground")}>
-          {participantLabel}
+              <AccountIcon name={account?.icon ?? "mail"} className="size-3.5 text-white" />
+            </TooltipTrigger>
+            <TooltipContent side="bottom" align="start" className="max-w-72 items-start">
+              <AccountTooltipContent account={account} />
+            </TooltipContent>
+          </Tooltip>
+
+          <Tooltip>
+            <TooltipTrigger render={<span className="min-w-0 truncate" />}>{participantLabel}</TooltipTrigger>
+            <TooltipContent side="bottom" align="start" className="max-w-72 items-start">
+              <SenderTooltipContent participant={thread.participant} />
+            </TooltipContent>
+          </Tooltip>
+
+          {showThreadCount ? (
+            <span className="-ml-0.5 text-xs font-normal text-muted-foreground">{thread.messageCount}</span>
+          ) : null}
         </span>
-      </TableCell>
-      <TableCell className="min-w-0">
+
+        {renderTime("ml-auto md:hidden")}
+      </div>
+
+      <div className="flex min-w-0 flex-1 flex-col gap-1">
         <div className="flex min-w-0 items-center gap-2">
-          {thread.labels.length > 0 && (
-            <div className="flex shrink-0 items-center gap-1">
-              <LabelChips labels={thread.labels} labelsColorMap={labelsColorMap} />
-            </div>
-          )}
-          <span className={cn("truncate", isUnread ? "text-foreground" : "text-muted-foreground")}>
+          <span
+            className={cn(
+              "min-w-0 flex-1 truncate text-sm",
+              isUnread ? "font-semibold text-foreground" : "font-medium text-muted-foreground"
+            )}
+          >
             {thread.latestSubject || "(제목 없음)"}
           </span>
-          <span className="truncate text-muted-foreground">- {thread.snippet}</span>
+
+          {renderTime("hidden md:flex")}
         </div>
-      </TableCell>
-      <TableCell className="hidden text-center md:table-cell">
-        {hasAttachments ? <Paperclip className="mx-auto size-4 text-muted-foreground" /> : null}
-      </TableCell>
-      <TableCell className="text-right text-xs text-muted-foreground">
-        {formatRelativeDate(thread.lastMessageAt)}
-      </TableCell>
+
+        <div className="flex min-w-0 flex-col gap-2 md:flex-row md:items-center">
+          <span className="line-clamp-1 min-w-0 text-sm text-muted-foreground md:flex-1">{thread.snippet}</span>
+
+          {hasLabels || hasAttachments ? (
+            <span className="flex min-w-0 items-center justify-between gap-1.5 md:shrink-0 md:justify-end">
+              {hasAttachments ? (
+                <Tooltip>
+                  <TooltipTrigger render={<span className="flex shrink-0 items-center" />}>
+                    <Paperclip className="mx-auto size-4 text-muted-foreground" />
+                  </TooltipTrigger>
+                  <TooltipContent side="bottom" align="end" className="max-w-72 items-start">
+                    <span className="flex min-w-0 flex-col items-start gap-1">
+                      <span>첨부파일 {thread.attachments.length}개</span>
+                      {thread.attachments.slice(0, 3).map((attachment) => (
+                        <span key={attachment.id} className="max-w-64 truncate text-background/80">
+                          {attachment.filename}
+                        </span>
+                      ))}
+                      {thread.attachments.length > 3 ? (
+                        <span className="text-background/70">외 {thread.attachments.length - 3}개</span>
+                      ) : null}
+                    </span>
+                  </TooltipContent>
+                </Tooltip>
+              ) : null}
+              <LabelChips labels={thread.labels} labelsColorMap={labelsColorMap} />
+            </span>
+          ) : null}
+        </div>
+      </div>
     </>
-  )
-}
-
-function EmailListItemPreview({ thread, participantLabel, labelsColorMap }: EmailListItemPreviewProps) {
-  const hasAttachments = thread.attachments.length > 0
-
-  return (
-    <div className="space-y-2.5">
-      <p className="text-sm leading-snug font-semibold">{thread.latestSubject || "(제목 없음)"}</p>
-      <p className="line-clamp-3 text-sm leading-relaxed text-muted-foreground">{thread.snippet}</p>
-      <Separator />
-      <div className="flex flex-wrap items-center gap-1.5">
-        <Badge variant="secondary" className="rounded font-normal">
-          {participantLabel}
-        </Badge>
-        <LabelChips labels={thread.labels} labelsColorMap={labelsColorMap} />
-      </div>
-      <div className="flex items-center gap-3 text-xs text-muted-foreground">
-        {hasAttachments ? (
-          <span className="flex items-center gap-1">
-            <Paperclip className="size-3" />
-            첨부 {thread.attachments.length}개
-          </span>
-        ) : null}
-        <span>{formatFullDateTime(thread.lastMessageAt)}</span>
-      </div>
-    </div>
   )
 }
 
@@ -162,85 +205,117 @@ export function EmailListItem({
   thread,
   isSelected,
   isChecked,
+  isSelectionMode,
   account,
   labelsColorMap,
   onSelect,
   onToggleCheck,
 }: EmailListItemProps) {
   const isMobile = useIsMobile()
-  const [open, setOpen] = useState(false)
-  const [anchor, setAnchor] = useState<PopoverPrimitive.Positioner.Props["anchor"]>(null)
+  const longPressTimerRef = useRef<ReturnType<typeof window.setTimeout> | null>(null)
+  const ignoreNextClickRef = useRef(false)
   const isUnread = !thread.isRead
   const participantLabel = getMailAddressLabel(thread.participant)
   const rowClassName = cn(
-    "cursor-pointer border-l-2 transition-colors",
-    isSelected ? "border-l-primary bg-accent" : "border-l-transparent",
-    isUnread ? "font-semibold hover:bg-accent" : "bg-accent/50 hover:bg-accent",
-    isSelected && "hover:bg-accent"
+    "flex cursor-pointer flex-col gap-1.5 border-b border-l-2 border-l-transparent p-3 transition-colors select-none hover:bg-accent md:flex-row md:items-center md:gap-3",
+    isSelected && "border-l-primary",
+    isUnread ? "font-semibold" : "bg-accent/50",
+    isSelected && isUnread && "bg-accent",
+    isChecked && !isSelected && "bg-accent/70"
   )
 
-  const updateAnchor = (event: React.PointerEvent<HTMLTableRowElement>) => {
-    setAnchor(createCursorAnchor(event.clientX, event.clientY, event.currentTarget))
+  const clearLongPressTimer = () => {
+    if (longPressTimerRef.current !== null) {
+      window.clearTimeout(longPressTimerRef.current)
+      longPressTimerRef.current = null
+    }
   }
 
-  const renderRow = (triggerProps: React.HTMLAttributes<HTMLTableRowElement> = {}) => {
-    const { onClick, onPointerEnter, onPointerMove, className, ...rowProps } = triggerProps
+  const startLongPressSelection = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (!isMobile || isSelectionMode || event.pointerType === "mouse" || event.button !== 0) {
+      return
+    }
 
+    clearLongPressTimer()
+    longPressTimerRef.current = window.setTimeout(() => {
+      ignoreNextClickRef.current = true
+      onToggleCheck()
+      longPressTimerRef.current = null
+    }, 500)
+  }
+
+  const handlePointerEnd = (
+    event: React.PointerEvent<HTMLDivElement>,
+    handler?: React.PointerEventHandler<HTMLDivElement>
+  ) => {
+    clearLongPressTimer()
+    handler?.(event)
+  }
+
+  useEffect(() => {
+    return () => {
+      if (longPressTimerRef.current !== null) {
+        window.clearTimeout(longPressTimerRef.current)
+      }
+    }
+  }, [])
+
+  const handleRowAction = () => {
+    if (isMobile && isSelectionMode) {
+      onToggleCheck()
+      return
+    }
+
+    onSelect()
+  }
+
+  const renderRow = () => {
     return (
-      <TableRow
-        {...rowProps}
+      <div
+        role="listitem"
         data-state={isSelected ? "selected" : undefined}
         onClick={(event) => {
-          onSelect()
-          onClick?.(event)
-        }}
-        onPointerEnter={(event) => {
-          updateAnchor(event)
-          onPointerEnter?.(event)
-        }}
-        onPointerMove={(event) => {
-          if (!open) {
-            updateAnchor(event)
+          if (ignoreNextClickRef.current) {
+            ignoreNextClickRef.current = false
+            event.preventDefault()
+            return
           }
-          onPointerMove?.(event)
+
+          handleRowAction()
         }}
-        className={cn(className, rowClassName)}
+        onKeyDown={(event) => {
+          if (event.key === "Enter" || event.key === " ") {
+            event.preventDefault()
+            handleRowAction()
+          }
+        }}
+        onPointerDown={(event) => {
+          startLongPressSelection(event)
+        }}
+        onPointerLeave={(event) => {
+          handlePointerEnd(event)
+        }}
+        onPointerUp={(event) => {
+          handlePointerEnd(event)
+        }}
+        onPointerCancel={(event) => {
+          handlePointerEnd(event)
+        }}
+        className={rowClassName}
       >
-        <EmailListItemCells
+        <EmailListItemContent
           thread={thread}
           isUnread={isUnread}
           isChecked={isChecked}
+          isSelectionMode={isSelectionMode}
           account={account}
           participantLabel={participantLabel}
           labelsColorMap={labelsColorMap}
           onToggleCheck={onToggleCheck}
         />
-      </TableRow>
+      </div>
     )
   }
 
-  if (isMobile) {
-    return renderRow()
-  }
-
-  return (
-    <Popover
-      open={open}
-      onOpenChange={(nextOpen, details) => {
-        if (details.reason === "trigger-press") return
-        setOpen(nextOpen)
-      }}
-    >
-      <PopoverTrigger
-        openOnHover
-        delay={300}
-        closeDelay={150}
-        nativeButton={false}
-        render={(triggerProps) => renderRow(triggerProps)}
-      />
-      <PopoverContent anchor={anchor} side="bottom" align="start" sideOffset={20} className="w-80 p-4">
-        <EmailListItemPreview thread={thread} participantLabel={participantLabel} labelsColorMap={labelsColorMap} />
-      </PopoverContent>
-    </Popover>
-  )
+  return renderRow()
 }
