@@ -1,7 +1,6 @@
 import { useEffect, useRef } from "react"
 import { Paperclip } from "lucide-react"
 
-import { Badge } from "@/components/ui/badge"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { useIsMobile } from "@/hooks/use-mobile"
@@ -147,9 +146,7 @@ function EmailListItemContent({
           </Tooltip>
 
           {showThreadCount ? (
-            <Badge variant="outline" className="-ml-0.5 text-xs text-muted-foreground">
-              {thread.messageCount}
-            </Badge>
+            <span className="-ml-0.5 text-xs font-normal text-muted-foreground">{thread.messageCount}</span>
           ) : null}
         </span>
 

@@ -4,7 +4,7 @@ import { toast } from "sonner"
 
 import { EmailErrorState } from "@/components/inbox/email-error-state"
 import { EmailListItem } from "@/components/inbox/email-list-item"
-import { EmailListLoadingRows } from "@/components/inbox/email-list-loading-rows"
+import { EmailListLoadingRows } from "@/components/inbox/email-list-item-loading"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { getErrorMessage } from "@/lib/http-error"
