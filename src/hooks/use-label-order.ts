@@ -12,11 +12,11 @@ export function useLabelOrder(serverLabels: LabelListItem[]) {
   const orderedLabels = useMemo(() => {
     const serverMap = new Map(serverLabels.map((l) => [l.id, l]))
     const existing = labelOrder.filter((id) => serverMap.has(id)).map((id) => serverMap.get(id)!)
-    const newLabels = serverLabels.filter((l) => !labelOrder.includes(l.id)).sort((a, b) => a.order - b.order)
+    const newLabels = serverLabels.filter((l) => !labelOrder.includes(l.id)).sort((a, b) => b.order - a.order)
 
     const result = [...existing]
     for (const label of newLabels) {
-      const idx = result.findIndex((l) => l.order > label.order)
+      const idx = result.findIndex((l) => l.order < label.order)
       if (idx === -1) result.push(label)
       else result.splice(idx, 0, label)
     }
@@ -44,8 +44,8 @@ export function useLabelOrder(serverLabels: LabelListItem[]) {
 
     let newOrder: number
     if (!prev && !next) return
-    else if (!prev) newOrder = next!.order - 1
-    else if (!next) newOrder = prev.order + 1
+    else if (!prev) newOrder = next!.order + 1
+    else if (!next) newOrder = prev.order - 1
     else newOrder = (prev.order + next.order) / 2
 
     updateLabel.mutate({ labelId: String(active.id), data: { order: newOrder } })
