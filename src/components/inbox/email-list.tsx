@@ -66,7 +66,10 @@ export function EmailList({
   const { mutate: deleteThread } = useDeleteThread()
   const { mutate: restoreThread } = useRestoreTrashThread()
   const { data: labelsList } = useLabels()
-  const labelsColorMap = useMemo(() => new Map(labelsList?.map((l) => [l.id, l.colorCode]) ?? []), [labelsList])
+  const labelsColorMap = useMemo(
+    () => (labelsList !== undefined ? new Map(labelsList.map((l) => [l.id, l.colorCode])) : undefined),
+    [labelsList]
+  )
   const isSelectionMode = selectedIds.size > 0
 
   const toggleSelected = (id: string) => {
