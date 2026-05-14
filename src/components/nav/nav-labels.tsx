@@ -294,7 +294,7 @@ function LabelItem({
                 {label.name} 라벨을 대화 {threadCountData.totalCount}개에서 제거하고 삭제하시겠습니까?
               </p>
             )}
-            {labelDetail?.rule?.groups && labelDetail.rule.groups.length > 0 && (
+            {labelDetail?.rule?.groups && (
               <div className="space-y-1.5">
                 <p className="text-xs font-medium text-muted-foreground">적용 중인 필터 규칙</p>
                 <div className="space-y-1 rounded-md border bg-muted/40 px-3 py-2 text-xs">
@@ -354,8 +354,9 @@ export function NavLabels({ activeLabelId, onLabelToggle, className }: NavLabels
     const colorToCreate = selectedColor
     setName("")
     setSelectedColor(LABEL_COLORS[0])
+    const minOrder = serverLabels.length > 0 ? Math.min(...serverLabels.map((l) => l.order)) : 0
     createLabel.mutate(
-      { name: nameToCreate, colorCode: colorToCreate, notificationPolicy: "INHERIT", order: 0 },
+      { name: nameToCreate, colorCode: colorToCreate, notificationPolicy: "INHERIT", order: minOrder - 1 },
       {
         onSuccess: () => setOpen(false),
         onError: (e) => {
