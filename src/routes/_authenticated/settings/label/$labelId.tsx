@@ -10,31 +10,14 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { LabelFilterDialog } from "@/components/label-filter-dialog"
 import { getErrorMessage } from "@/lib/http-error"
+import { FIELD_LABELS, OPERATOR_LABELS } from "@/lib/label-rule"
 import { useUpdateLabelRule } from "@/mutations/labels"
 import { useLabelDetail } from "@/queries/labels"
-import type { ConditionField, ConditionOperator, LabelCondition } from "@/types/label"
+import type { LabelCondition } from "@/types/label"
 
 export const Route = createFileRoute("/_authenticated/settings/label/$labelId")({
   component: LabelDetailPage,
 })
-
-const FIELD_LABELS: Record<ConditionField, string> = {
-  MAIL_ACCOUNT: "메일 계정",
-  FROM_ADDRESS: "보낸 주소",
-  FROM_DOMAIN: "보낸 도메인",
-  TO_ADDRESS: "받는 주소",
-  CC_ADDRESS: "참조",
-  SUBJECT: "제목",
-  BODY_TEXT: "포함하는 단어",
-  HAS_ATTACHMENT: "첨부파일",
-}
-
-const OPERATOR_LABELS: Record<ConditionOperator, string> = {
-  EQUALS: "같음",
-  CONTAINS: "포함",
-  NOT_CONTAINS: "미포함",
-  BOOLEAN: "해당함 여부",
-}
 
 function LabelDetailPage() {
   const { labelId } = Route.useParams()
