@@ -1,16 +1,19 @@
 import { useMutation } from "@tanstack/react-query"
 
 import {
+  approveLabelSuggestion,
   createLabel,
   createLabelGroup,
+  createLabelSuggestions,
   deleteLabel,
   deleteLabelGroup,
+  deleteLabelSuggestion,
   updateLabel,
   updateLabelGroup,
   updateLabelRule,
 } from "@/api/labels"
 import { queryClient } from "@/lib/query-client"
-import { labelGroupKeys, labelKeys } from "@/queries/labels"
+import { labelGroupKeys, labelKeys, labelSuggestionKeys } from "@/queries/labels"
 import type {
   CreateLabelGroupPayload,
   CreateLabelPayload,
@@ -21,6 +24,10 @@ import type {
 
 function invalidateLabels() {
   void queryClient.invalidateQueries({ queryKey: labelKeys.all() })
+}
+
+function invalidateLabelSuggestions() {
+  void queryClient.invalidateQueries({ queryKey: labelSuggestionKeys.all() })
 }
 
 function invalidateLabelGroups() {
@@ -89,4 +96,35 @@ export function useUpdateLabelGroup() {
 
 export function useDeleteLabelGroup() {
   return useMutation(labelGroupMutationOptions.delete())
+}
+
+export const labelSuggestionMutationOptions = {
+  create: () => ({
+    mutationFn: () => createLabelSuggestions(),
+    onSuccess: invalidateLabelSuggestions,
+  }),
+  approve: () => ({
+    mutationFn: ({ suggestionId, data }: { suggestionId: string; data: CreateLabelPayload }) =>
+      approveLabelSuggestion(suggestionId, data),
+    onSuccess: () => {
+      invalidateLabels()
+      invalidateLabelSuggestions()
+    },
+  }),
+  delete: () => ({
+    mutationFn: (suggestionId: string) => deleteLabelSuggestion(suggestionId),
+    onSuccess: invalidateLabelSuggestions,
+  }),
+}
+
+export function useCreateLabelSuggestions() {
+  return useMutation(labelSuggestionMutationOptions.create())
+}
+
+export function useApproveLabelSuggestion() {
+  return useMutation(labelSuggestionMutationOptions.approve())
+}
+
+export function useDeleteLabelSuggestion() {
+  return useMutation(labelSuggestionMutationOptions.delete())
 }

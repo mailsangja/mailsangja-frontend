@@ -143,26 +143,26 @@ function LabelDeleteDialog({
 }
 
 const LABEL_COLORS = [
-  "#ef4444", // red
-  "#f97316", // orange
-  "#f59e0b", // amber
-  "#eab308", // yellow
-  "#84cc16", // lime
-  "#22c55e", // green
-  "#10b981", // emerald
-  "#14b8a6", // teal
-  "#06b6d4", // cyan
-  "#0ea5e9", // sky
-  "#3b82f6", // blue
-  "#6366f1", // indigo
-  "#8b5cf6", // violet
-  "#a855f7", // purple
-  "#d946ef", // fuchsia
-  "#ec4899", // pink
-  "#f43f5e", // rose
-  "#64748b", // slate
-  "#78716c", // stone
-  "#6b7280", // gray
+  "#ef4444",
+  "#f97316",
+  "#f59e0b",
+  "#eab308",
+  "#84cc16",
+  "#4ade80",
+  "#22c55e",
+  "#14b8a6",
+  "#06b6d4",
+  "#2FE3FB",
+  "#0ea5e9",
+  "#3b82f6",
+  "#6366f1",
+  "#8b5cf6",
+  "#a855f7",
+  "#c084fc",
+  "#d946ef",
+  "#FDB6D8",
+  "#FB71B4",
+  "#ec4899",
 ]
 
 const NOTIFICATION_OPTIONS: { value: NotificationPolicy; label: string }[] = [

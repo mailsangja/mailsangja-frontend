@@ -10,6 +10,22 @@ import type {
   UpdateLabelRulePayload,
 } from "@/types/label"
 
+export async function getLabelSuggestions(): Promise<LabelListItem[]> {
+  return apiClient.get<LabelListItem[]>("/api/v1/labels/suggestions")
+}
+
+export async function createLabelSuggestions(): Promise<LabelListItem[]> {
+  return apiClient.post<LabelListItem[]>("/api/v1/labels/suggestions", undefined)
+}
+
+export async function approveLabelSuggestion(suggestionId: string, data: CreateLabelPayload): Promise<LabelDetail> {
+  return apiClient.post<LabelDetail>(`/api/v1/labels/suggestions/${suggestionId}/approve`, data)
+}
+
+export async function deleteLabelSuggestion(suggestionId: string): Promise<void> {
+  return apiClient.delete<void>(`/api/v1/labels/suggestions/${suggestionId}`)
+}
+
 export async function getLabels(): Promise<LabelListItem[]> {
   return apiClient.get<LabelListItem[]>("/api/v1/labels")
 }
