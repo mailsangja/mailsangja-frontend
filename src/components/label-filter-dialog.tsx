@@ -175,7 +175,7 @@ export function LabelFilterDialog({
               className="h-8"
             />
           </CriteriaRow>
-          <CriteriaRow label="포함하는 단어">
+          <CriteriaRow label="본문">
             <Input
               value={criteria.bodyText}
               onChange={(e) => setCriteria((c) => ({ ...c, bodyText: e.target.value }))}

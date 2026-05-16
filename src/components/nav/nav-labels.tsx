@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Link } from "@tanstack/react-router"
+import { Link, useNavigate, useSearch } from "@tanstack/react-router"
 import { useQuery } from "@tanstack/react-query"
 import { DndContext, closestCenter } from "@dnd-kit/core"
 import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable"
@@ -7,7 +7,7 @@ import { CSS } from "@dnd-kit/utilities"
 import { Check, ChevronDown, GripVertical, ListFilter, MoreVertical, Plus } from "lucide-react"
 import { toast } from "sonner"
 
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import {
   DropdownMenu,
@@ -31,9 +31,116 @@ import {
 import { cn } from "@/lib/utils"
 import { getErrorMessage, getHttpStatus } from "@/lib/http-error"
 import { useCreateLabel, useDeleteLabel, useUpdateLabel } from "@/mutations/labels"
+import { emailQueries } from "@/queries/emails"
 import { labelQueries, useLabels } from "@/queries/labels"
 import { useLabelOrder } from "@/hooks/use-label-order"
-import type { LabelListItem, NotificationPolicy } from "@/types/label"
+import type { ConditionField, ConditionOperator, LabelListItem, NotificationPolicy } from "@/types/label"
+
+const FIELD_LABELS: Record<ConditionField, string> = {
+  MAIL_ACCOUNT: "메일 계정",
+  FROM_ADDRESS: "보낸 주소",
+  FROM_DOMAIN: "보낸 도메인",
+  TO_ADDRESS: "받는 주소",
+  CC_ADDRESS: "참조",
+  SUBJECT: "제목",
+  BODY_TEXT: "본문",
+  HAS_ATTACHMENT: "첨부파일",
+}
+
+const OPERATOR_LABELS: Record<ConditionOperator, string> = {
+  EQUALS: "같음",
+  CONTAINS: "포함",
+  NOT_CONTAINS: "미포함",
+  BOOLEAN: "해당함 여부",
+}
+
+function LabelDeleteDialog({
+  open,
+  onOpenChange,
+  label,
+}: {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  label: LabelListItem
+}) {
+  const navigate = useNavigate()
+  const search = useSearch({ strict: false })
+  const deleteLabel = useDeleteLabel()
+  const { data: labelDetail, isLoading: isLoadingDetail } = useQuery({
+    ...labelQueries.detail(label.id),
+    enabled: open,
+  })
+  const { data: threadCountData, isLoading: isLoadingCount } = useQuery({
+    ...emailQueries.labelCount(label.id),
+    enabled: open,
+  })
+  const isInfoLoading = isLoadingDetail || isLoadingCount
+
+  function handleDelete() {
+    deleteLabel.mutate(label.id, {
+      onSuccess: () => {
+        onOpenChange(false)
+        toast.success(`${label.name} 라벨이 삭제되었습니다`)
+        if ("labelId" in search && search.labelId === label.id) {
+          void navigate({ to: "/mail/$mailbox", params: { mailbox: "inbox" }, replace: true })
+        }
+      },
+    })
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>라벨 삭제</DialogTitle>
+        </DialogHeader>
+        <div className="space-y-3">
+          {isInfoLoading ? (
+            <div className="space-y-2">
+              <div className="h-4 w-3/4 animate-pulse rounded bg-muted" />
+              <div className="h-4 w-1/2 animate-pulse rounded bg-muted" />
+            </div>
+          ) : (
+            <>
+              {threadCountData?.totalCount != null && (
+                <p className="text-base text-muted-foreground">
+                  {label.name} 라벨을 대화 {threadCountData.totalCount}개에서 제거하고 삭제하시겠습니까?
+                </p>
+              )}
+              {labelDetail?.rule?.groups && (
+                <div className="space-y-1.5">
+                  <p className="text-xs font-medium text-muted-foreground">적용 중인 필터 규칙</p>
+                  <div className="space-y-1 rounded-md border bg-muted/40 px-3 py-2 text-xs">
+                    {labelDetail.rule.groups.flatMap((group, gi) => [
+                      ...(gi > 0 ? [<hr key={`sep-${gi}`} className="my-1 border-border" />] : []),
+                      ...group.conditions.map((cond, ci) => (
+                        <p key={`${gi}-${ci}`} className="text-muted-foreground">
+                          <span className="font-medium text-foreground">{FIELD_LABELS[cond.field]}</span>{" "}
+                          {OPERATOR_LABELS[cond.operator]}{" "}
+                          {cond.operator !== "BOOLEAN" && (
+                            <span className="font-mono text-foreground">&quot;{cond.value}&quot;</span>
+                          )}
+                        </p>
+                      )),
+                    ])}
+                  </div>
+                </div>
+              )}
+            </>
+          )}
+        </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            취소
+          </Button>
+          <Button variant="destructive" onClick={handleDelete} disabled={deleteLabel.isPending || isInfoLoading}>
+            삭제
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  )
+}
 
 const LABEL_COLORS = [
   "#ef4444", // red
@@ -80,7 +187,6 @@ function LabelItem({
   const [renameName, setRenameName] = useState(label.name)
 
   const updateLabel = useUpdateLabel()
-  const deleteLabel = useDeleteLabel()
   const { data: labelDetail } = useQuery({ ...labelQueries.detail(label.id), enabled: dropdownOpen })
 
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: label.id })
@@ -115,10 +221,6 @@ function LabelItem({
         },
       }
     )
-  }
-
-  function handleDelete() {
-    deleteLabel.mutate(label.id, { onSuccess: () => setDeleteOpen(false) })
   }
 
   return (
@@ -252,26 +354,7 @@ function LabelItem({
         </DialogContent>
       </Dialog>
 
-      {/* Delete confirmation dialog */}
-      <Dialog open={deleteOpen} onOpenChange={setDeleteOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>라벨 삭제</DialogTitle>
-          </DialogHeader>
-          <p className="text-sm text-muted-foreground">
-            <span className="font-medium text-foreground">{label.name}</span> 라벨을 삭제합니다. 이 작업은 되돌릴 수
-            없습니다.
-          </p>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setDeleteOpen(false)}>
-              취소
-            </Button>
-            <Button variant="destructive" onClick={handleDelete} disabled={deleteLabel.isPending}>
-              삭제
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
+      <LabelDeleteDialog open={deleteOpen} onOpenChange={setDeleteOpen} label={label} />
     </SidebarMenuItem>
   )
 }
@@ -302,8 +385,9 @@ export function NavLabels({ activeLabelId, onLabelToggle, className }: NavLabels
     const colorToCreate = selectedColor
     setName("")
     setSelectedColor(LABEL_COLORS[0])
+    const maxOrder = serverLabels.length > 0 ? Math.max(...serverLabels.map((l) => l.order)) : 0
     createLabel.mutate(
-      { name: nameToCreate, colorCode: colorToCreate, notificationPolicy: "INHERIT", order: 0 },
+      { name: nameToCreate, colorCode: colorToCreate, notificationPolicy: "INHERIT", order: maxOrder + 1 },
       {
         onSuccess: () => setOpen(false),
         onError: (e) => {
@@ -322,15 +406,15 @@ export function NavLabels({ activeLabelId, onLabelToggle, className }: NavLabels
       <SidebarGroupLabel className="flex items-center justify-between pr-1">
         <span>라벨</span>
         <div className="flex items-center">
-          <Button
-            variant="ghost"
-            size="icon-xs"
+          <Link
+            to="/settings/label"
+            hash="create-filter"
             title="필터 만들기"
-            render={<Link to="/settings/label" hash="create-filter" />}
+            className={buttonVariants({ variant: "ghost", size: "icon-xs" })}
           >
             <ListFilter />
             <span className="sr-only">필터 만들기</span>
-          </Button>
+          </Link>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
               <Button variant="ghost" size="icon-xs" title="라벨 추가">

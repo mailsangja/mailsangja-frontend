@@ -25,14 +25,15 @@ interface EmailListItemProps {
 }
 
 function LabelChips({ labels, labelsColorMap }: { labels: LabelSummary[]; labelsColorMap: LabelsColorMap }) {
-  if (labels.length === 0) return null
+  const visibleLabels = labels.filter((label) => labelsColorMap.has(label.labelId))
+  if (visibleLabels.length === 0) return null
   return (
     <>
-      {labels.map((label) => (
+      {visibleLabels.map((label) => (
         <span
           key={label.labelId}
           className="inline-flex max-w-24 shrink-0 items-center truncate rounded-full px-1.5 py-0.5 text-xs font-medium text-white"
-          style={{ backgroundColor: labelsColorMap.get(label.labelId) ?? label.colorCode }}
+          style={{ backgroundColor: labelsColorMap?.get(label.labelId) ?? label.colorCode }}
         >
           {label.name}
         </span>

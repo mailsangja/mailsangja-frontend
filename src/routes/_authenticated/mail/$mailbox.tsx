@@ -35,14 +35,14 @@ export const Route = createFileRoute("/_authenticated/mail/$mailbox")({
   beforeLoad: async ({ context, params, search }) => {
     const { labelId, accountId } = search
 
-    if (!labelId && !accountId) return
-
     const [labels, accounts] = await Promise.all([
-      labelId !== undefined ? context.queryClient.ensureQueryData(labelQueries.list()) : null,
+      context.queryClient.ensureQueryData(labelQueries.list()),
       accountId !== undefined ? context.queryClient.ensureQueryData(mailAccountQueries.list()) : null,
     ])
 
-    const isLabelInvalid = labels !== null && !labels.some((l) => l.id === labelId)
+    if (!labelId && !accountId) return
+
+    const isLabelInvalid = labelId !== undefined && !labels.some((l) => l.id === labelId)
     const isAccountInvalid = accounts !== null && !accounts.some((a) => a.id === accountId)
 
     if (!isLabelInvalid && !isAccountInvalid) return

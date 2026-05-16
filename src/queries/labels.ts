@@ -1,4 +1,4 @@
-import { queryOptions, useQuery } from "@tanstack/react-query"
+import { queryOptions, useQuery, useSuspenseQuery } from "@tanstack/react-query"
 
 import { getLabelDetail, getLabelGroupDetail, getLabelGroups, getLabels } from "@/api/labels"
 
@@ -44,6 +44,10 @@ export const labelGroupQueries = {
 
 export function useLabels() {
   return useQuery(labelQueries.list())
+}
+
+export function useSuspenseLabels() {
+  return useSuspenseQuery(labelQueries.list())
 }
 
 export function useLabelDetail(id: string) {

@@ -1,4 +1,4 @@
-import { useInfiniteQuery, useQuery } from "@tanstack/react-query"
+import { queryOptions, useInfiniteQuery, useQuery } from "@tanstack/react-query"
 
 import { getMailboxThreads, getThreadDetail } from "@/api/emails"
 import type { ListThreadsParams, SupportedMailboxId } from "@/types/email"
@@ -15,6 +15,11 @@ export const emailQueries = {
     queryKey: emailKeys.thread(id),
     queryFn: () => getThreadDetail(id),
   }),
+  labelCount: (labelId: string) =>
+    queryOptions({
+      queryKey: [...emailKeys.all(), "label-count", labelId] as const,
+      queryFn: () => getMailboxThreads("inbox", { size: 1, labelId: [labelId] }),
+    }),
 }
 
 export function useMailboxThreads(mailbox: SupportedMailboxId | null, options: Omit<ListThreadsParams, "marker"> = {}) {
