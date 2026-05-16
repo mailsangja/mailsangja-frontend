@@ -31,6 +31,7 @@ interface RecipientInputProps {
   recipients: MailAddress[]
   onRecipientsChange: (recipients: MailAddress[]) => void
   placeholder?: string
+  disabled?: boolean
 }
 
 interface RecipientOption extends MailAddress {
@@ -60,6 +61,7 @@ export function RecipientInput({
   recipients,
   onRecipientsChange,
   placeholder = "이름 또는 이메일 입력",
+  disabled = false,
 }: RecipientInputProps) {
   const anchorRef = useComboboxAnchor()
   const [draft, setDraft] = useState("")
@@ -68,7 +70,7 @@ export function RecipientInput({
   const keyword = draft.trim()
   const debouncedKeyword = useDebounce(keyword)
   const isDebouncing = keyword !== debouncedKeyword
-  const contactsQuery = useContacts({ keyword: debouncedKeyword }, isFocused || isOpen)
+  const contactsQuery = useContacts({ keyword: debouncedKeyword }, !disabled && (isFocused || isOpen))
   const selectedEmails = useMemo(
     () => new Set(recipients.map((recipient) => recipient.email.toLowerCase())),
     [recipients]
@@ -105,10 +107,18 @@ export function RecipientInput({
           : "empty"
 
   const updateRecipients = (nextRecipients: readonly MailAddress[]) => {
+    if (disabled) {
+      return
+    }
+
     onRecipientsChange(getUniqueMailAddresses(nextRecipients))
   }
 
   const commitDraft = () => {
+    if (disabled) {
+      return false
+    }
+
     const nextRecipients = parseMailRecipients(draft)
 
     if (nextRecipients.length === 0) {
@@ -121,6 +131,10 @@ export function RecipientInput({
   }
 
   const handleKeyDown = (event: KeyboardEvent<HTMLInputElement>) => {
+    if (disabled) {
+      return
+    }
+
     if (event.key === "Tab" || event.key === "," || event.key === ";") {
       if (!draft.trim()) {
         return
@@ -133,6 +147,10 @@ export function RecipientInput({
   }
 
   const handlePaste = (event: ClipboardEvent<HTMLInputElement>) => {
+    if (disabled) {
+      return
+    }
+
     const pastedText = event.clipboardData.getData("text")
 
     if (!hasRecipientSeparator(pastedText)) {
@@ -151,16 +169,25 @@ export function RecipientInput({
       filteredItems={recipientOptions}
       multiple
       value={recipients}
+      open={disabled ? false : isOpen}
       inputValue={draft}
       autoHighlight="always"
       itemToStringLabel={getMailAddressSearchText}
       itemToStringValue={(recipient) => recipient.email}
       isItemEqualToValue={(item, value) => item.email.toLowerCase() === value.email.toLowerCase()}
-      onInputValueChange={(value) => setDraft(value)}
-      onOpenChange={setIsOpen}
+      onInputValueChange={(value) => {
+        if (!disabled) {
+          setDraft(value)
+        }
+      }}
+      onOpenChange={(open) => {
+        setIsOpen(disabled ? false : open)
+      }}
       onValueChange={(value) => {
         updateRecipients(value)
-        setDraft("")
+        if (!disabled) {
+          setDraft("")
+        }
       }}
     >
       <ComboboxChips
@@ -170,7 +197,7 @@ export function RecipientInput({
         <ComboboxValue>
           {recipients.map((recipient) => (
             <Tooltip key={recipient.email}>
-              <TooltipTrigger render={<ComboboxChip className="max-w-full font-normal" />}>
+              <TooltipTrigger render={<ComboboxChip className="max-w-full font-normal" showRemove={!disabled} />}>
                 <span className="truncate">{getMailAddressDisplayName(recipient)}</span>
               </TooltipTrigger>
               <TooltipContent>{recipient.email}</TooltipContent>
@@ -180,7 +207,8 @@ export function RecipientInput({
         <ComboboxChipsInput
           id={id}
           placeholder={recipients.length === 0 ? placeholder : undefined}
-          className="h-6 min-w-36 bg-transparent text-sm placeholder:text-muted-foreground"
+          disabled={disabled}
+          className="h-6 min-w-36 bg-transparent text-sm placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-60"
           onFocus={() => setIsFocused(true)}
           onBlur={() => {
             commitDraft()

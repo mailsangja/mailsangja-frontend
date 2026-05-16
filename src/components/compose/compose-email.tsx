@@ -13,18 +13,21 @@ import { useNavigate } from "@tanstack/react-router"
 import { toast } from "sonner"
 
 import { FileAttachmentChip } from "@/components/attachment-chip"
+import { ComposeAiDraftPanel } from "@/components/compose/compose-ai-draft-panel"
 import { ComposeEditorToolbar, type ComposeEditor } from "@/components/compose/compose-editor-toolbar"
 import { ComposeSendPreviewDialog, type ComposeSendPreviewData } from "@/components/compose/compose-send-preview-dialog"
 import { RecipientInput } from "@/components/compose/recipient-input"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { MailDraftStreamError, streamMailDraft } from "@/api/emails"
 import { getErrorMessage } from "@/lib/http-error"
 import { formatMailAddressesForSend, parseMailRecipients } from "@/lib/mail-address"
+import { cn } from "@/lib/utils"
 import { useSendMail } from "@/mutations/emails"
 import { useActiveMailAccounts } from "@/queries/mail-accounts"
 import { useUser } from "@/queries/user"
-import type { ComposeInlineImage, MailAddress } from "@/types/email"
+import type { ComposeInlineImage, MailAddress, MailDraftStreamPhase, MailDraftUsage } from "@/types/email"
 
 interface ComposeEmailProps {
   fromAddress: string | null
@@ -50,6 +53,7 @@ interface RecipientFieldProps {
   label: string
   recipients: MailAddress[]
   onRecipientsChange: (recipients: MailAddress[]) => void
+  disabled?: boolean
   children?: ReactNode
 }
 
@@ -201,6 +205,40 @@ function applyListIndentation(document: Document) {
   }
 }
 
+function textToEditorContent(text: string): JSONContent {
+  const lines = text.replace(/\r\n/g, "\n").split("\n")
+
+  return {
+    type: "doc",
+    content: lines.map((line) => ({
+      type: "paragraph",
+      content: line ? [{ type: "text", text: line }] : undefined,
+    })),
+  }
+}
+
+const CONTENTFUL_EDITOR_NODE_TYPES = new Set(["button", "horizontalRule", "image", "section", "table"])
+
+function hasVisibleEditorContent(node: JSONContent): boolean {
+  if (node.type === "globalContent" || node.type === "hardBreak") {
+    return false
+  }
+
+  if (typeof node.text === "string") {
+    return node.text.trim().length > 0
+  }
+
+  if (node.type && CONTENTFUL_EDITOR_NODE_TYPES.has(node.type)) {
+    return true
+  }
+
+  return (node.content ?? []).some(hasVisibleEditorContent)
+}
+
+function isEditorContentEmpty(content: JSONContent) {
+  return !hasVisibleEditorContent(content)
+}
+
 function buildMailContentWithImages(
   html: string,
   inlineImages: readonly PendingInlineImage[],
@@ -245,7 +283,14 @@ function buildMailContentWithImages(
   }
 }
 
-function RecipientField({ id, label, recipients, onRecipientsChange, children }: RecipientFieldProps) {
+function RecipientField({
+  id,
+  label,
+  recipients,
+  onRecipientsChange,
+  disabled = false,
+  children,
+}: RecipientFieldProps) {
   return (
     <div className="flex min-h-10 items-start border-b px-4 py-2">
       <label htmlFor={id} className="w-20 shrink-0 pt-1 text-sm text-muted-foreground">
@@ -257,6 +302,7 @@ function RecipientField({ id, label, recipients, onRecipientsChange, children }:
           recipients={recipients}
           onRecipientsChange={onRecipientsChange}
           placeholder="이름 또는 이메일 입력"
+          disabled={disabled}
         />
       </div>
       {children ? <div className="ml-2 flex shrink-0 items-center gap-1">{children}</div> : null}
@@ -277,6 +323,8 @@ export function ComposeEmail({
   const attachmentInputRef = useRef<HTMLInputElement>(null)
   const attachmentsRef = useRef<File[]>([])
   const inlineImagesRef = useRef<PendingInlineImage[]>([])
+  const draftAbortControllerRef = useRef<AbortController | null>(null)
+  const isMountedRef = useRef(true)
   const { data: user, isPending: isUserPending } = useUser()
   const { data: activeMailAccounts, isPending: isMailAccountsPending } = useActiveMailAccounts()
   const sendMailMutation = useSendMail()
@@ -285,6 +333,7 @@ export function ComposeEmail({
   const [cc, setCc] = useState<MailAddress[]>(() => parseMailRecipients(initialCc ?? ""))
   const [bcc, setBcc] = useState<MailAddress[]>([])
   const [subject, setSubject] = useState(initialSubject ?? "")
+  const [initialSubjectValue] = useState(() => initialSubject ?? "")
   const [isEditorReady, setIsEditorReady] = useState(false)
   const [isEditorEmpty, setIsEditorEmpty] = useState(true)
   const [isPreparingPreview, setIsPreparingPreview] = useState(false)
@@ -293,6 +342,10 @@ export function ComposeEmail({
   const [showBcc, setShowBcc] = useState(false)
   const [attachments, setAttachments] = useState<File[]>([])
   const [inlineImages, setInlineImages] = useState<PendingInlineImage[]>([])
+  const [draftPrompt, setDraftPrompt] = useState("")
+  const [isDraftStreaming, setIsDraftStreaming] = useState(false)
+  const [draftStreamPhase, setDraftStreamPhase] = useState<MailDraftStreamPhase>("idle")
+  const [draftUsage, setDraftUsage] = useState<MailDraftUsage | null>(null)
 
   const activeFromAddressSet = useMemo(
     () => new Set((activeMailAccounts ?? []).map((mailAccount) => mailAccount.emailAddress)),
@@ -315,8 +368,15 @@ export function ComposeEmail({
   const isFromAddressPending = isUserPending || isMailAccountsPending
   const isSendPreviewOpen = sendPreview !== null
   const cannotSend =
-    sendMailMutation.isPending || isPreparingPreview || isFromAddressPending || !selectedFromAddress || !isEditorReady
-
+    sendMailMutation.isPending ||
+    isPreparingPreview ||
+    isDraftStreaming ||
+    isFromAddressPending ||
+    !selectedFromAddress ||
+    !isEditorReady
+  const isDraftSubjectEmpty = !subject.trim() || (!!initialSubjectValue && subject === initialSubjectValue)
+  const isDraftContentEmpty = isDraftSubjectEmpty && isEditorEmpty
+  const draftPromptText = draftPrompt.trim()
   useEffect(() => {
     attachmentsRef.current = attachments
   }, [attachments])
@@ -332,6 +392,37 @@ export function ComposeEmail({
       }
     }
   }, [])
+
+  useEffect(() => {
+    isMountedRef.current = true
+
+    return () => {
+      isMountedRef.current = false
+      draftAbortControllerRef.current?.abort()
+    }
+  }, [])
+
+  const replaceEditorBodyText = (text: string) => {
+    const currentEditor = editorRef.current?.editor
+
+    if (!currentEditor) {
+      return
+    }
+
+    currentEditor.commands.setContent(textToEditorContent(text))
+    setIsEditorEmpty(isEditorContentEmpty(currentEditor.getJSON()))
+  }
+
+  const getCurrentEditorContent = () => editorRef.current?.getJSON() ?? null
+  const isCurrentEditorContentEmpty = () => {
+    const content = getCurrentEditorContent()
+
+    return !content || isEditorContentEmpty(content)
+  }
+
+  const isCurrentDraftContentEmpty = () => {
+    return isDraftSubjectEmpty && isCurrentEditorContentEmpty()
+  }
 
   const showUploadLimitError = () => {
     toast.error("첨부 용량은 본문 이미지를 포함해 20MB 이하만 가능합니다")
@@ -423,6 +514,116 @@ export function ComposeEmail({
     setInlineImages(nextInlineImages)
   }
 
+  const handleGenerateDraft = async () => {
+    if (draftAbortControllerRef.current) {
+      return
+    }
+
+    if (!selectedFromAddress) {
+      toast.error("발신 계정을 선택해주세요")
+      return
+    }
+
+    if (!editorRef.current?.editor || !isEditorReady) {
+      toast.error("메일 에디터를 불러오는 중입니다")
+      return
+    }
+
+    if (!draftPromptText) {
+      toast.error("AI 초안 요청을 입력해주세요")
+      return
+    }
+
+    if (!isCurrentDraftContentEmpty()) {
+      toast.error("작성 중인 내용을 비운 뒤 다시 시도해주세요")
+      return
+    }
+
+    const abortController = new AbortController()
+    let draftSubject = ""
+    let draftBody = ""
+
+    draftAbortControllerRef.current = abortController
+    setSubject("")
+    replaceEditorBodyText("")
+    setDraftUsage(null)
+    setDraftStreamPhase("subject")
+    setIsDraftStreaming(true)
+
+    try {
+      await streamMailDraft(
+        {
+          mailAddress: selectedFromAddress,
+          query: draftPromptText,
+          replyMessageId: messageId ?? null,
+          to: formatMailAddressesForSend(to),
+          cc: formatMailAddressesForSend(cc),
+        },
+        {
+          signal: abortController.signal,
+          onEvent: (event) => {
+            if (!isMountedRef.current || draftAbortControllerRef.current !== abortController) {
+              return
+            }
+
+            if (event.type === "subject") {
+              draftSubject += event.delta
+              setSubject(draftSubject)
+              setDraftStreamPhase("subject")
+              return
+            }
+
+            if (event.type === "body") {
+              draftBody += event.delta
+              replaceEditorBodyText(draftBody)
+              setDraftStreamPhase("body")
+              return
+            }
+
+            if (event.type === "usage") {
+              setDraftUsage(event.usage)
+              return
+            }
+          },
+        }
+      )
+
+      if (isMountedRef.current && draftAbortControllerRef.current === abortController) {
+        setDraftStreamPhase("done")
+      }
+    } catch (error) {
+      if (abortController.signal.aborted) {
+        if (isMountedRef.current && draftAbortControllerRef.current === abortController) {
+          setDraftStreamPhase("aborted")
+        }
+
+        return
+      }
+
+      if (!isMountedRef.current || draftAbortControllerRef.current !== abortController) {
+        return
+      }
+
+      setDraftStreamPhase("error")
+      toast.error("메일 초안 생성에 실패했습니다", {
+        description:
+          error instanceof MailDraftStreamError ? error.message : getErrorMessage(error, "잠시 후 다시 시도해주세요."),
+      })
+    } finally {
+      if (draftAbortControllerRef.current === abortController) {
+        draftAbortControllerRef.current = null
+
+        if (isMountedRef.current) {
+          setIsDraftStreaming(false)
+        }
+      }
+    }
+  }
+
+  const handleStopDraft = () => {
+    draftAbortControllerRef.current?.abort()
+  }
+
   const createSendPreview = async () => {
     if (isFromAddressPending) {
       toast.error("발신 계정을 불러오는 중입니다")
@@ -449,13 +650,15 @@ export function ComposeEmail({
       return null
     }
 
-    if (isEditorEmpty || editorRef.current.editor?.isEmpty) {
+    const editorContent = editorRef.current.getJSON()
+
+    if (isEditorEmpty || isEditorContentEmpty(editorContent)) {
       toast.error("메일 내용을 입력해주세요")
       return null
     }
 
     const emailContent = await editorRef.current.getEmail()
-    const imageMetadata = collectImageMetadata(editorRef.current.getJSON())
+    const imageMetadata = collectImageMetadata(editorContent)
 
     if (!emailContent.text.trim() && !emailContent.html.trim()) {
       toast.error("메일 내용을 입력해주세요")
@@ -520,34 +723,67 @@ export function ComposeEmail({
   }
 
   const handleClose = () => {
+    if (isDraftStreaming) {
+      return
+    }
+
     navigate({ to: "/mail/$mailbox", params: { mailbox: "inbox" } })
   }
 
   return (
-    <div className="flex h-full w-full min-w-0 flex-1 flex-col">
+    <div className="relative flex h-full w-full min-w-0 flex-1 flex-col">
       <div className="flex h-11 shrink-0 items-center justify-between border-b px-4">
         <h1 className="text-sm font-medium">{messageId ? "답장" : "새 메일 작성"}</h1>
-        <Button variant="ghost" size="icon-sm" onClick={handleClose} className="-mr-2" aria-label="메일 작성 닫기">
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          onClick={handleClose}
+          className="-mr-2"
+          aria-label="메일 작성 닫기"
+          disabled={isDraftStreaming}
+        >
           <X className="size-4" />
         </Button>
       </div>
 
-      <RecipientField id="compose-to" label="받는 사람" recipients={to} onRecipientsChange={setTo}>
+      <RecipientField
+        id="compose-to"
+        label="받는 사람"
+        recipients={to}
+        onRecipientsChange={setTo}
+        disabled={isDraftStreaming}
+      >
         {!showCc && (
-          <Button variant="ghost" size="xs" onClick={() => setShowCc(true)}>
+          <Button variant="ghost" size="xs" onClick={() => setShowCc(true)} disabled={isDraftStreaming}>
             참조
           </Button>
         )}
         {!showBcc && (
-          <Button variant="ghost" size="xs" onClick={() => setShowBcc(true)}>
+          <Button variant="ghost" size="xs" onClick={() => setShowBcc(true)} disabled={isDraftStreaming}>
             숨은참조
           </Button>
         )}
       </RecipientField>
 
-      {showCc && <RecipientField id="compose-cc" label="참조" recipients={cc} onRecipientsChange={setCc} />}
+      {showCc && (
+        <RecipientField
+          id="compose-cc"
+          label="참조"
+          recipients={cc}
+          onRecipientsChange={setCc}
+          disabled={isDraftStreaming}
+        />
+      )}
 
-      {showBcc && <RecipientField id="compose-bcc" label="숨은 참조" recipients={bcc} onRecipientsChange={setBcc} />}
+      {showBcc && (
+        <RecipientField
+          id="compose-bcc"
+          label="숨은 참조"
+          recipients={bcc}
+          onRecipientsChange={setBcc}
+          disabled={isDraftStreaming}
+        />
+      )}
 
       <div className="flex h-10 items-center border-b px-4 py-2">
         <label htmlFor="compose-subject" className="w-20 shrink-0 text-sm text-muted-foreground">
@@ -559,7 +795,8 @@ export function ComposeEmail({
           value={subject}
           onChange={(e) => setSubject(e.target.value)}
           placeholder="메일 제목 입력"
-          className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground"
+          disabled={isDraftStreaming}
+          className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-60"
         />
       </div>
 
@@ -571,7 +808,7 @@ export function ComposeEmail({
           value={selectedFromAddress}
           onValueChange={onFromAddressChange}
           items={fromAddressItems}
-          disabled={isFromAddressPending || fromAddressItems.length === 0}
+          disabled={isDraftStreaming || isFromAddressPending || fromAddressItems.length === 0}
         >
           <SelectTrigger
             aria-labelledby="compose-from-label"
@@ -592,29 +829,49 @@ export function ComposeEmail({
         </Select>
       </div>
 
-      <ComposeEditorToolbar editor={editor} disabled={!isEditorReady} />
+      <ComposeEditorToolbar editor={editor} disabled={!isEditorReady || isDraftStreaming} />
 
-      <div className="flex-1 overflow-hidden" aria-label="메일 본문">
+      <div
+        className={cn("relative flex-1 overflow-hidden", isDraftStreaming && "compose-email-editor-ai-streaming")}
+        aria-label="메일 본문"
+      >
         <EmailEditor
           ref={editorRef}
           theme={EDITOR_THEME}
           placeholder="메일 내용을 입력하세요. / 로 블록을 추가할 수 있습니다."
           bubbleMenu={{ hideWhenActiveNodes: ["button", "image"] }}
           className="compose-email-editor h-full overflow-auto text-sm outline-none"
+          editable={!isDraftStreaming}
           onUploadImage={uploadInlineImage}
           onReady={(ref) => {
             applyEditorTheme(ref.editor)
             setIsEditorReady(true)
-            setIsEditorEmpty(ref.editor?.isEmpty ?? true)
+            setIsEditorEmpty(isEditorContentEmpty(ref.getJSON()))
             setEditor(ref.editor)
           }}
           onUpdate={(ref) => {
             const content = ref.getJSON()
 
             applyEditorTheme(ref.editor, content)
-            setIsEditorEmpty(ref.editor?.isEmpty ?? true)
+            setIsEditorEmpty(isEditorContentEmpty(content))
             pruneUnusedInlineImages(content)
           }}
+        />
+        {isDraftStreaming && (
+          <>
+            <div className="compose-email-editor-ai-sweep" aria-hidden />
+          </>
+        )}
+
+        <ComposeAiDraftPanel
+          prompt={draftPrompt}
+          onPromptChange={setDraftPrompt}
+          isDraftContentEmpty={isDraftContentEmpty}
+          isStreaming={isDraftStreaming}
+          phase={draftStreamPhase}
+          usage={draftUsage}
+          onGenerate={() => void handleGenerateDraft()}
+          onStop={handleStopDraft}
         />
       </div>
 
@@ -634,7 +891,7 @@ export function ComposeEmail({
                 <FileAttachmentChip
                   key={`${file.name}-${file.lastModified}-${index}`}
                   file={file}
-                  onRemove={() => removeAttachment(index)}
+                  onRemove={isDraftStreaming ? undefined : () => removeAttachment(index)}
                 />
               ))}
             </div>
@@ -647,7 +904,7 @@ export function ComposeEmail({
             variant="outline"
             size="lg"
             onClick={() => attachmentInputRef.current?.click()}
-            disabled={sendMailMutation.isPending || isPreparingPreview}
+            disabled={isDraftStreaming || sendMailMutation.isPending || isPreparingPreview}
             aria-label="첨부파일 추가"
           >
             <Paperclip className="size-4" />
