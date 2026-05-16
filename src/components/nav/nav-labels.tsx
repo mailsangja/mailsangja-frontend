@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query"
 import { DndContext, closestCenter } from "@dnd-kit/core"
 import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
-import { Check, ChevronDown, GripVertical, ListFilter, MoreVertical, Plus } from "lucide-react"
+import { Check, ChevronDown, GripVertical, ListFilter, MoreVertical, Plus, Sparkles } from "lucide-react"
 import { toast } from "sonner"
 
 import { Button, buttonVariants } from "@/components/ui/button"
@@ -403,6 +403,19 @@ export function NavLabels({ activeLabelId, onLabelToggle, className }: NavLabels
 
   return (
     <SidebarGroup className={className}>
+      <div className="px-2 pb-1.5">
+        <div className="ai-gradient-border rounded-full p-px">
+          <button
+            type="button"
+            className="flex w-full items-center justify-center gap-1.5 rounded-full bg-sidebar px-3 py-1.5 text-xs font-semibold transition-colors hover:bg-sidebar-accent"
+          >
+            <Sparkles className="size-3.5 text-violet-500" />
+            <span className="bg-linear-to-r from-blue-500 via-violet-500 to-pink-500 bg-clip-text text-transparent">
+              AI 생성하기
+            </span>
+          </button>
+        </div>
+      </div>
       <SidebarGroupLabel className="flex items-center justify-between pr-1">
         <span>라벨</span>
         <div className="flex items-center">

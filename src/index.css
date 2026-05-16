@@ -24,6 +24,33 @@
   animation: shake 0.45s ease-in-out;
 }
 
+@property --ai-angle {
+  syntax: "<angle>";
+  initial-value: 0deg;
+  inherits: false;
+}
+
+@keyframes ai-spin {
+  to {
+    --ai-angle: 360deg;
+  }
+}
+
+.ai-gradient-border {
+  background: conic-gradient(
+    from var(--ai-angle),
+    #4285f4,
+    #9b59b6,
+    #d946ef,
+    #f43f5e,
+    #fb923c,
+    #fbbc05,
+    #34a853,
+    #4285f4
+  );
+  animation: ai-spin 4s linear infinite;
+}
+
 .compose-email-editor {
   --re-bg: var(--popover);
   --re-bg-active: var(--accent);
