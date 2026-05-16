@@ -11,7 +11,7 @@ import { cn } from "@/lib/utils"
 import type { InboxThreadSummary, LabelSummary } from "@/types/email"
 import type { MailAccount } from "@/types/mail-account"
 
-type LabelsColorMap = Map<string, string> | undefined
+type LabelsColorMap = Map<string, string>
 
 interface EmailListItemProps {
   thread: InboxThreadSummary
@@ -25,8 +25,7 @@ interface EmailListItemProps {
 }
 
 function LabelChips({ labels, labelsColorMap }: { labels: LabelSummary[]; labelsColorMap: LabelsColorMap }) {
-  const visibleLabels =
-    labelsColorMap !== undefined ? labels.filter((label) => labelsColorMap.has(label.labelId)) : labels
+  const visibleLabels = labels.filter((label) => labelsColorMap.has(label.labelId))
   if (visibleLabels.length === 0) return null
   return (
     <>

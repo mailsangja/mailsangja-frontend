@@ -8,7 +8,7 @@ import { EmailListItem } from "@/components/inbox/email-list-item"
 import { EmailListLoadingRows } from "@/components/inbox/email-list-item-loading"
 import { useDeleteThread, useRestoreTrashThread } from "@/mutations/trash"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { useLabels } from "@/queries/labels"
+import { useSuspenseLabels } from "@/queries/labels"
 import type { EmailFilter, InboxThreadSummary } from "@/types/email"
 import type { MailAccount } from "@/types/mail-account"
 
@@ -65,11 +65,8 @@ export function EmailList({
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const { mutate: deleteThread } = useDeleteThread()
   const { mutate: restoreThread } = useRestoreTrashThread()
-  const { data: labelsList } = useLabels()
-  const labelsColorMap = useMemo(
-    () => (labelsList !== undefined ? new Map(labelsList.map((l) => [l.id, l.colorCode])) : undefined),
-    [labelsList]
-  )
+  const { data: labelsList } = useSuspenseLabels()
+  const labelsColorMap = useMemo(() => new Map(labelsList.map((l) => [l.id, l.colorCode])), [labelsList])
   const isSelectionMode = selectedIds.size > 0
 
   const toggleSelected = (id: string) => {

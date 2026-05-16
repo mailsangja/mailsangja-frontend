@@ -157,6 +157,7 @@ export function EmailDetail({ threadId, onClose }: EmailDetailProps) {
 
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
   const [expandedThreadId, setExpandedThreadId] = useState<string | null>(null)
+
   if (thread && thread.threadId !== expandedThreadId) {
     const next = new Set<string>()
     const last = thread.messages.at(-1)
