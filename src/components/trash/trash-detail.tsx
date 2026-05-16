@@ -204,7 +204,7 @@ export function TrashDetail({ threadId, onClose }: TrashDetailProps) {
   return (
     <div className="flex h-full w-full min-w-0 flex-1 flex-col">
       <TrashToolbar onClose={onClose} onRestore={handleRestoreThread} isRestoring={isRestoringThread} />
-      <ThreadHeader thread={thread} account={account} />
+      <ThreadHeader thread={thread} account={account} labels={thread.labels} />
       <ThreadMessageList
         messages={messages}
         expandedIds={expandedIds}
