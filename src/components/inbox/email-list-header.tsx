@@ -13,7 +13,7 @@ const filterOptions: Array<{ value: EmailFilter; label: string }> = [
 interface EmailListHeaderProps {
   mailboxName: string
   currentCount: number
-  totalCount?: number
+  totalCount: number
   filter: EmailFilter
   onFilterChange: (filter: EmailFilter) => void
   isRefreshing?: boolean
@@ -59,7 +59,7 @@ export function EmailListHeader({
     <div className="flex h-11 shrink-0 items-center gap-3 border-b px-4">
       <h2 className="min-w-0 truncate text-sm font-medium">{mailboxName}</h2>
       <span className="hidden rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground sm:inline-flex">
-        {(totalCount ?? 0).toLocaleString()}개
+        {totalCount.toLocaleString()}개
       </span>
       <div className="ml-auto flex shrink-0 items-center gap-1">
         {onRefresh ? (

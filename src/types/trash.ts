@@ -23,5 +23,6 @@ export interface TrashThreadDetail {
   latestSubject: string
   isRead: boolean
   lastMessageAt: string
+  labels: LabelSummary[]
   messages: InboxMessage[]
 }

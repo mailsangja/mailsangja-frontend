@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react"
+import { useState } from "react"
 import { Archive, ArrowLeft, Forward, MailOpen, Reply, Trash2 } from "lucide-react"
 import { useNavigate } from "@tanstack/react-router"
 import { toast } from "sonner"
@@ -157,18 +157,6 @@ export function EmailDetail({ threadId, onClose }: EmailDetailProps) {
 
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
   const [expandedThreadId, setExpandedThreadId] = useState<string | null>(null)
-  const threadLabels = useMemo(() => {
-    if (!thread) return []
-    const seen = new Set<string>()
-    return thread.messages
-      .flatMap((m) => m.labels)
-      .filter((l) => {
-        if (seen.has(l.labelId)) return false
-        seen.add(l.labelId)
-        return true
-      })
-  }, [thread])
-
   if (thread && thread.threadId !== expandedThreadId) {
     const next = new Set<string>()
     const last = thread.messages.at(-1)
@@ -274,7 +262,7 @@ export function EmailDetail({ threadId, onClose }: EmailDetailProps) {
   return (
     <div className="flex h-full w-full min-w-0 flex-1 flex-col">
       <ThreadToolbar onClose={onClose} onDelete={handleDeleteThread} onReply={handleReply} isDeleting={isDeleting} />
-      <ThreadHeader thread={thread} account={account} labels={threadLabels} />
+      <ThreadHeader thread={thread} account={account} labels={thread.labels} />
       <ThreadMessageList
         messages={messages}
         expandedIds={expandedIds}

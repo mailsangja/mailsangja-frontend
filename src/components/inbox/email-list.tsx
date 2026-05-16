@@ -15,7 +15,7 @@ import type { MailAccount } from "@/types/mail-account"
 interface EmailListProps {
   mailboxName: string
   threads: InboxThreadSummary[] | undefined
-  totalCount?: number
+  totalCount: number
   isLoading: boolean
   isFetchingNextPage: boolean
   hasNextPage: boolean

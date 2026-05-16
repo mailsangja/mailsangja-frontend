@@ -126,7 +126,7 @@ function MailboxView({ mailbox }: { mailbox: PrimaryMailboxId }) {
   })
 
   const loadedThreads = data?.pages.flatMap((page) => page.content) ?? []
-  const totalThreadCount = data?.pages[0]?.totalCount ?? loadedThreads.length
+  const totalThreadCount = data?.pages[0]?.totalCount ?? 0
   const searchTerms = query.trim().toLowerCase().split(/\s+/).filter(Boolean)
   const selectedAccount = accountId ? (accounts?.find((account) => account.id === accountId) ?? null) : null
 
@@ -314,7 +314,7 @@ function TrashMailboxView() {
   } = useTrashThreads()
 
   const loadedThreads = data?.pages.flatMap((page) => page.content) ?? []
-  const totalThreadCount = data?.pages[0]?.totalCount ?? loadedThreads.length
+  const totalThreadCount = data?.pages[0]?.totalCount ?? 0
   const searchTerms = query.trim().toLowerCase().split(/\s+/).filter(Boolean)
   const selectedAccount = accountId ? (accounts?.find((account) => account.id === accountId) ?? null) : null
 

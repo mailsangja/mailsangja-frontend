@@ -58,7 +58,6 @@ export interface InboxMessage {
   bodyText: string
   bodyHtml: string
   attachments: Attachment[]
-  labels: LabelSummary[]
 }
 
 export interface InboxThreadSummary {
@@ -82,6 +81,7 @@ export interface InboxThreadDetail {
   latestSubject: string
   isRead: boolean
   lastMessageAt: string
+  labels: LabelSummary[]
   messages: InboxMessage[]
 }
 
@@ -89,8 +89,8 @@ export interface MarkerSliceResponse<T> {
   content: T[]
   nextMarker: string | null
   hasNext: boolean
-  unreadCount?: number
-  totalCount?: number
+  unreadCount: number
+  totalCount: number
 }
 
 export interface ListThreadsParams {
