@@ -7,7 +7,7 @@ import { CSS } from "@dnd-kit/utilities"
 import { Check, ChevronDown, GripVertical, ListFilter, MoreVertical, Plus } from "lucide-react"
 import { toast } from "sonner"
 
-import { Button } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import {
   DropdownMenu,
@@ -30,12 +30,29 @@ import {
 } from "@/components/ui/sidebar"
 import { cn } from "@/lib/utils"
 import { getErrorMessage, getHttpStatus } from "@/lib/http-error"
-import { FIELD_LABELS, OPERATOR_LABELS } from "@/lib/label-rule"
 import { useCreateLabel, useDeleteLabel, useUpdateLabel } from "@/mutations/labels"
 import { emailQueries } from "@/queries/emails"
 import { labelQueries, useLabels } from "@/queries/labels"
 import { useLabelOrder } from "@/hooks/use-label-order"
-import type { LabelListItem, NotificationPolicy } from "@/types/label"
+import type { ConditionField, ConditionOperator, LabelListItem, NotificationPolicy } from "@/types/label"
+
+const FIELD_LABELS: Record<ConditionField, string> = {
+  MAIL_ACCOUNT: "메일 계정",
+  FROM_ADDRESS: "보낸 주소",
+  FROM_DOMAIN: "보낸 도메인",
+  TO_ADDRESS: "받는 주소",
+  CC_ADDRESS: "참조",
+  SUBJECT: "제목",
+  BODY_TEXT: "본문",
+  HAS_ATTACHMENT: "첨부파일",
+}
+
+const OPERATOR_LABELS: Record<ConditionOperator, string> = {
+  EQUALS: "같음",
+  CONTAINS: "포함",
+  NOT_CONTAINS: "미포함",
+  BOOLEAN: "해당함 여부",
+}
 
 function LabelDeleteDialog({
   open,
@@ -389,15 +406,15 @@ export function NavLabels({ activeLabelId, onLabelToggle, className }: NavLabels
       <SidebarGroupLabel className="flex items-center justify-between pr-1">
         <span>라벨</span>
         <div className="flex items-center">
-          <Button
-            variant="ghost"
-            size="icon-xs"
+          <Link
+            to="/settings/label"
+            hash="create-filter"
             title="필터 만들기"
-            render={<Link to="/settings/label" hash="create-filter" />}
+            className={buttonVariants({ variant: "ghost", size: "icon-xs" })}
           >
             <ListFilter />
             <span className="sr-only">필터 만들기</span>
-          </Button>
+          </Link>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
               <Button variant="ghost" size="icon-xs" title="라벨 추가">
