@@ -109,7 +109,7 @@ export function ComposeReference({ threadId }: ComposeReferenceProps) {
         <EmailErrorState title={errorCopy.title} description={errorCopy.description} onRetry={() => void refetch()} />
       ) : thread ? (
         <>
-          <ThreadHeader thread={thread} account={accounts?.find((a) => a.id === thread.accountId)} />
+          <ThreadHeader thread={thread} account={accounts?.find((a) => a.id === thread.accountId)} className="pt-4" />
           <ThreadMessageList messages={thread.messages} expandedIds={expandedIds} onToggle={toggleExpanded} />
         </>
       ) : null}

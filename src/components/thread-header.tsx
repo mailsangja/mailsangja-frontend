@@ -1,5 +1,6 @@
 import { Badge } from "@/components/ui/badge"
 import { AccountIcon } from "@/lib/icon-entries"
+import { cn } from "@/lib/utils"
 import type { LabelSummary } from "@/types/email"
 import type { MailAccount } from "@/types/mail-account"
 
@@ -12,14 +13,15 @@ interface ThreadHeaderProps {
   thread: ThreadHeaderData
   account?: MailAccount
   labels?: LabelSummary[]
+  className?: string
 }
 
-export function ThreadHeader({ thread, account, labels }: ThreadHeaderProps) {
+export function ThreadHeader({ thread, account, labels, className }: ThreadHeaderProps) {
   const messageCount = thread.messages.length
   const hasInbound = thread.messages.some((m) => m.direction === "INBOUND")
   const hasOutbound = thread.messages.some((m) => m.direction === "OUTBOUND")
   return (
-    <div className="shrink-0 border-b px-6 pt-2 pb-5">
+    <div className={cn("shrink-0 border-b px-6 pb-5", className)}>
       <h2 className="text-xl leading-snug font-semibold wrap-break-word">{thread.latestSubject || "(제목 없음)"}</h2>
       <div className="mt-2 flex flex-wrap items-center gap-1">
         {account?.icon ? (
