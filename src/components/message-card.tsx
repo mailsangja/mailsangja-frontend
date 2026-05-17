@@ -106,7 +106,7 @@ export function MessageCard({ message, isExpanded, onToggle, menuActions }: Mess
       </header>
 
       {isExpanded ? (
-        <div className="mt-4 pl-0 sm:pl-13">
+        <div className="mt-4 pl-0 sm:pl-11">
           {message.bodyHtml ? (
             <MessageBodyFrame html={message.bodyHtml} />
           ) : (
