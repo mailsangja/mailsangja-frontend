@@ -24,6 +24,58 @@
   animation: shake 0.45s ease-in-out;
 }
 
+@keyframes ai-editor-sweep {
+  0% {
+    opacity: 0.14;
+    transform: translateX(-110%);
+  }
+
+  45% {
+    opacity: 0.62;
+  }
+
+  100% {
+    opacity: 0.14;
+    transform: translateX(110%);
+  }
+}
+
+@keyframes ai-editor-glow {
+  0%,
+  100% {
+    box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--primary) 26%, transparent);
+  }
+
+  50% {
+    box-shadow:
+      inset 0 0 0 1px color-mix(in oklch, var(--primary) 58%, transparent),
+      0 0 38px color-mix(in oklch, var(--primary) 34%, transparent);
+  }
+}
+
+.compose-email-editor-ai-streaming {
+  animation: ai-editor-glow 1.6s ease-in-out infinite;
+}
+
+.compose-email-editor-ai-sweep {
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, color-mix(in oklch, var(--primary) 30%, transparent), transparent);
+  pointer-events: none;
+  animation: ai-editor-sweep 1.7s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .compose-email-editor-ai-streaming,
+  .compose-email-editor-ai-sweep {
+    animation: none;
+  }
+
+  .compose-email-editor-ai-sweep {
+    display: none;
+  }
+}
+
 .compose-email-editor {
   --re-bg: var(--popover);
   --re-bg-active: var(--accent);

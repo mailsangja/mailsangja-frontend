@@ -121,3 +121,27 @@ export interface ComposeEmailData {
   attachments?: File[]
   inlineImages?: ComposeInlineImage[]
 }
+
+export interface MailDraftStreamRequest {
+  mailAddress: string
+  query: string
+  replyMessageId: string | null
+  to: string[]
+  cc: string[]
+}
+
+export interface MailDraftUsage {
+  model: string
+  inputTokens: number
+  outputTokens: number
+  totalTokens: number
+}
+
+export type MailDraftStreamPhase = "idle" | "subject" | "body" | "done" | "error" | "aborted"
+
+export type MailDraftStreamEvent =
+  | { type: "subject"; delta: string }
+  | { type: "body"; delta: string }
+  | { type: "usage"; usage: MailDraftUsage }
+  | { type: "done" }
+  | { type: "error"; code?: string; message: string }
