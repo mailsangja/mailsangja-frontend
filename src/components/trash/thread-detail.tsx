@@ -2,9 +2,9 @@ import { useState } from "react"
 import { ArrowLeft, Copy, MailOpen, Undo2 } from "lucide-react"
 import { toast } from "sonner"
 
-import { EmailErrorState } from "@/components/inbox/email-error-state"
-import { ThreadHeader } from "@/components/thread-header"
-import { ThreadMessageList } from "@/components/thread-message-list"
+import { MailErrorState } from "@/components/mail-error-state"
+import { ThreadHeader } from "@/components/thread/header"
+import { ThreadMessageList } from "@/components/thread/message-list"
 import { Button } from "@/components/ui/button"
 import { DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu"
 import { Separator } from "@/components/ui/separator"
@@ -129,12 +129,12 @@ function TrashFooter({ onRestore, isRestoring }: { onRestore: () => void; isRest
   )
 }
 
-interface TrashDetailProps {
+interface TrashThreadDetailProps {
   threadId: string | null
   onClose?: () => void
 }
 
-export function TrashDetail({ threadId, onClose }: TrashDetailProps) {
+export function TrashThreadDetail({ threadId, onClose }: TrashThreadDetailProps) {
   const { data: thread, isLoading, isError, error, refetch } = useTrashThread(threadId)
   const { data: accounts } = useMailAccounts()
   const { mutate: restoreThread, isPending: isRestoringThread } = useRestoreTrashThread()
@@ -193,9 +193,7 @@ export function TrashDetail({ threadId, onClose }: TrashDetailProps) {
   if (isLoading) return <LoadingState />
   if (isError) {
     const errorCopy = getThreadDetailErrorCopy(error)
-    return (
-      <EmailErrorState title={errorCopy.title} description={errorCopy.description} onRetry={() => void refetch()} />
-    )
+    return <MailErrorState title={errorCopy.title} description={errorCopy.description} onRetry={() => void refetch()} />
   }
   if (!thread) return <EmptyState />
 

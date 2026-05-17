@@ -1,4 +1,4 @@
-import { MessageCard } from "@/components/message-card"
+import { MessageCard } from "@/components/message/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import type { InboxMessage } from "@/types/email"
 

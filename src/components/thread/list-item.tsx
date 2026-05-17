@@ -13,7 +13,7 @@ import type { MailAccount } from "@/types/mail-account"
 
 type LabelsColorMap = Map<string, string>
 
-interface EmailListItemProps {
+interface ThreadListItemProps {
   thread: InboxThreadSummary
   isSelected: boolean
   isChecked: boolean
@@ -70,7 +70,7 @@ function AccountTooltipContent({ account }: { account?: MailAccount }) {
   return <span>{account.alias ? `${account.alias} (${account.emailAddress})` : account.emailAddress}</span>
 }
 
-function EmailListItemContent({
+function ThreadListItemContent({
   thread,
   isUnread,
   isChecked,
@@ -202,7 +202,7 @@ function EmailListItemContent({
   )
 }
 
-export function EmailListItem({
+export function ThreadListItem({
   thread,
   isSelected,
   isChecked,
@@ -211,7 +211,7 @@ export function EmailListItem({
   labelsColorMap,
   onSelect,
   onToggleCheck,
-}: EmailListItemProps) {
+}: ThreadListItemProps) {
   const isMobile = useIsMobile()
   const longPressTimerRef = useRef<ReturnType<typeof window.setTimeout> | null>(null)
   const ignoreNextClickRef = useRef(false)
@@ -304,7 +304,7 @@ export function EmailListItem({
         }}
         className={rowClassName}
       >
-        <EmailListItemContent
+        <ThreadListItemContent
           thread={thread}
           isUnread={isUnread}
           isChecked={isChecked}

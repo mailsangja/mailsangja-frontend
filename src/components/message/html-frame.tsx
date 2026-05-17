@@ -1,6 +1,6 @@
 import { useState } from "react"
 
-export function MessageBodyFrame({ html }: { html: string }) {
+export function MessageHtmlFrame({ html }: { html: string }) {
   const [height, setHeight] = useState(0)
 
   const srcDoc = `<!doctype html><html><head><meta charset="utf-8"><base target="_blank"><style>html,body{margin:0;padding:0;font-family:ui-sans-serif,system-ui,sans-serif;font-size:14px;color:#111;word-break:break-word;overflow-wrap:anywhere;overflow:hidden}img{max-width:100%;height:auto}</style></head><body>${html}</body></html>`

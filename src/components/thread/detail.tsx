@@ -3,9 +3,9 @@ import { Archive, ArrowLeft, Copy, Forward, MailOpen, Mail, Reply, Trash2 } from
 import { useNavigate } from "@tanstack/react-router"
 import { toast } from "sonner"
 
-import { EmailErrorState } from "@/components/inbox/email-error-state"
-import { ThreadHeader } from "@/components/thread-header"
-import { ThreadMessageList } from "@/components/thread-message-list"
+import { MailErrorState } from "@/components/mail-error-state"
+import { ThreadHeader } from "@/components/thread/header"
+import { ThreadMessageList } from "@/components/thread/message-list"
 import { Button } from "@/components/ui/button"
 import { DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu"
 import { Separator } from "@/components/ui/separator"
@@ -169,12 +169,12 @@ function ThreadFooter({ onReply }: { onReply: () => void }) {
   )
 }
 
-interface EmailDetailProps {
+interface ThreadDetailProps {
   threadId: string | null
   onClose?: () => void
 }
 
-export function EmailDetail({ threadId, onClose }: EmailDetailProps) {
+export function ThreadDetail({ threadId, onClose }: ThreadDetailProps) {
   const navigate = useNavigate()
   const { data: thread, isLoading, isError, error, refetch } = useThread(threadId)
   const { data: accounts } = useMailAccounts()
@@ -303,9 +303,7 @@ export function EmailDetail({ threadId, onClose }: EmailDetailProps) {
   if (isLoading) return <LoadingState />
   if (isError) {
     const errorCopy = getThreadDetailErrorCopy(error)
-    return (
-      <EmailErrorState title={errorCopy.title} description={errorCopy.description} onRetry={() => void refetch()} />
-    )
+    return <MailErrorState title={errorCopy.title} description={errorCopy.description} onRetry={() => void refetch()} />
   }
   if (!thread) return <EmptyState />
 

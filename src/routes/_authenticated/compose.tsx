@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router"
 
 import { ComposeEmail } from "@/components/compose/compose-email"
-import { ComposeReference } from "@/components/compose/compose-reference"
+import { ComposeReferenceThreadPanel } from "@/components/compose/compose-reference-thread-panel"
 import { Separator } from "@/components/ui/separator"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { formatMailAddressList } from "@/lib/mail-address"
@@ -91,7 +91,7 @@ function ComposePage() {
   return (
     <div className="flex min-h-0 w-full min-w-0 flex-1 overflow-hidden">
       <div className="min-h-0 min-w-0 basis-1/2 border-r-0">
-        <ComposeReference threadId={replyThreadId ?? null} />
+        <ComposeReferenceThreadPanel threadId={replyThreadId ?? null} />
       </div>
       <Separator orientation="vertical" />
       <div className="min-h-0 min-w-0 basis-2/3">

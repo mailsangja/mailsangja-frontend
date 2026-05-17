@@ -1,8 +1,8 @@
 import { ChevronDown, MoreVertical, Star } from "lucide-react"
 
-import { AttachmentChip } from "@/components/attachment-chip"
-import { MessageBodyFrame } from "@/components/message-body-frame"
-import { MessageDetail } from "@/components/message-detail"
+import { AttachmentDownloadChip } from "@/components/attachment/download-chip"
+import { MessageHtmlFrame } from "@/components/message/html-frame"
+import { MessageMetadataContent } from "@/components/message/metadata-content"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -86,7 +86,7 @@ export function MessageCard({ message, isExpanded, onToggle, accountEmail, menuA
                 <ChevronDown data-icon="inline-end" />
               </PopoverTrigger>
               <PopoverContent align="start" className="w-80 max-w-[calc(100vw-2rem)]">
-                <MessageDetail message={message} />
+                <MessageMetadataContent message={message} />
               </PopoverContent>
             </Popover>
           </div>
@@ -132,7 +132,7 @@ export function MessageCard({ message, isExpanded, onToggle, accountEmail, menuA
       {isExpanded ? (
         <div className="mt-4 pl-0 sm:pl-11">
           {message.bodyHtml ? (
-            <MessageBodyFrame html={message.bodyHtml} />
+            <MessageHtmlFrame html={message.bodyHtml} />
           ) : (
             <div className="prose prose-sm max-w-none text-sm whitespace-pre-wrap">{message.bodyText}</div>
           )}
@@ -140,7 +140,7 @@ export function MessageCard({ message, isExpanded, onToggle, accountEmail, menuA
           {message.attachments.length > 0 ? (
             <div className="mt-4 flex flex-wrap gap-2">
               {message.attachments.map((attachment) => (
-                <AttachmentChip key={attachment.id} attachment={attachment} />
+                <AttachmentDownloadChip key={attachment.id} attachment={attachment} />
               ))}
             </div>
           ) : null}

@@ -1,10 +1,10 @@
 import { createFileRoute, redirect } from "@tanstack/react-router"
 import { toast } from "sonner"
 
-import { EmailDetail } from "@/components/inbox/email-detail"
-import { EmailList } from "@/components/inbox/email-list"
-import { TrashDetail } from "@/components/trash/trash-detail"
-import { TrashList } from "@/components/trash/trash-list"
+import { ThreadDetail } from "@/components/thread/detail"
+import { ThreadList } from "@/components/thread/list"
+import { TrashThreadDetail } from "@/components/trash/thread-detail"
+import { TrashThreadList } from "@/components/trash/thread-list"
 import { Separator } from "@/components/ui/separator"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { getErrorMessage, getHttpStatus } from "@/lib/http-error"
@@ -178,7 +178,7 @@ function MailboxView({ mailbox }: { mailbox: PrimaryMailboxId }) {
   }
 
   const emailList = (
-    <EmailList
+    <ThreadList
       mailboxName={MAILBOX_LABELS[mailbox]}
       threads={threads}
       totalCount={totalThreadCount}
@@ -232,7 +232,7 @@ function MailboxView({ mailbox }: { mailbox: PrimaryMailboxId }) {
     return (
       <div className="flex min-h-0 w-full min-w-0 flex-1 overflow-hidden">
         {hasSelection ? (
-          <EmailDetail
+          <ThreadDetail
             threadId={visibleSelectedThreadId}
             onClose={() => {
               void navigate({
@@ -265,7 +265,7 @@ function MailboxView({ mailbox }: { mailbox: PrimaryMailboxId }) {
         <>
           <Separator orientation="vertical" />
           <div className="min-h-0 min-w-0 basis-2/3">
-            <EmailDetail
+            <ThreadDetail
               threadId={visibleSelectedThreadId}
               onClose={() => {
                 void navigate({
@@ -348,7 +348,7 @@ function TrashMailboxView() {
   }
 
   const trashList = (
-    <TrashList
+    <TrashThreadList
       mailboxName={MAILBOX_LABELS.trash}
       threads={threads}
       totalCount={totalThreadCount}
@@ -394,7 +394,7 @@ function TrashMailboxView() {
   if (isMobile) {
     return (
       <div className="flex min-h-0 w-full min-w-0 flex-1 overflow-hidden">
-        {hasSelection ? <TrashDetail threadId={visibleSelectedThreadId} onClose={closeThread} /> : trashList}
+        {hasSelection ? <TrashThreadDetail threadId={visibleSelectedThreadId} onClose={closeThread} /> : trashList}
       </div>
     )
   }
@@ -413,7 +413,7 @@ function TrashMailboxView() {
         <>
           <Separator orientation="vertical" />
           <div className="min-h-0 min-w-0 basis-2/3">
-            <TrashDetail threadId={visibleSelectedThreadId} onClose={closeThread} />
+            <TrashThreadDetail threadId={visibleSelectedThreadId} onClose={closeThread} />
           </div>
         </>
       ) : null}

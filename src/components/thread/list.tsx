@@ -2,17 +2,17 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import { InboxIcon } from "lucide-react"
 import { toast } from "sonner"
 
-import { EmailErrorState } from "@/components/inbox/email-error-state"
-import { EmailListHeader } from "@/components/inbox/email-list-header"
-import { EmailListItem } from "@/components/inbox/email-list-item"
-import { EmailListLoadingRows } from "@/components/inbox/email-list-item-loading"
+import { MailErrorState } from "@/components/mail-error-state"
+import { ThreadListItem } from "@/components/thread/list-item"
+import { ThreadListSkeletonRows } from "@/components/thread/list-skeleton-rows"
+import { ThreadListToolbar } from "@/components/thread/list-toolbar"
 import { useDeleteThread, useRestoreTrashThread } from "@/mutations/trash"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { useSuspenseLabels } from "@/queries/labels"
 import type { EmailFilter, InboxThreadSummary } from "@/types/email"
 import type { MailAccount } from "@/types/mail-account"
 
-interface EmailListProps {
+interface ThreadListProps {
   mailboxName: string
   threads: InboxThreadSummary[] | undefined
   totalCount: number
@@ -37,7 +37,7 @@ interface EmailListProps {
   onRetryLoadMore?: () => void
 }
 
-export function EmailList({
+export function ThreadList({
   mailboxName,
   threads,
   totalCount,
@@ -60,7 +60,7 @@ export function EmailList({
   loadMoreErrorTitle,
   loadMoreErrorDescription,
   onRetryLoadMore,
-}: EmailListProps) {
+}: ThreadListProps) {
   const loadMoreRef = useRef<HTMLDivElement | null>(null)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const { mutate: deleteThread } = useDeleteThread()
@@ -104,7 +104,7 @@ export function EmailList({
 
   return (
     <div className="flex h-full w-full min-w-0 flex-1 flex-col overflow-hidden rounded-[inherit]">
-      <EmailListHeader
+      <ThreadListToolbar
         mailboxName={mailboxName}
         currentCount={threads?.length ?? 0}
         totalCount={totalCount}
@@ -137,16 +137,16 @@ export function EmailList({
       <ScrollArea className="min-h-0 flex-1">
         {isLoading ? (
           <div role="list" aria-label={`${mailboxName} 메일 목록`} className="min-w-0">
-            <EmailListLoadingRows />
+            <ThreadListSkeletonRows />
           </div>
         ) : errorTitle && errorDescription ? (
-          <EmailErrorState title={errorTitle} description={errorDescription} onRetry={onRetry} />
+          <MailErrorState title={errorTitle} description={errorDescription} onRetry={onRetry} />
         ) : threads && threads.length > 0 ? (
           <>
             <div role="list" aria-label={`${mailboxName} 메일 목록`} className="min-w-0">
               {threads.map((thread) => {
                 return (
-                  <EmailListItem
+                  <ThreadListItem
                     key={thread.threadId}
                     thread={thread}
                     isSelected={selectedThreadId === thread.threadId}
@@ -159,11 +159,11 @@ export function EmailList({
                   />
                 )
               })}
-              {isFetchingNextPage ? <EmailListLoadingRows /> : null}
+              {isFetchingNextPage ? <ThreadListSkeletonRows /> : null}
             </div>
             {loadMoreErrorTitle && loadMoreErrorDescription ? (
               <div className="border-t px-4 py-3">
-                <EmailErrorState
+                <MailErrorState
                   title={loadMoreErrorTitle}
                   description={loadMoreErrorDescription}
                   retryLabel="추가 메일 다시 불러오기"

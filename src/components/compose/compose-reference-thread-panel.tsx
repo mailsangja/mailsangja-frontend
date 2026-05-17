@@ -1,9 +1,9 @@
 import { useState } from "react"
 import { Mail } from "lucide-react"
 
-import { EmailErrorState } from "@/components/inbox/email-error-state"
-import { ThreadHeader } from "@/components/thread-header"
-import { ThreadMessageList } from "@/components/thread-message-list"
+import { MailErrorState } from "@/components/mail-error-state"
+import { ThreadHeader } from "@/components/thread/header"
+import { ThreadMessageList } from "@/components/thread/message-list"
 import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
 import { getErrorMessage, getHttpStatus } from "@/lib/http-error"
@@ -66,11 +66,11 @@ function LoadingState() {
   )
 }
 
-interface ComposeReferenceProps {
+interface ComposeReferenceThreadPanelProps {
   threadId: string | null
 }
 
-export function ComposeReference({ threadId }: ComposeReferenceProps) {
+export function ComposeReferenceThreadPanel({ threadId }: ComposeReferenceThreadPanelProps) {
   const { data: thread, isLoading, isError, error, refetch } = useThread(threadId)
   const { data: accounts } = useMailAccounts()
 
@@ -107,7 +107,7 @@ export function ComposeReference({ threadId }: ComposeReferenceProps) {
       ) : isLoading ? (
         <LoadingState />
       ) : isError && errorCopy ? (
-        <EmailErrorState title={errorCopy.title} description={errorCopy.description} onRetry={() => void refetch()} />
+        <MailErrorState title={errorCopy.title} description={errorCopy.description} onRetry={() => void refetch()} />
       ) : thread ? (
         <>
           <ThreadHeader thread={thread} account={account} className="pt-4" />

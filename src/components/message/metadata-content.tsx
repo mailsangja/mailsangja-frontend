@@ -19,7 +19,7 @@ function AddressList({ addresses }: { addresses: MailAddress[] }) {
   return (
     <ul className="flex min-w-0 flex-col gap-0.5">
       {addresses.map((address, index) => (
-        <li key={`${address.email}-${index}`} className="flex min-h-7 min-w-0 items-center gap-1">
+        <li key={`${address.email}-${index}`} className="flex min-h-6 min-w-0 items-center gap-1">
           <span className="min-w-0 flex-1 wrap-break-word">{getMailAddressFullLabel(address)}</span>
           <Button
             variant="ghost"
@@ -43,17 +43,17 @@ function AddressList({ addresses }: { addresses: MailAddress[] }) {
 function DetailRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <>
-      <dt className="flex min-h-7 items-center text-xs font-medium whitespace-nowrap text-muted-foreground">{label}</dt>
-      <dd className="flex min-h-7 min-w-0 items-center text-xs break-words">{children}</dd>
+      <dt className="flex min-h-6 items-center text-xs font-medium whitespace-nowrap text-muted-foreground">{label}</dt>
+      <dd className="flex min-h-6 min-w-0 items-center text-xs wrap-break-word">{children}</dd>
     </>
   )
 }
 
-interface MessageDetailProps {
+interface MessageMetadataContentProps {
   message: InboxMessage
 }
 
-export function MessageDetail({ message }: MessageDetailProps) {
+export function MessageMetadataContent({ message }: MessageMetadataContentProps) {
   const showReplyTo = message.replyTo && !isSameAddress(message.replyTo, message.from)
 
   return (

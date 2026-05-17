@@ -1,6 +1,6 @@
 import { Loader2, Send } from "lucide-react"
 
-import { FileAttachmentChip } from "@/components/attachment-chip"
+import { LocalAttachmentChip } from "@/components/attachment/local-chip"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import type { ComposeEmailData } from "@/types/email"
@@ -101,7 +101,7 @@ export function ComposeSendPreviewDialog({
                 <div className="mb-2 font-medium">첨부파일</div>
                 <div className="flex max-h-20 flex-wrap gap-2 overflow-y-auto pr-1">
                   {mail.attachments.map((file, index) => (
-                    <FileAttachmentChip key={`${file.name}-${file.lastModified}-${index}`} file={file} />
+                    <LocalAttachmentChip key={`${file.name}-${file.lastModified}-${index}`} file={file} />
                   ))}
                 </div>
               </div>

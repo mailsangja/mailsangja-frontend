@@ -2,9 +2,9 @@ import { useEffect, useMemo, useRef, useState } from "react"
 import { SquareMinus, Trash2, Undo2 } from "lucide-react"
 import { toast } from "sonner"
 
-import { EmailErrorState } from "@/components/inbox/email-error-state"
-import { EmailListItem } from "@/components/inbox/email-list-item"
-import { EmailListLoadingRows } from "@/components/inbox/email-list-item-loading"
+import { MailErrorState } from "@/components/mail-error-state"
+import { ThreadListItem } from "@/components/thread/list-item"
+import { ThreadListSkeletonRows } from "@/components/thread/list-skeleton-rows"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { getErrorMessage } from "@/lib/http-error"
@@ -30,7 +30,7 @@ function toInboxSummary(thread: TrashThreadSummary): InboxThreadSummary {
   }
 }
 
-interface TrashListProps {
+interface TrashThreadListProps {
   mailboxName: string
   threads: TrashThreadSummary[] | undefined
   totalCount: number
@@ -51,7 +51,7 @@ interface TrashListProps {
   onRetryLoadMore?: () => void
 }
 
-export function TrashList({
+export function TrashThreadList({
   mailboxName,
   threads,
   totalCount,
@@ -70,7 +70,7 @@ export function TrashList({
   loadMoreErrorTitle,
   loadMoreErrorDescription,
   onRetryLoadMore,
-}: TrashListProps) {
+}: TrashThreadListProps) {
   const loadMoreRef = useRef<HTMLDivElement | null>(null)
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const { mutateAsync: restoreThread } = useRestoreTrashThread()
@@ -197,15 +197,15 @@ export function TrashList({
       <ScrollArea className="min-h-0 flex-1">
         {isLoading ? (
           <div role="list" aria-label={`${mailboxName} 메일 목록`} className="min-w-0">
-            <EmailListLoadingRows />
+            <ThreadListSkeletonRows />
           </div>
         ) : errorTitle && errorDescription ? (
-          <EmailErrorState title={errorTitle} description={errorDescription} onRetry={onRetry} />
+          <MailErrorState title={errorTitle} description={errorDescription} onRetry={onRetry} />
         ) : threads && threads.length > 0 ? (
           <>
             <div role="list" aria-label={`${mailboxName} 메일 목록`} className="min-w-0">
               {threads.map((thread) => (
-                <EmailListItem
+                <ThreadListItem
                   key={thread.threadId}
                   thread={toInboxSummary(thread)}
                   isSelected={selectedThreadId === thread.threadId}
@@ -217,11 +217,11 @@ export function TrashList({
                   onToggleCheck={() => toggleSelected(thread.threadId)}
                 />
               ))}
-              {isFetchingNextPage ? <EmailListLoadingRows /> : null}
+              {isFetchingNextPage ? <ThreadListSkeletonRows /> : null}
             </div>
             {loadMoreErrorTitle && loadMoreErrorDescription ? (
               <div className="border-t px-4 py-3">
-                <EmailErrorState
+                <MailErrorState
                   title={loadMoreErrorTitle}
                   description={loadMoreErrorDescription}
                   retryLabel="추가 메일 다시 불러오기"
