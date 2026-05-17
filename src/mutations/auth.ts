@@ -56,6 +56,7 @@ export const authMutationOptions = {
     onSuccess: async () => {
       await queryClient.cancelQueries()
       queryClient.clear()
+      toast.dismiss()
       void navigate({ to: "/login" })
     },
     onError: (error: unknown) => {
