@@ -30,9 +30,11 @@ import {
 } from "@/components/ui/sidebar"
 import { cn } from "@/lib/utils"
 import { getErrorMessage, getHttpStatus } from "@/lib/http-error"
-import { useCreateLabel, useDeleteLabel, useUpdateLabel } from "@/mutations/labels"
+import { useCreateLabel, useCreateLabelSuggestions, useDeleteLabel, useUpdateLabel } from "@/mutations/labels"
+import { approveLabelSuggestion, deleteLabelSuggestion } from "@/api/labels"
+import { queryClient } from "@/lib/query-client"
 import { emailQueries } from "@/queries/emails"
-import { labelQueries, useLabels } from "@/queries/labels"
+import { labelKeys, labelQueries, labelSuggestionKeys, useLabels } from "@/queries/labels"
 import { useLabelOrder } from "@/hooks/use-label-order"
 import type { ConditionField, ConditionOperator, LabelListItem, NotificationPolicy } from "@/types/label"
 
@@ -370,6 +372,7 @@ interface NavLabelsProps {
 export function NavLabels({ activeLabelId, onLabelToggle, className }: NavLabelsProps) {
   const { data: serverLabels = [] } = useLabels()
   const createLabel = useCreateLabel()
+  const createSuggestions = useCreateLabelSuggestions()
   const { orderedLabels, sensors, handleDragEnd } = useLabelOrder(serverLabels)
   const [open, setOpen] = useState(false)
   const [name, setName] = useState("")
@@ -401,13 +404,65 @@ export function NavLabels({ activeLabelId, onLabelToggle, className }: NavLabels
     )
   }
 
+  function handleAiCreate() {
+    const loadingId = toast.loading("AI 라벨을 생성하고 있습니다...")
+    createSuggestions.mutate(undefined, {
+      onSuccess: (suggestions) => {
+        toast.dismiss(loadingId)
+        if (suggestions.length === 0) {
+          toast.info("추천할 라벨이 없습니다.")
+          return
+        }
+        for (const suggestion of suggestions) {
+          toast(`"${suggestion.name}" 라벨을 승인하시겠습니까?`, {
+            duration: Infinity,
+            action: {
+              label: "승인",
+              onClick: () => {
+                const labels = queryClient.getQueryData<LabelListItem[]>(labelKeys.list()) ?? []
+                const maxOrder = labels.length > 0 ? Math.max(...labels.map((l) => l.order)) : 0
+                void approveLabelSuggestion(suggestion.id, {
+                  name: suggestion.name,
+                  colorCode: suggestion.colorCode,
+                  notificationPolicy: "INHERIT",
+                  order: maxOrder + 1,
+                })
+                  .then(() => {
+                    void queryClient.invalidateQueries({ queryKey: labelKeys.all() })
+                    void queryClient.invalidateQueries({ queryKey: labelSuggestionKeys.all() })
+                  })
+                  .catch((e) => toast.error(getErrorMessage(e, "라벨 승인에 실패했습니다.")))
+              },
+            },
+            cancel: {
+              label: "거부",
+              onClick: () => {
+                void deleteLabelSuggestion(suggestion.id)
+                  .then(() => {
+                    void queryClient.invalidateQueries({ queryKey: labelSuggestionKeys.all() })
+                  })
+                  .catch((e) => toast.error(getErrorMessage(e, "라벨 거부에 실패했습니다.")))
+              },
+            },
+          })
+        }
+      },
+      onError: (e) => {
+        toast.dismiss(loadingId)
+        toast.error(getErrorMessage(e, "AI 라벨 생성에 실패했습니다."))
+      },
+    })
+  }
+
   return (
     <SidebarGroup className={className}>
       <div className="px-2 pb-1.5">
         <div className="ai-gradient-border rounded-full p-px">
           <button
             type="button"
-            className="flex w-full items-center justify-center gap-1.5 rounded-full bg-sidebar px-3 py-1.5 text-xs font-semibold transition-colors hover:bg-sidebar-accent"
+            className="flex w-full items-center justify-center gap-1.5 rounded-full bg-sidebar px-3 py-1.5 text-xs font-semibold transition-colors hover:bg-sidebar-accent disabled:cursor-not-allowed disabled:opacity-50"
+            onClick={handleAiCreate}
+            disabled={createSuggestions.isPending}
           >
             <Sparkles className="size-3.5 text-violet-500" />
             <span className="bg-linear-to-r from-blue-500 via-violet-500 to-pink-500 bg-clip-text text-transparent">

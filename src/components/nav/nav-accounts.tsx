@@ -22,7 +22,7 @@ export function NavAccounts({ activeAccountId, onAccountToggle, className }: Nav
 
   return (
     <SidebarGroup className={cn("group-data-[collapsible=icon]:hidden", className)}>
-      <SidebarGroupLabel className="transition-colors hover:text-sidebar-foreground">계정</SidebarGroupLabel>
+      <SidebarGroupLabel>계정</SidebarGroupLabel>
       <SidebarMenu>
         {accounts.map((account) => (
           <SidebarMenuItem key={account.id}>

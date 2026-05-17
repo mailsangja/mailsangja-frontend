@@ -63,7 +63,6 @@ function SignUpPage() {
             placeholder="아이디"
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            className="flex-1"
             required
           />
         </div>
