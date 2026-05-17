@@ -65,61 +65,69 @@
   animation: ai-editor-sweep 1.7s ease-in-out infinite;
 }
 
-@property --ai-label-angle {
-  syntax: "<angle>";
-  inherits: false;
-  initial-value: 0deg;
-}
-
-@keyframes ai-label-spin {
-  to {
-    --ai-label-angle: 360deg;
-  }
-}
-
-.ai-label-spinning-border {
-  position: relative;
-  border-radius: var(--radius-md);
-}
-
-.ai-label-spinning-border::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  padding: 1.5px;
-  background: conic-gradient(
-    from var(--ai-label-angle),
-    transparent 0deg,
-    color-mix(in oklch, var(--primary) 55%, transparent) 50deg,
-    var(--primary) 100deg,
-    #fb923c 130deg,
-    #fbbf24 150deg,
-    #fb923c 170deg,
-    var(--primary) 200deg,
-    color-mix(in oklch, var(--primary) 30%, transparent) 260deg,
-    transparent 310deg
-  );
-  animation: ai-label-spin 4s linear infinite;
-  -webkit-mask:
-    linear-gradient(#fff 0 0) content-box,
-    linear-gradient(#fff 0 0);
-  mask:
-    linear-gradient(#fff 0 0) content-box,
-    linear-gradient(#fff 0 0);
-  -webkit-mask-composite: destination-out;
-  mask-composite: exclude;
-  pointer-events: none;
-}
-
 @media (prefers-reduced-motion: reduce) {
   .compose-email-editor-ai-streaming,
-  .compose-email-editor-ai-sweep,
-  .ai-label-spinning-border::before {
+  .compose-email-editor-ai-sweep {
     animation: none;
   }
 
   .compose-email-editor-ai-sweep {
+    display: none;
+  }
+}
+
+@keyframes ai-label-glow {
+  0%,
+  100% {
+    box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--primary) 16%, transparent);
+  }
+
+  50% {
+    box-shadow:
+      inset 0 0 0 1px color-mix(in oklch, var(--primary) 42%, transparent),
+      0 0 8px color-mix(in oklch, var(--primary) 12%, transparent);
+  }
+}
+
+@keyframes ai-label-sweep {
+  0% {
+    opacity: 0;
+    transform: translateX(-110%);
+  }
+
+  45% {
+    opacity: 0.18;
+  }
+
+  100% {
+    opacity: 0;
+    transform: translateX(110%);
+  }
+}
+
+.ai-suggestion-item {
+  position: relative;
+  overflow: hidden;
+  border-radius: var(--radius-sm);
+  animation: ai-label-glow 3s ease-in-out infinite;
+}
+
+.ai-suggestion-item::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(90deg, transparent, color-mix(in oklch, var(--primary) 100%, transparent), transparent);
+  pointer-events: none;
+  animation: ai-label-sweep 4.5s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ai-suggestion-item {
+    animation: none;
+    box-shadow: inset 0 0 0 1px color-mix(in oklch, var(--primary) 22%, transparent);
+  }
+
+  .ai-suggestion-item::after {
     display: none;
   }
 }
