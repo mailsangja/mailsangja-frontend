@@ -1,10 +1,12 @@
 import { apiClient } from "@/lib/api-client"
 import type {
+  ApproveLabelSuggestionPayload,
   CreateLabelGroupPayload,
   CreateLabelPayload,
   LabelDetail,
   LabelGroupItem,
   LabelListItem,
+  LabelSuggestion,
   UpdateLabelGroupPayload,
   UpdateLabelPayload,
   UpdateLabelRulePayload,
@@ -52,4 +54,27 @@ export async function updateLabelGroup(labelGroupId: string, data: UpdateLabelGr
 
 export async function deleteLabelGroup(labelGroupId: string): Promise<void> {
   return apiClient.delete<void>(`/api/v1/label-groups/${labelGroupId}`)
+}
+
+export async function getLabelSuggestions(): Promise<LabelSuggestion[]> {
+  return apiClient.get<LabelSuggestion[]>("/api/v1/labels/suggestions")
+}
+
+export async function createLabelSuggestions(): Promise<LabelListItem[]> {
+  return apiClient.post<LabelListItem[]>("/api/v1/labels/suggestions", undefined)
+}
+
+export async function approveLabelSuggestion(
+  suggestionId: string,
+  data: ApproveLabelSuggestionPayload
+): Promise<LabelDetail> {
+  return apiClient.post<LabelDetail>(`/api/v1/labels/suggestions/${suggestionId}/approve`, data)
+}
+
+export async function getLabelSuggestionDetail(suggestionId: string): Promise<LabelDetail> {
+  return apiClient.get<LabelDetail>(`/api/v1/labels/suggestions/${suggestionId}`)
+}
+
+export async function deleteLabelSuggestion(suggestionId: string): Promise<void> {
+  return apiClient.delete<void>(`/api/v1/labels/suggestions/${suggestionId}`)
 }

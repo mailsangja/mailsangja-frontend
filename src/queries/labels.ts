@@ -1,6 +1,13 @@
 import { queryOptions, useQuery, useSuspenseQuery } from "@tanstack/react-query"
 
-import { getLabelDetail, getLabelGroupDetail, getLabelGroups, getLabels } from "@/api/labels"
+import {
+  getLabelDetail,
+  getLabelGroupDetail,
+  getLabelGroups,
+  getLabelSuggestionDetail,
+  getLabelSuggestions,
+  getLabels,
+} from "@/api/labels"
 
 export const labelKeys = {
   all: () => ["labels"] as const,
@@ -12,6 +19,12 @@ export const labelGroupKeys = {
   all: () => ["label-groups"] as const,
   list: () => [...labelGroupKeys.all(), "list"] as const,
   detail: (id: string) => [...labelGroupKeys.all(), "detail", id] as const,
+}
+
+export const labelSuggestionKeys = {
+  all: () => ["label-suggestions"] as const,
+  list: () => [...labelSuggestionKeys.all(), "list"] as const,
+  detail: (id: string) => [...labelSuggestionKeys.all(), "detail", id] as const,
 }
 
 export const labelQueries = {
@@ -60,4 +73,26 @@ export function useLabelGroups() {
 
 export function useLabelGroupDetail(id: string) {
   return useQuery(labelGroupQueries.detail(id))
+}
+
+export const labelSuggestionQueries = {
+  list: () =>
+    queryOptions({
+      queryKey: labelSuggestionKeys.list(),
+      queryFn: getLabelSuggestions,
+    }),
+  detail: (id: string) =>
+    queryOptions({
+      queryKey: labelSuggestionKeys.detail(id),
+      queryFn: () => getLabelSuggestionDetail(id),
+      enabled: !!id,
+    }),
+}
+
+export function useLabelSuggestions() {
+  return useQuery(labelSuggestionQueries.list())
+}
+
+export function useLabelSuggestionDetail(id: string) {
+  return useQuery(labelSuggestionQueries.detail(id))
 }

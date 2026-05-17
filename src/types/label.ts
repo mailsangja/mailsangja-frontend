@@ -80,3 +80,9 @@ export interface UpdateLabelGroupPayload {
   labelIds?: string[]
   order?: number
 }
+
+export interface LabelSuggestion extends LabelListItem {
+  rule: LabelRule
+}
+
+export type ApproveLabelSuggestionPayload = CreateLabelPayload
