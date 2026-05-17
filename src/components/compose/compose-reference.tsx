@@ -95,6 +95,7 @@ export function ComposeReference({ threadId }: ComposeReferenceProps) {
   }
 
   const errorCopy = isError ? getThreadDetailErrorCopy(error) : null
+  const account = thread ? accounts?.find((item) => item.id === thread.accountId) : undefined
 
   return (
     <div className="flex h-full w-full min-w-0 flex-1 flex-col overflow-hidden">
@@ -109,8 +110,13 @@ export function ComposeReference({ threadId }: ComposeReferenceProps) {
         <EmailErrorState title={errorCopy.title} description={errorCopy.description} onRetry={() => void refetch()} />
       ) : thread ? (
         <>
-          <ThreadHeader thread={thread} account={accounts?.find((a) => a.id === thread.accountId)} className="pt-4" />
-          <ThreadMessageList messages={thread.messages} expandedIds={expandedIds} onToggle={toggleExpanded} />
+          <ThreadHeader thread={thread} account={account} className="pt-4" />
+          <ThreadMessageList
+            messages={thread.messages}
+            expandedIds={expandedIds}
+            onToggle={toggleExpanded}
+            accountEmail={account?.emailAddress}
+          />
         </>
       ) : null}
     </div>

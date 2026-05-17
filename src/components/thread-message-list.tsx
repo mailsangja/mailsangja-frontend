@@ -6,10 +6,17 @@ interface ThreadMessageListProps {
   messages: InboxMessage[]
   expandedIds: Set<string>
   onToggle: (id: string) => void
+  accountEmail?: string
   renderMenuActions?: (message: InboxMessage) => React.ReactNode
 }
 
-export function ThreadMessageList({ messages, expandedIds, onToggle, renderMenuActions }: ThreadMessageListProps) {
+export function ThreadMessageList({
+  messages,
+  expandedIds,
+  onToggle,
+  accountEmail,
+  renderMenuActions,
+}: ThreadMessageListProps) {
   return (
     <ScrollArea className="min-h-0 flex-1">
       <div className="p-2">
@@ -20,6 +27,7 @@ export function ThreadMessageList({ messages, expandedIds, onToggle, renderMenuA
               message={message}
               isExpanded={expandedIds.has(message.id)}
               onToggle={() => onToggle(message.id)}
+              accountEmail={accountEmail}
               menuActions={renderMenuActions?.(message)}
             />
           ))}

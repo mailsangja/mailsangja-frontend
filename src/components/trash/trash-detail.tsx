@@ -1,14 +1,15 @@
 import { useState } from "react"
-import { ArrowLeft, MailOpen, Undo2 } from "lucide-react"
+import { ArrowLeft, Copy, MailOpen, Undo2 } from "lucide-react"
 import { toast } from "sonner"
 
 import { EmailErrorState } from "@/components/inbox/email-error-state"
 import { ThreadHeader } from "@/components/thread-header"
 import { ThreadMessageList } from "@/components/thread-message-list"
 import { Button } from "@/components/ui/button"
-import { DropdownMenuItem } from "@/components/ui/dropdown-menu"
+import { DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu"
 import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
+import { copyTextToClipboard } from "@/lib/clipboard"
 import { getErrorMessage, getHttpStatus } from "@/lib/http-error"
 import { useRestoreTrashMessage, useRestoreTrashThread } from "@/mutations/trash"
 import { useMailAccounts } from "@/queries/mail-accounts"
@@ -209,11 +210,19 @@ export function TrashDetail({ threadId, onClose }: TrashDetailProps) {
         messages={messages}
         expandedIds={expandedIds}
         onToggle={toggleExpanded}
+        accountEmail={account?.emailAddress}
         renderMenuActions={(message) => (
-          <DropdownMenuItem onClick={() => handleRestoreMessage(message, messages.length === 1)}>
-            <Undo2 className="size-4" />
-            복구
-          </DropdownMenuItem>
+          <>
+            <DropdownMenuItem onClick={() => handleRestoreMessage(message, messages.length === 1)}>
+              <Undo2 />
+              복구
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => copyTextToClipboard(message.from.email, "발신자 주소를 복사했습니다")}>
+              <Copy />
+              발신자 주소 복사
+            </DropdownMenuItem>
+          </>
         )}
       />
       <TrashFooter onRestore={handleRestoreThread} isRestoring={isRestoringThread} />

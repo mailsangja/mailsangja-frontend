@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Archive, ArrowLeft, Forward, MailOpen, Reply, Trash2 } from "lucide-react"
+import { Archive, ArrowLeft, Copy, Forward, MailOpen, Mail, Reply, Trash2 } from "lucide-react"
 import { useNavigate } from "@tanstack/react-router"
 import { toast } from "sonner"
 
@@ -7,10 +7,17 @@ import { EmailErrorState } from "@/components/inbox/email-error-state"
 import { ThreadHeader } from "@/components/thread-header"
 import { ThreadMessageList } from "@/components/thread-message-list"
 import { Button } from "@/components/ui/button"
-import { DropdownMenuItem } from "@/components/ui/dropdown-menu"
+import { DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu"
 import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
+import { copyTextToClipboard } from "@/lib/clipboard"
 import { getErrorMessage, getHttpStatus } from "@/lib/http-error"
+import {
+  useMarkMessageAsRead,
+  useMarkMessageAsUnread,
+  useMarkThreadAsRead,
+  useMarkThreadAsUnread,
+} from "@/mutations/emails"
 import { useDeleteMessage, useDeleteThread, useRestoreTrashMessage, useRestoreTrashThread } from "@/mutations/trash"
 import { useThread } from "@/queries/emails"
 import { useMailAccounts } from "@/queries/mail-accounts"
@@ -83,31 +90,52 @@ function LoadingState() {
 }
 
 interface ThreadToolbarProps {
+  isRead: boolean
   onClose?: () => void
   onDelete: () => void
   onReply: () => void
+  onToggleRead: () => void
   isDeleting: boolean
+  isTogglingRead: boolean
 }
 
-function ThreadToolbar({ onClose, onDelete, onReply, isDeleting }: ThreadToolbarProps) {
+function ThreadToolbar({
+  isRead,
+  onClose,
+  onDelete,
+  onReply,
+  onToggleRead,
+  isDeleting,
+  isTogglingRead,
+}: ThreadToolbarProps) {
   return (
     <div className="flex h-11 shrink-0 items-center justify-between gap-2 px-4">
       {onClose ? (
         <Button variant="ghost" size="icon-sm" onClick={onClose} aria-label="스레드 목록으로 돌아가기">
-          <ArrowLeft className="size-4" />
+          <ArrowLeft />
         </Button>
       ) : (
         <span />
       )}
       <div className="ml-auto flex items-center gap-1">
         <Button variant="ghost" size="icon-sm" onClick={onReply} aria-label="답장" title="답장">
-          <Reply className="size-4" />
+          <Reply />
+        </Button>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          onClick={onToggleRead}
+          disabled={isTogglingRead}
+          aria-label={isRead ? "스레드를 안읽음으로 표시" : "스레드를 읽음으로 표시"}
+          title={isRead ? "안읽음으로 표시" : "읽음으로 표시"}
+        >
+          <Mail />
         </Button>
         <Button variant="ghost" size="icon-sm" disabled title="전달 기능은 아직 지원되지 않습니다.">
-          <Forward className="size-4" />
+          <Forward />
         </Button>
         <Button variant="ghost" size="icon-sm" disabled title="보관 기능은 아직 지원되지 않습니다.">
-          <Archive className="size-4" />
+          <Archive />
         </Button>
         <Button
           variant="ghost"
@@ -117,7 +145,7 @@ function ThreadToolbar({ onClose, onDelete, onReply, isDeleting }: ThreadToolbar
           title="삭제"
           aria-label="메일 삭제"
         >
-          <Trash2 className="size-4" />
+          <Trash2 />
         </Button>
       </div>
     </div>
@@ -129,11 +157,11 @@ function ThreadFooter({ onReply }: { onReply: () => void }) {
     <div className="shrink-0 border-t px-6 py-2">
       <div className="flex flex-wrap gap-2">
         <Button variant="outline" size="sm" onClick={onReply}>
-          <Reply className="size-4" />
+          <Reply />
           답장
         </Button>
         <Button variant="outline" size="sm" disabled title="전달 기능은 아직 지원되지 않습니다.">
-          <Forward className="size-4" />
+          <Forward />
           전달
         </Button>
       </div>
@@ -154,6 +182,10 @@ export function EmailDetail({ threadId, onClose }: EmailDetailProps) {
   const { mutate: restoreThread } = useRestoreTrashThread()
   const { mutate: deleteMessage } = useDeleteMessage()
   const { mutate: restoreMessage } = useRestoreTrashMessage()
+  const { mutate: markThreadRead, isPending: isMarkingThreadRead } = useMarkThreadAsRead()
+  const { mutate: markThreadUnread, isPending: isMarkingThreadUnread } = useMarkThreadAsUnread()
+  const { mutate: markMessageRead } = useMarkMessageAsRead()
+  const { mutate: markMessageUnread } = useMarkMessageAsUnread()
 
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
   const [expandedThreadId, setExpandedThreadId] = useState<string | null>(null)
@@ -208,12 +240,32 @@ export function EmailDetail({ threadId, onClose }: EmailDetailProps) {
     })
   }
 
-  const handleReply = () => {
+  const handleReply = (message?: InboxMessage) => {
     if (!thread) return
     void navigate({
       to: "/compose",
-      search: { replyThreadId: thread.threadId },
+      search: {
+        replyThreadId: thread.threadId,
+        ...(message ? { replyMessageId: message.id } : {}),
+      },
     })
+  }
+
+  const handleToggleThreadRead = () => {
+    if (!thread) return
+    if (thread.isRead) {
+      markThreadUnread(thread.threadId)
+    } else {
+      markThreadRead(thread.threadId)
+    }
+  }
+
+  const handleToggleMessageRead = (message: InboxMessage) => {
+    if (message.isRead) {
+      markMessageUnread(message.id)
+    } else {
+      markMessageRead(message.id)
+    }
   }
 
   const handleDeleteThread = () => {
@@ -262,20 +314,49 @@ export function EmailDetail({ threadId, onClose }: EmailDetailProps) {
 
   return (
     <div className="flex h-full w-full min-w-0 flex-1 flex-col">
-      <ThreadToolbar onClose={onClose} onDelete={handleDeleteThread} onReply={handleReply} isDeleting={isDeleting} />
+      <ThreadToolbar
+        isRead={thread.isRead}
+        onClose={onClose}
+        onDelete={handleDeleteThread}
+        onReply={() => handleReply()}
+        onToggleRead={handleToggleThreadRead}
+        isDeleting={isDeleting}
+        isTogglingRead={isMarkingThreadRead || isMarkingThreadUnread}
+      />
       <ThreadHeader thread={thread} account={account} labels={thread.labels} />
       <ThreadMessageList
         messages={messages}
         expandedIds={expandedIds}
         onToggle={toggleExpanded}
+        accountEmail={account?.emailAddress}
         renderMenuActions={(message) => (
-          <DropdownMenuItem onClick={() => handleDeleteMessage(message, messages.length === 1)}>
-            <Trash2 className="size-4" />
-            삭제
-          </DropdownMenuItem>
+          <>
+            <DropdownMenuItem onClick={() => handleReply(message)}>
+              <Reply />
+              답장
+            </DropdownMenuItem>
+            <DropdownMenuItem disabled title="전달 기능은 아직 지원되지 않습니다.">
+              <Forward />
+              전달
+            </DropdownMenuItem>
+            <DropdownMenuItem onClick={() => handleToggleMessageRead(message)}>
+              <Mail />
+              {message.isRead ? "안읽음으로 표시" : "읽음으로 표시"}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem onClick={() => copyTextToClipboard(message.from.email, "발신자 주소를 복사했습니다")}>
+              <Copy />
+              발신자 주소 복사
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem variant="destructive" onClick={() => handleDeleteMessage(message, messages.length === 1)}>
+              <Trash2 />
+              삭제
+            </DropdownMenuItem>
+          </>
         )}
       />
-      <ThreadFooter onReply={handleReply} />
+      <ThreadFooter onReply={() => handleReply()} />
     </div>
   )
 }

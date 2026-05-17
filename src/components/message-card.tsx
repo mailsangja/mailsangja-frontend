@@ -1,22 +1,33 @@
-import { MoreVertical, Star } from "lucide-react"
+import { ChevronDown, MoreVertical, Star } from "lucide-react"
 
 import { AttachmentChip } from "@/components/attachment-chip"
 import { MessageBodyFrame } from "@/components/message-body-frame"
+import { MessageDetail } from "@/components/message-detail"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { formatMailAddressList, getMailAddressLabel } from "@/lib/mail-address"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
+import { formatRelativeDate } from "@/lib/date"
+import { getMailAddressFullLabel, getMailAddressLabel } from "@/lib/mail-address"
 import type { InboxMessage } from "@/types/email"
 
-function formatDate(value: string) {
-  return new Date(value).toLocaleDateString("ko-KR", {
-    year: "numeric",
-    month: "long",
-    day: "numeric",
-    hour: "numeric",
-    minute: "2-digit",
-    hour12: true,
-  })
+function getRecipientSummary(message: InboxMessage, accountEmail?: string) {
+  const recipients = message.to
+
+  if (recipients.length === 0) {
+    return "받는 사람 없음"
+  }
+
+  const normalizedAccountEmail = accountEmail?.trim().toLowerCase()
+  const first = recipients[0]
+  const firstLabel =
+    normalizedAccountEmail && first.email.trim().toLowerCase() === normalizedAccountEmail
+      ? "나"
+      : getMailAddressLabel(first)
+  const others = recipients.length - 1
+
+  return others > 0 ? `${firstLabel} 외 ${others}명` : firstLabel
 }
 
 function getInitials(value: string) {
@@ -28,60 +39,71 @@ interface MessageCardProps {
   message: InboxMessage
   isExpanded: boolean
   onToggle: () => void
+  accountEmail?: string
   menuActions?: React.ReactNode
 }
 
-export function MessageCard({ message, isExpanded, onToggle, menuActions }: MessageCardProps) {
+export function MessageCard({ message, isExpanded, onToggle, accountEmail, menuActions }: MessageCardProps) {
   const senderName = getMailAddressLabel(message.from)
-  const senderEmail = message.from.email
+  const fullSenderLabel = getMailAddressFullLabel(message.from)
+  const recipientSummary = getRecipientSummary(message, accountEmail)
 
   return (
     <article className="w-full min-w-0 p-4">
-      <header
-        className="flex cursor-pointer items-start gap-3"
-        onClick={onToggle}
-        role="button"
-        tabIndex={0}
-        onKeyDown={(event) => {
-          if (event.key === "Enter" || event.key === " ") {
-            event.preventDefault()
-            onToggle()
-          }
-        }}
-        aria-expanded={isExpanded}
-      >
-        <Avatar>
-          <AvatarFallback>{getInitials(senderName)}</AvatarFallback>
-        </Avatar>
+      <header className="flex items-start gap-3">
+        <button
+          type="button"
+          className="shrink-0 rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+          onClick={onToggle}
+          aria-expanded={isExpanded}
+          aria-label={isExpanded ? "메시지 접기" : "메시지 펼치기"}
+        >
+          <Avatar>
+            <AvatarFallback>{getInitials(senderName)}</AvatarFallback>
+          </Avatar>
+        </button>
 
-        <div className="min-w-0 flex-1 overflow-hidden">
-          <div className="flex min-w-0 items-baseline gap-2">
-            <p className="shrink-0 truncate text-sm font-semibold">{senderName}</p>
-            {senderEmail && senderEmail !== senderName ? (
-              <p className="hidden min-w-0 flex-1 truncate text-xs text-muted-foreground sm:block">
-                &lt;{senderEmail}&gt;
-              </p>
-            ) : null}
+        <div className="-mt-1 min-w-0 flex-1">
+          <div className="flex min-w-0 flex-wrap items-center gap-x-1.5 gap-y-0.5 text-sm">
+            <Tooltip>
+              <TooltipTrigger className="mr-2 font-semibold">{senderName}</TooltipTrigger>
+              <TooltipContent side="bottom" align="start" className="max-w-80 items-start">
+                <span className="max-w-72 truncate">{fullSenderLabel}</span>
+              </TooltipContent>
+            </Tooltip>
+            <Popover>
+              <PopoverTrigger
+                render={
+                  <Button
+                    variant="ghost"
+                    size="xs"
+                    className="-ml-2 text-muted-foreground"
+                    aria-label="메시지 상세 정보"
+                  />
+                }
+              >
+                <span className="min-w-0 truncate">{recipientSummary}에게</span>
+                <ChevronDown data-icon="inline-end" />
+              </PopoverTrigger>
+              <PopoverContent align="start" className="w-80 max-w-[calc(100vw-2rem)]">
+                <MessageDetail message={message} />
+              </PopoverContent>
+            </Popover>
           </div>
-          {isExpanded ? (
-            <p className="mt-0.5 text-xs break-all text-muted-foreground">
-              받는 사람: {message.to.length > 0 ? formatMailAddressList(message.to) : "-"}
-            </p>
-          ) : (
-            <p className="mt-0.5 truncate text-xs text-muted-foreground">{message.snippet}</p>
-          )}
-          {isExpanded && message.cc.length > 0 ? (
-            <p className="mt-0.5 text-xs break-all text-muted-foreground">참조: {formatMailAddressList(message.cc)}</p>
-          ) : null}
+          <button
+            type="button"
+            className="block w-full min-w-0 cursor-pointer truncate rounded-sm text-left text-xs text-muted-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+            onClick={onToggle}
+            aria-expanded={isExpanded}
+            aria-label={isExpanded ? "메시지 접기" : "메시지 펼치기"}
+          >
+            {isExpanded ? message.subject || "(제목 없음)" : message.snippet}
+          </button>
         </div>
 
-        <div
-          className="flex shrink-0 items-center gap-1"
-          onClick={(event) => event.stopPropagation()}
-          onKeyDown={(event) => event.stopPropagation()}
-        >
+        <div className="flex shrink-0 items-center gap-1">
           <span className="hidden truncate text-xs text-muted-foreground/80 sm:inline">
-            {formatDate(message.sentAt)}
+            {formatRelativeDate(message.sentAt)}
           </span>
           <div className="flex shrink-0 items-center">
             <Button
@@ -91,14 +113,16 @@ export function MessageCard({ message, isExpanded, onToggle, menuActions }: Mess
               title="즐겨찾기는 아직 지원되지 않습니다."
               aria-label="즐겨찾기"
             >
-              <Star className="size-4" />
+              <Star />
             </Button>
             {menuActions ? (
               <DropdownMenu>
                 <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" aria-label="메시지 더보기" />}>
-                  <MoreVertical className="size-4" />
+                  <MoreVertical />
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">{menuActions}</DropdownMenuContent>
+                <DropdownMenuContent align="end" className="min-w-36">
+                  {menuActions}
+                </DropdownMenuContent>
               </DropdownMenu>
             ) : null}
           </div>
