@@ -14,32 +14,10 @@ import {
 } from "@/components/ui/sidebar"
 import { cn } from "@/lib/utils"
 import { getErrorMessage, getHttpStatus } from "@/lib/http-error"
+import { LABEL_COLORS } from "@/lib/label-colors"
 import { useApproveLabelSuggestion, useCreateLabelSuggestions, useDeleteLabelSuggestion } from "@/mutations/labels"
 import { useLabelSuggestions } from "@/queries/labels"
 import type { ConditionField, ConditionOperator, LabelSuggestion, NotificationPolicy } from "@/types/label"
-
-const LABEL_COLORS = [
-  "#FF2020", // 빨강
-  "#FF8000", // 주황
-  "#FFB300", // 주노
-  "#FFE000", // 노랑
-  "#F5FF00", // 레몬
-  "#AADD00", // 노초
-  "#55CC00", // 연두
-  "#00CC88", // 청초
-  "#00CCCC", // 청록
-  "#2FE3FB", // 민트
-  "#00AAEE", // 하늘
-  "#0066FF", // 파랑
-  "#3322BB", // 남색
-  "#7722CC", // 보라
-  "#c084fc", // 연보라
-  "#AA22BB", // 보핑
-  "#CC2299", // 자주
-  "#FF1177", // 핫핑크
-  "#FF66AA", // 분홍
-  "#FFB3D1", // 연핑크
-]
 
 const NOTIFICATION_OPTIONS: { value: NotificationPolicy; label: string }[] = [
   { value: "URGENT", label: "항상 알림" },
@@ -80,6 +58,7 @@ function ApproveDialog({
   const approveLabelSuggestion = useApproveLabelSuggestion()
 
   function handleApprove() {
+    if (approveLabelSuggestion.isPending) return
     const trimmed = name.trim()
     if (!trimmed) return
     approveLabelSuggestion.mutate(

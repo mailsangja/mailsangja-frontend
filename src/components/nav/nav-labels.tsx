@@ -30,6 +30,7 @@ import {
 } from "@/components/ui/sidebar"
 import { cn } from "@/lib/utils"
 import { getErrorMessage, getHttpStatus } from "@/lib/http-error"
+import { LABEL_COLORS } from "@/lib/label-colors"
 import {
   useApproveLabelSuggestion,
   useCreateLabel,
@@ -289,29 +290,6 @@ function ApproveDialog({
   )
 }
 
-const LABEL_COLORS = [
-  "#FF2020", // 빨강
-  "#FF8000", // 주황
-  "#FFB300", // 주노
-  "#FFE000", // 노랑
-  "#F5FF00", // 레몬
-  "#AADD00", // 노초
-  "#55CC00", // 연두
-  "#00CC88", // 청초
-  "#00CCCC", // 청록
-  "#2FE3FB", // 민트
-  "#00AAEE", // 하늘
-  "#0066FF", // 파랑
-  "#3322BB", // 남색
-  "#7722CC", // 보라
-  "#c084fc", // 연보라
-  "#AA22BB", // 보핑
-  "#CC2299", // 자주
-  "#FF1177", // 핫핑크
-  "#FF66AA", // 분홍
-  "#FFB3D1", // 연핑크
-]
-
 const NOTIFICATION_OPTIONS: { value: NotificationPolicy; label: string }[] = [
   { value: "URGENT", label: "항상 알림" },
   { value: "INHERIT", label: "기본" },
@@ -507,7 +485,6 @@ function LabelItem({
 }
 
 function SuggestionItem({ suggestion }: { suggestion: LabelSuggestion }) {
-  const [isHovered, setIsHovered] = useState(false)
   const [approveOpen, setApproveOpen] = useState(false)
   const deleteSuggestion = useDeleteLabelSuggestion()
 
@@ -518,22 +495,13 @@ function SuggestionItem({ suggestion }: { suggestion: LabelSuggestion }) {
   }
 
   return (
-    <SidebarMenuItem
-      className="ai-suggestion-item"
-      onMouseEnter={() => setIsHovered(true)}
-      onMouseLeave={() => setIsHovered(false)}
-    >
+    <SidebarMenuItem className="ai-suggestion-item group/suggestion">
       <SidebarMenuButton type="button" size="sm" tooltip={suggestion.name} onClick={() => setApproveOpen(true)}>
         <span className="size-3 shrink-0 rounded-sm" style={{ backgroundColor: suggestion.colorCode }} />
         <span className="truncate">{suggestion.name}</span>
       </SidebarMenuButton>
 
-      <div
-        className={cn(
-          "absolute top-1/2 right-1 flex -translate-y-1/2 items-center gap-0.5 transition-opacity",
-          isHovered ? "opacity-100" : "opacity-0"
-        )}
-      >
+      <div className="absolute top-1/2 right-1 flex -translate-y-1/2 items-center gap-0.5 transition-opacity [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-focus-within/suggestion:opacity-100 [@media(hover:hover)]:group-hover/suggestion:opacity-100">
         <button
           type="button"
           className="flex size-5 items-center justify-center rounded text-muted-foreground hover:text-green-600"

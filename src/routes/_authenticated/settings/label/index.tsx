@@ -12,6 +12,7 @@ import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { LabelFilterDialog } from "@/components/label-filter-dialog"
 import { getErrorMessage } from "@/lib/http-error"
+import { LABEL_COLORS } from "@/lib/label-colors"
 import { useCreateLabel } from "@/mutations/labels"
 import { useLabels } from "@/queries/labels"
 import { useLabelOrder } from "@/hooks/use-label-order"
@@ -21,29 +22,6 @@ import type { LabelListItem } from "@/types/label"
 export const Route = createFileRoute("/_authenticated/settings/label/")({
   component: SettingsLabelPage,
 })
-
-const LABEL_COLORS = [
-  "#FF2020", // 빨강
-  "#FF8000", // 주황
-  "#FFB300", // 주노
-  "#FFE000", // 노랑
-  "#F5FF00", // 레몬
-  "#AADD00", // 노초
-  "#55CC00", // 연두
-  "#00CC88", // 청초
-  "#00CCCC", // 청록
-  "#2FE3FB", // 민트
-  "#00AAEE", // 하늘
-  "#0066FF", // 파랑
-  "#3322BB", // 남색
-  "#7722CC", // 보라
-  "#c084fc", // 연보라
-  "#AA22BB", // 보핑
-  "#CC2299", // 자주
-  "#FF1177", // 핫핑크
-  "#FF66AA", // 분홍
-  "#FFB3D1", // 연핑크
-]
 
 function ColorPicker({ selected, onSelect }: { selected: string; onSelect: (color: string) => void }) {
   return (
