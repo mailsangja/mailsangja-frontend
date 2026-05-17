@@ -23,26 +23,26 @@ export const Route = createFileRoute("/_authenticated/settings/label/")({
 })
 
 const LABEL_COLORS = [
-  "#ef4444",
-  "#f97316",
-  "#f59e0b",
-  "#eab308",
-  "#84cc16",
-  "#22c55e",
-  "#10b981",
-  "#14b8a6",
-  "#06b6d4",
-  "#0ea5e9",
-  "#3b82f6",
-  "#6366f1",
-  "#8b5cf6",
-  "#a855f7",
-  "#d946ef",
-  "#ec4899",
-  "#f43f5e",
-  "#64748b",
-  "#78716c",
-  "#6b7280",
+  "#FF2020", // 빨강
+  "#FF8000", // 주황
+  "#FFB300", // 주노
+  "#FFE000", // 노랑
+  "#F5FF00", // 레몬
+  "#AADD00", // 노초
+  "#55CC00", // 연두
+  "#00CC88", // 청초
+  "#00CCCC", // 청록
+  "#2FE3FB", // 민트
+  "#00AAEE", // 하늘
+  "#0066FF", // 파랑
+  "#3322BB", // 남색
+  "#7722CC", // 보라
+  "#c084fc", // 연보라
+  "#AA22BB", // 보핑
+  "#CC2299", // 자주
+  "#FF1177", // 핫핑크
+  "#FF66AA", // 분홍
+  "#FFB3D1", // 연핑크
 ]
 
 function ColorPicker({ selected, onSelect }: { selected: string; onSelect: (color: string) => void }) {

@@ -19,26 +19,26 @@ import { useLabelSuggestions } from "@/queries/labels"
 import type { ConditionField, ConditionOperator, LabelSuggestion, NotificationPolicy } from "@/types/label"
 
 const LABEL_COLORS = [
-  "#ef4444",
-  "#f97316",
-  "#f59e0b",
-  "#eab308",
-  "#84cc16",
-  "#22c55e",
-  "#10b981",
-  "#14b8a6",
-  "#06b6d4",
-  "#0ea5e9",
-  "#3b82f6",
-  "#6366f1",
-  "#8b5cf6",
-  "#a855f7",
-  "#d946ef",
-  "#ec4899",
-  "#f43f5e",
-  "#64748b",
-  "#78716c",
-  "#6b7280",
+  "#FF2020", // 빨강
+  "#FF8000", // 주황
+  "#FFB300", // 주노
+  "#FFE000", // 노랑
+  "#F5FF00", // 레몬
+  "#AADD00", // 노초
+  "#55CC00", // 연두
+  "#00CC88", // 청초
+  "#00CCCC", // 청록
+  "#2FE3FB", // 민트
+  "#00AAEE", // 하늘
+  "#0066FF", // 파랑
+  "#3322BB", // 남색
+  "#7722CC", // 보라
+  "#c084fc", // 연보라
+  "#AA22BB", // 보핑
+  "#CC2299", // 자주
+  "#FF1177", // 핫핑크
+  "#FF66AA", // 분홍
+  "#FFB3D1", // 연핑크
 ]
 
 const NOTIFICATION_OPTIONS: { value: NotificationPolicy; label: string }[] = [
@@ -117,7 +117,6 @@ function ApproveDialog({
         </DialogHeader>
         <div className="flex flex-col gap-4 py-2">
           <div className="flex items-center gap-3">
-            <span className="size-4 shrink-0 rounded-sm" style={{ backgroundColor: selectedColor }} />
             <Input
               value={name}
               onChange={(e) => setName(e.target.value)}
@@ -200,7 +199,6 @@ function ApproveDialog({
 }
 
 function SuggestionItem({ suggestion }: { suggestion: LabelSuggestion }) {
-  const [isHovered, setIsHovered] = useState(false)
   const [approveOpen, setApproveOpen] = useState(false)
   const deleteSuggestion = useDeleteLabelSuggestion()
 
@@ -211,18 +209,13 @@ function SuggestionItem({ suggestion }: { suggestion: LabelSuggestion }) {
   }
 
   return (
-    <SidebarMenuItem onMouseEnter={() => setIsHovered(true)} onMouseLeave={() => setIsHovered(false)}>
+    <SidebarMenuItem className="group/suggestion">
       <SidebarMenuButton type="button" size="sm" tooltip={suggestion.name} onClick={() => setApproveOpen(true)}>
         <span className="size-3 shrink-0 rounded-sm" style={{ backgroundColor: suggestion.colorCode }} />
         <span className="truncate">{suggestion.name}</span>
       </SidebarMenuButton>
 
-      <div
-        className={cn(
-          "absolute top-1/2 right-1 flex -translate-y-1/2 items-center gap-0.5 transition-opacity",
-          isHovered ? "opacity-100" : "opacity-0"
-        )}
-      >
+      <div className="absolute top-1/2 right-1 flex -translate-y-1/2 items-center gap-0.5 transition-opacity [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-focus-within/suggestion:opacity-100 [@media(hover:hover)]:group-hover/suggestion:opacity-100">
         <button
           type="button"
           className="flex size-5 items-center justify-center rounded text-muted-foreground hover:text-green-600"
