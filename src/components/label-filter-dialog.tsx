@@ -144,7 +144,7 @@ export function LabelRuleDialog({ open, onOpenChange, labelId }: LabelRuleDialog
         </DialogHeader>
 
         <ScrollArea className="max-h-[40vh]">
-          <div className="flex min-h-12 flex-col gap-3 pr-3">
+          <div className="flex min-h-12 flex-col gap-3 py-0.5 pr-3 pl-0.5">
             {entries.map((entry, index) => (
               <div key={index} className="flex flex-wrap items-center gap-2">
                 <Select value={entry.field} onValueChange={(v) => handleFieldChange(index, v as ConditionField)}>
@@ -192,7 +192,7 @@ export function LabelRuleDialog({ open, onOpenChange, labelId }: LabelRuleDialog
                       onValueChange={(v) => handleOperatorChange(index, v as ConditionOperator)}
                       disabled={!entry.field}
                     >
-                      <SelectTrigger className="h-9 w-28 shrink-0">
+                      <SelectTrigger className="h-9 w-24 shrink-0">
                         {entry.operator ? (
                           <span className="truncate text-sm">
                             {OPERATOR_LABELS[entry.operator as ConditionOperator]}
@@ -201,7 +201,7 @@ export function LabelRuleDialog({ open, onOpenChange, labelId }: LabelRuleDialog
                           <SelectValue placeholder="연산자" />
                         )}
                       </SelectTrigger>
-                      <SelectContent>
+                      <SelectContent className="min-w-32">
                         {entry.field &&
                           FIELD_OPERATORS[entry.field].map((op) => (
                             <SelectItem key={op} value={op}>
@@ -214,7 +214,7 @@ export function LabelRuleDialog({ open, onOpenChange, labelId }: LabelRuleDialog
                       <Input
                         value={entry.value}
                         onChange={(e) => handleValueChange(index, e.target.value)}
-                        className="h-9 flex-1"
+                        className="h-8 flex-1"
                         placeholder="값 입력..."
                         disabled={!entry.field}
                       />
