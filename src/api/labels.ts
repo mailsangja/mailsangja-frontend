@@ -29,7 +29,7 @@ export async function updateLabel(labelId: string, data: UpdateLabelPayload): Pr
 }
 
 export async function updateLabelRule(labelId: string, data: UpdateLabelRulePayload): Promise<LabelDetail> {
-  return apiClient.patch<LabelDetail>(`/api/v1/labels/${labelId}/rule`, data)
+  return apiClient.patch<LabelDetail>(`/api/v1/labels/${labelId}/rule`, { rule: data })
 }
 
 export async function deleteLabel(labelId: string): Promise<void> {

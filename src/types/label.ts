@@ -58,9 +58,7 @@ export interface UpdateLabelPayload {
   order?: number
 }
 
-export interface UpdateLabelRulePayload {
-  rule: LabelRule
-}
+export type UpdateLabelRulePayload = LabelRule
 
 export interface LabelGroupItem {
   id: string

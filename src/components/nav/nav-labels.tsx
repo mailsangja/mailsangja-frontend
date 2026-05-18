@@ -4,7 +4,7 @@ import { useQuery } from "@tanstack/react-query"
 import { DndContext, closestCenter } from "@dnd-kit/core"
 import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
-import { Check, ChevronDown, GripVertical, ListFilter, MoreVertical, Plus, Sparkles, X } from "lucide-react"
+import { Check, ChevronDown, GripVertical, MoreVertical, Plus, Sparkles, X } from "lucide-react"
 import { toast } from "sonner"
 
 import { Button, buttonVariants } from "@/components/ui/button"
@@ -591,15 +591,6 @@ export function NavLabels({ activeLabelId, onLabelToggle, className }: NavLabels
             <Sparkles className="size-3.5" />
             <span className="sr-only">AI 라벨 추천 받기</span>
           </button>
-          <Link
-            to="/settings/label"
-            hash="create-filter"
-            title="필터 만들기"
-            className={buttonVariants({ variant: "ghost", size: "icon-xs" })}
-          >
-            <ListFilter />
-            <span className="sr-only">필터 만들기</span>
-          </Link>
           <Dialog open={open} onOpenChange={setOpen}>
             <DialogTrigger asChild>
               <Button variant="ghost" size="icon-xs" title="라벨 추가">

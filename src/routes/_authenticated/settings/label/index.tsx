@@ -10,7 +10,6 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { LabelFilterDialog } from "@/components/label-filter-dialog"
 import { getErrorMessage } from "@/lib/http-error"
 import { LABEL_COLORS } from "@/lib/label-colors"
 import { useCreateLabel } from "@/mutations/labels"
@@ -216,18 +215,6 @@ function SettingsLabelPage() {
             <CreateLabelDialog />
           </CardContent>
         </Card>
-
-        <div ref={createFilterRef}>
-          <Card>
-            <CardHeader>
-              <CardTitle>필터 만들기</CardTitle>
-              <CardDescription>검색 기준에 맞는 메일에 자동으로 라벨을 적용합니다.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <LabelFilterDialog />
-            </CardContent>
-          </Card>
-        </div>
       </div>
     </ScrollArea>
   )
