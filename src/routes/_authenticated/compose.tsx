@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router"
 
 import { ComposeEmail } from "@/components/compose/compose-email"
-import { ComposeReference } from "@/components/compose/compose-reference"
+import { ComposeReferenceThreadPanel } from "@/components/compose/compose-reference-thread-panel"
 import { Separator } from "@/components/ui/separator"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { formatMailAddressList } from "@/lib/mail-address"
@@ -11,19 +11,22 @@ import { mailAccountQueries } from "@/queries/mail-accounts"
 interface ComposeRouteSearch {
   from?: string
   replyThreadId?: string
+  replyMessageId?: string
 }
 
 export const Route = createFileRoute("/_authenticated/compose")({
   validateSearch: (search: Record<string, unknown>): ComposeRouteSearch => {
     const from = typeof search.from === "string" ? search.from.trim() : ""
     const replyThreadId = typeof search.replyThreadId === "string" ? search.replyThreadId.trim() : ""
+    const replyMessageId = typeof search.replyMessageId === "string" ? search.replyMessageId.trim() : ""
     return {
       ...(from ? { from } : {}),
       ...(replyThreadId ? { replyThreadId } : {}),
+      ...(replyMessageId ? { replyMessageId } : {}),
     }
   },
-  loaderDeps: ({ search: { replyThreadId } }) => ({ replyThreadId }),
-  loader: async ({ context, deps: { replyThreadId } }) => {
+  loaderDeps: ({ search: { replyThreadId, replyMessageId } }) => ({ replyThreadId, replyMessageId }),
+  loader: async ({ context, deps: { replyThreadId, replyMessageId } }) => {
     if (!replyThreadId) return null
 
     const [thread, accounts] = await Promise.all([
@@ -31,19 +34,21 @@ export const Route = createFileRoute("/_authenticated/compose")({
       context.queryClient.ensureQueryData(mailAccountQueries.list()),
     ])
 
-    const lastMessage = thread.messages.at(-1)
-    if (!lastMessage) return null
+    const replyMessage = replyMessageId
+      ? thread.messages.find((message) => message.id === replyMessageId)
+      : thread.messages.at(-1)
+    if (!replyMessage) return null
 
-    const replyToAddress = lastMessage.replyTo ?? lastMessage.from
+    const replyToAddress = replyMessage.replyTo ?? replyMessage.from
     const replyTo = replyToAddress.name ? `${replyToAddress.name} <${replyToAddress.email}>` : replyToAddress.email
     const currentSubject = thread.latestSubject
     const replySubject = /^re:/i.test(currentSubject) ? currentSubject : `Re: ${currentSubject}`
     const fromAccount = accounts.find((a) => a.id === thread.accountId)
-    const replyCcAddresses = lastMessage.cc.filter((addr) => addr.email !== fromAccount?.emailAddress)
+    const replyCcAddresses = replyMessage.cc.filter((addr) => addr.email !== fromAccount?.emailAddress)
     const replyCc = replyCcAddresses.length > 0 ? formatMailAddressList(replyCcAddresses) : undefined
 
     return {
-      messageId: lastMessage.id,
+      messageId: replyMessage.id,
       replyTo,
       replySubject,
       replyCc,
@@ -86,7 +91,7 @@ function ComposePage() {
   return (
     <div className="flex min-h-0 w-full min-w-0 flex-1 overflow-hidden">
       <div className="min-h-0 min-w-0 basis-1/2 border-r-0">
-        <ComposeReference threadId={replyThreadId ?? null} />
+        <ComposeReferenceThreadPanel threadId={replyThreadId ?? null} />
       </div>
       <Separator orientation="vertical" />
       <div className="min-h-0 min-w-0 basis-2/3">

@@ -193,6 +193,18 @@ export async function markThreadAsRead(threadId: string): Promise<void> {
   return apiClient.post<void>(`/api/v1/threads/${threadId}/read`)
 }
 
+export async function markThreadAsUnread(threadId: string): Promise<void> {
+  return apiClient.post<void>(`/api/v1/threads/${threadId}/unread`)
+}
+
+export async function markMessageAsRead(messageId: string): Promise<void> {
+  return apiClient.post<void>(`/api/v1/messages/${messageId}/read`)
+}
+
+export async function markMessageAsUnread(messageId: string): Promise<void> {
+  return apiClient.post<void>(`/api/v1/messages/${messageId}/unread`)
+}
+
 export async function getUnreadCount(): Promise<UnreadCountResponse> {
   return apiClient.get<UnreadCountResponse>("/api/v1/threads/inbox/unread-count")
 }

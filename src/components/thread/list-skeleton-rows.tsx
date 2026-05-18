@@ -1,15 +1,17 @@
 import { Skeleton } from "@/components/ui/skeleton"
 
-interface EmailListLoadingRowsProps {
+interface ThreadListSkeletonRowsProps {
   count?: number
 }
 
-const loadingItemClassName =
-  "flex min-w-0 flex-col gap-1.5 border-b border-l-2 border-l-transparent p-3 md:flex-row md:items-center md:gap-3"
-
-export function EmailListLoadingRows({ count = 10 }: EmailListLoadingRowsProps) {
+export function ThreadListSkeletonRows({ count = 10 }: ThreadListSkeletonRowsProps) {
   return Array.from({ length: count }).map((_, index) => (
-    <div key={index} className={loadingItemClassName} role="listitem" aria-hidden="true">
+    <div
+      key={index}
+      className="flex min-w-0 flex-col gap-1.5 border-b border-l-2 border-l-transparent p-3 md:flex-row md:items-center md:gap-3"
+      role="listitem"
+      aria-hidden="true"
+    >
       <div className="flex min-w-0 items-center gap-2.5 md:w-48 md:shrink-0">
         <div className="mr-0.5 hidden md:flex">
           <Skeleton className="size-4 rounded" />

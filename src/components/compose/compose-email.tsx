@@ -12,7 +12,7 @@ import { Loader2, Paperclip, X } from "lucide-react"
 import { useNavigate } from "@tanstack/react-router"
 import { toast } from "sonner"
 
-import { FileAttachmentChip } from "@/components/attachment-chip"
+import { LocalAttachmentChip } from "@/components/attachment/local-chip"
 import { ComposeAiDraftPanel } from "@/components/compose/compose-ai-draft-panel"
 import { ComposeEditorToolbar, type ComposeEditor } from "@/components/compose/compose-editor-toolbar"
 import { ComposeSendPreviewDialog, type ComposeSendPreviewData } from "@/components/compose/compose-send-preview-dialog"
@@ -888,7 +888,7 @@ export function ComposeEmail({
           <div className="mb-3">
             <div className="flex max-h-20 flex-wrap gap-2 overflow-y-auto pr-1">
               {attachments.map((file, index) => (
-                <FileAttachmentChip
+                <LocalAttachmentChip
                   key={`${file.name}-${file.lastModified}-${index}`}
                   file={file}
                   onRemove={isDraftStreaming ? undefined : () => removeAttachment(index)}

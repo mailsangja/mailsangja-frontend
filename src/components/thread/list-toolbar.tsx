@@ -10,7 +10,7 @@ const filterOptions: Array<{ value: EmailFilter; label: string }> = [
   { value: "unread", label: "안읽음" },
 ]
 
-interface EmailListHeaderProps {
+interface ThreadListToolbarProps {
   mailboxName: string
   currentCount: number
   totalCount: number
@@ -24,7 +24,7 @@ interface EmailListHeaderProps {
   onLabelSelected: () => void
 }
 
-export function EmailListHeader({
+export function ThreadListToolbar({
   mailboxName,
   totalCount,
   filter,
@@ -35,7 +35,7 @@ export function EmailListHeader({
   onClearSelection,
   onDeleteSelected,
   onLabelSelected,
-}: EmailListHeaderProps) {
+}: ThreadListToolbarProps) {
   if (selectedCount > 0) {
     return (
       <div className="flex h-11 shrink-0 items-center gap-2 border-b bg-accent/40 px-3">
