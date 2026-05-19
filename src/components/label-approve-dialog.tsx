@@ -1,29 +1,15 @@
 import { useState } from "react"
-import { Check, Sparkles, X } from "lucide-react"
 import { toast } from "sonner"
 
-import { Button, buttonVariants } from "@/components/ui/button"
+import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
-import {
-  SidebarGroup,
-  SidebarGroupLabel,
-  SidebarMenu,
-  SidebarMenuButton,
-  SidebarMenuItem,
-} from "@/components/ui/sidebar"
 import { cn } from "@/lib/utils"
 import { getErrorMessage, getHttpStatus } from "@/lib/http-error"
 import { LABEL_COLORS } from "@/lib/label-colors"
-import { useApproveLabelSuggestion, useCreateLabelSuggestions, useDeleteLabelSuggestion } from "@/mutations/labels"
-import { useLabelSuggestionDetail, useLabelSuggestions } from "@/queries/labels"
+import { useApproveLabelSuggestion } from "@/mutations/labels"
+import { useLabelSuggestionDetail } from "@/queries/labels"
 import type { ConditionField, ConditionOperator, LabelSuggestion, NotificationPolicy } from "@/types/label"
-
-const NOTIFICATION_OPTIONS: { value: NotificationPolicy; label: string }[] = [
-  { value: "URGENT", label: "항상 알림" },
-  { value: "INHERIT", label: "기본" },
-  { value: "SILENT", label: "알림 안함" },
-]
 
 const FIELD_LABELS: Record<ConditionField, string> = {
   MAIL_ACCOUNT: "메일 계정",
@@ -43,7 +29,13 @@ const OPERATOR_LABELS: Record<ConditionOperator, string> = {
   BOOLEAN: "해당함 여부",
 }
 
-function ApproveDialog({
+const NOTIFICATION_OPTIONS: { value: NotificationPolicy; label: string }[] = [
+  { value: "URGENT", label: "항상 알림" },
+  { value: "INHERIT", label: "기본" },
+  { value: "SILENT", label: "알림 안함" },
+]
+
+export function ApproveDialog({
   open,
   onOpenChange,
   suggestion,
@@ -59,7 +51,6 @@ function ApproveDialog({
   const { data: detail } = useLabelSuggestionDetail(suggestion.id)
 
   function handleApprove() {
-    if (approveLabelSuggestion.isPending) return
     const trimmed = name.trim()
     if (!trimmed) return
     approveLabelSuggestion.mutate(
@@ -175,83 +166,5 @@ function ApproveDialog({
         </DialogFooter>
       </DialogContent>
     </Dialog>
-  )
-}
-
-function SuggestionItem({ suggestion }: { suggestion: LabelSuggestion }) {
-  const [approveOpen, setApproveOpen] = useState(false)
-  const deleteSuggestion = useDeleteLabelSuggestion()
-
-  function handleReject() {
-    deleteSuggestion.mutate(suggestion.id, {
-      onError: (e) => toast.error(getErrorMessage(e, "라벨 제안 거부에 실패했습니다.")),
-    })
-  }
-
-  return (
-    <SidebarMenuItem className="group/suggestion">
-      <SidebarMenuButton type="button" size="sm" tooltip={suggestion.name} onClick={() => setApproveOpen(true)}>
-        <span className="size-3 shrink-0 rounded-sm" style={{ backgroundColor: suggestion.colorCode }} />
-        <span className="truncate">{suggestion.name}</span>
-      </SidebarMenuButton>
-
-      <div className="absolute top-1/2 right-1 flex -translate-y-1/2 items-center gap-0.5 transition-opacity [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-focus-within/suggestion:opacity-100 [@media(hover:hover)]:group-hover/suggestion:opacity-100">
-        <button
-          type="button"
-          className="flex size-5 items-center justify-center rounded text-muted-foreground hover:text-green-600"
-          aria-label="승인"
-          onClick={(e) => {
-            e.stopPropagation()
-            setApproveOpen(true)
-          }}
-        >
-          <Check className="size-3.5" />
-        </button>
-        <button
-          type="button"
-          className="flex size-5 items-center justify-center rounded text-muted-foreground hover:text-destructive"
-          aria-label="거부"
-          onClick={(e) => {
-            e.stopPropagation()
-            handleReject()
-          }}
-          disabled={deleteSuggestion.isPending}
-        >
-          <X className="size-3.5" />
-        </button>
-      </div>
-
-      <ApproveDialog open={approveOpen} onOpenChange={setApproveOpen} suggestion={suggestion} />
-    </SidebarMenuItem>
-  )
-}
-
-export function NavAiLabels({ className }: { className?: string }) {
-  const { data: suggestions = [] } = useLabelSuggestions()
-  const createSuggestions = useCreateLabelSuggestions()
-
-  if (suggestions.length === 0) return null
-
-  return (
-    <SidebarGroup className={cn(className, "ai-label-spinning-border")}>
-      <SidebarGroupLabel className="flex items-center justify-between pr-1">
-        <span>AI 추천 라벨</span>
-        <button
-          type="button"
-          title="AI 라벨 추천 받기"
-          className={buttonVariants({ variant: "ghost", size: "icon-xs" })}
-          onClick={() => createSuggestions.mutate()}
-          disabled={createSuggestions.isPending}
-        >
-          <Sparkles className="size-3.5" />
-          <span className="sr-only">AI 라벨 추천 받기</span>
-        </button>
-      </SidebarGroupLabel>
-      <SidebarMenu>
-        {suggestions.map((suggestion) => (
-          <SuggestionItem key={suggestion.id} suggestion={suggestion} />
-        ))}
-      </SidebarMenu>
-    </SidebarGroup>
   )
 }
