@@ -89,7 +89,7 @@ export function LabelRuleDialog({ open, onOpenChange, labelId }: LabelRuleDialog
   const { data: label } = useLabelDetail(labelId)
   const updateRule = useUpdateLabelRule()
 
-  const canSubmit = entries.length > 0 && entries.every(isComplete)
+  const canSubmit = !!label && entries.length > 0 && entries.every(isComplete)
 
   function handleFieldChange(index: number, field: ConditionField | "") {
     setEntries((prev) =>

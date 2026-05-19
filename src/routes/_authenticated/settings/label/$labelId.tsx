@@ -158,7 +158,7 @@ function LabelDetailPage() {
                       </Badge>
                       <span className="shrink-0 text-muted-foreground">
                         {condition.field === "HAS_ATTACHMENT"
-                          ? ATTACHMENT_VALUE_LABELS[condition.value]
+                          ? (ATTACHMENT_VALUE_LABELS[condition.value] ?? String(condition.value))
                           : OPERATOR_LABELS[condition.operator]}
                       </span>
                       {condition.field !== "HAS_ATTACHMENT" && <div className="text-sm">{condition.value}</div>}
@@ -169,7 +169,12 @@ function LabelDetailPage() {
             </div>
           ))}
 
-          <Button variant="outline" className="w-full" onClick={() => setRuleDialogOpen(true)}>
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={() => setRuleDialogOpen(true)}
+            disabled={updateRule.isPending}
+          >
             <Plus className="size-4" />
             규칙 추가
           </Button>

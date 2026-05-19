@@ -98,7 +98,7 @@ export function ApproveDialog({
   const [selectedColor, setSelectedColor] = useState(suggestion.colorCode)
   const [notificationPolicy, setNotificationPolicy] = useState<NotificationPolicy>("INHERIT")
   const approveLabelSuggestion = useApproveLabelSuggestion()
-  const { data: detail } = useLabelSuggestionDetail(suggestion.id)
+  const { data: detail } = useLabelSuggestionDetail(suggestion.id, open)
 
   const suggestedGroups = useMemo(
     () =>
@@ -210,7 +210,7 @@ export function ApproveDialog({
         </DialogHeader>
         <ScrollArea className="min-h-0 flex-1">
           <div className="flex min-h-0 flex-1 flex-col gap-4 overflow-hidden py-2">
-            <div className="flex shrink-0 items-center gap-3">
+            <div className="flex shrink-0 items-center gap-3 px-1">
               <Input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
@@ -263,11 +263,6 @@ export function ApproveDialog({
               <div className="flex flex-col gap-4 py-0.5 pr-3 pl-0.5">
                 {groups.map((groupEntries, groupIndex) => (
                   <div key={groupIndex} className="flex flex-col gap-3">
-                    {groupIndex > 0 && (
-                      <div className="flex items-center gap-2">
-                        <div className="h-px flex-1 bg-border" />
-                      </div>
-                    )}
                     {groupEntries.map((entry, conditionIndex) => (
                       <div key={conditionIndex} className="flex flex-wrap items-center gap-2">
                         <DropdownMenu>
