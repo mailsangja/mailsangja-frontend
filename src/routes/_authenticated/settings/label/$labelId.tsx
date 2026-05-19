@@ -1,6 +1,6 @@
 import { useState } from "react"
 import { Link, createFileRoute } from "@tanstack/react-router"
-import { ArrowLeft, Plus, Minus } from "lucide-react"
+import { ArrowLeft, Plus, X } from "lucide-react"
 import { toast } from "sonner"
 
 import { Badge } from "@/components/ui/badge"
@@ -147,7 +147,7 @@ function LabelDetailPage() {
                     disabled={updateRule.isPending}
                     aria-label="규칙 삭제"
                   >
-                    <Minus className="size-4" />
+                    <X className="size-4" />
                   </Button>
                 </CardHeader>
                 <CardContent className="flex flex-col gap-2">
