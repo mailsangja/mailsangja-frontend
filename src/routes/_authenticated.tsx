@@ -29,7 +29,7 @@ export const Route = createFileRoute("/_authenticated")({
 
 function getMailRouteState(pathname: string, search: unknown) {
   const [, section, mailbox] = pathname.split("/")
-  const { query = "", filter = "all", accountId, labelId } = parseMailRouteSearch(search)
+  const { query = "", filter = "all", accountId, labelId, labelGroupId } = parseMailRouteSearch(search)
 
   return {
     mailbox: section === "mail" && mailbox ? parseMailboxId(mailbox) : null,
@@ -37,6 +37,7 @@ function getMailRouteState(pathname: string, search: unknown) {
     filter,
     accountId,
     labelId,
+    labelGroupId,
   }
 }
 
@@ -61,7 +62,7 @@ function NotificationSettingsLink() {
 function AuthenticatedRouteLayout() {
   const isMobile = useIsMobile()
   const navigate = useNavigate()
-  const { mailbox, query, filter, accountId, labelId } = useLocation({
+  const { mailbox, query, filter, accountId, labelId, labelGroupId } = useLocation({
     select: (currentLocation) => getMailRouteState(currentLocation.pathname, currentLocation.search),
   })
 
@@ -148,6 +149,7 @@ function AuthenticatedRouteLayout() {
           mailbox={mailbox}
           activeAccountId={accountId}
           activeLabelId={labelId}
+          activeLabelGroupId={labelGroupId}
           onMailboxChange={(nextMailbox) => {
             void navigate({
               to: "/mail/$mailbox",
@@ -178,6 +180,20 @@ function AuthenticatedRouteLayout() {
               search: (previous) => ({
                 ...previous,
                 labelId: previous.labelId === nextLabelId ? undefined : nextLabelId,
+                labelGroupId: undefined,
+                thread: undefined,
+              }),
+              replace: true,
+            })
+          }}
+          onLabelGroupToggle={(nextGroupId) => {
+            void navigate({
+              to: "/mail/$mailbox",
+              params: { mailbox: mailbox ?? "inbox" },
+              search: (previous) => ({
+                ...previous,
+                labelGroupId: previous.labelGroupId === nextGroupId ? undefined : nextGroupId,
+                labelId: undefined,
                 thread: undefined,
               }),
               replace: true,

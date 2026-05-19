@@ -14,7 +14,7 @@ import { cn } from "@/lib/utils"
 import { useMarkThreadAsRead } from "@/mutations/emails"
 import { useMailAccounts, mailAccountQueries } from "@/queries/mail-accounts"
 import { useMailboxThreads } from "@/queries/emails"
-import { useLabels, labelQueries } from "@/queries/labels"
+import { useLabels, labelQueries, useLabelGroups, labelGroupQueries } from "@/queries/labels"
 import { useTrashThreads } from "@/queries/trash"
 import { isSupportedMailboxId, MAILBOX_LABELS, parseMailboxId, type PrimaryMailboxId } from "@/types/email"
 import type { TrashThreadSummary } from "@/types/trash"
@@ -33,22 +33,25 @@ export const Route = createFileRoute("/_authenticated/mail/$mailbox")({
   },
   validateSearch: parseMailRouteSearch,
   beforeLoad: async ({ context, params, search }) => {
-    const { labelId, accountId } = search
+    const { labelId, accountId, labelGroupId } = search
 
-    const [labels, accounts] = await Promise.all([
+    const [labels, accounts, groups] = await Promise.all([
       context.queryClient.ensureQueryData(labelQueries.list()),
       accountId !== undefined ? context.queryClient.ensureQueryData(mailAccountQueries.list()) : null,
+      labelGroupId !== undefined ? context.queryClient.ensureQueryData(labelGroupQueries.list()) : null,
     ])
 
-    if (!labelId && !accountId) return
+    if (!labelId && !accountId && !labelGroupId) return
 
     const isLabelInvalid = labelId !== undefined && !labels.some((l) => l.id === labelId)
     const isAccountInvalid = accounts !== null && !accounts.some((a) => a.id === accountId)
+    const isGroupInvalid = groups !== null && !groups.some((g) => g.id === labelGroupId)
 
-    if (!isLabelInvalid && !isAccountInvalid) return
+    if (!isLabelInvalid && !isAccountInvalid && !isGroupInvalid) return
 
     if (isLabelInvalid) toast.error("유효하지 않은 라벨입니다")
     if (isAccountInvalid) toast.error("유효하지 않은 계정입니다")
+    if (isGroupInvalid) toast.error("유효하지 않은 라벨 그룹입니다")
 
     throw redirect({
       to: "/mail/$mailbox",
@@ -57,6 +60,7 @@ export const Route = createFileRoute("/_authenticated/mail/$mailbox")({
         ...search,
         labelId: isLabelInvalid ? undefined : search.labelId,
         accountId: isAccountInvalid ? undefined : search.accountId,
+        labelGroupId: isGroupInvalid ? undefined : search.labelGroupId,
       },
       replace: true,
     })
@@ -101,14 +105,24 @@ function MailboxPage() {
 }
 
 function MailboxView({ mailbox }: { mailbox: PrimaryMailboxId }) {
-  const { query = "", filter = "all", accountId, labelId, thread: selectedThreadId = null } = Route.useSearch()
+  const {
+    query = "",
+    filter = "all",
+    accountId,
+    labelId,
+    labelGroupId,
+    thread: selectedThreadId = null,
+  } = Route.useSearch()
   const navigate = Route.useNavigate()
   const isMobile = useIsMobile()
   const { data: accounts } = useMailAccounts()
   const { data: labels } = useLabels()
+  const { data: groups } = useLabelGroups()
   const { mutate: markAsRead } = useMarkThreadAsRead()
   const supportedMailbox = isSupportedMailboxId(mailbox) ? mailbox : null
   const selectedLabel = labelId ? (labels?.find((label) => label.id === labelId) ?? null) : null
+  const selectedGroup = labelGroupId ? (groups?.find((g) => g.id === labelGroupId) ?? null) : null
+  const effectiveLabelIds = selectedGroup ? selectedGroup.labelIds : labelId ? [labelId] : undefined
   const {
     data,
     isLoading,
@@ -122,7 +136,7 @@ function MailboxView({ mailbox }: { mailbox: PrimaryMailboxId }) {
     isFetchNextPageError,
   } = useMailboxThreads(supportedMailbox, {
     read: filter === "unread" ? false : undefined,
-    labelId: labelId ? [labelId] : undefined,
+    labelId: effectiveLabelIds,
   })
 
   const loadedThreads = data?.pages.flatMap((page) => page.content) ?? []
@@ -169,6 +183,9 @@ function MailboxView({ mailbox }: { mailbox: PrimaryMailboxId }) {
     emptyDescription = "현재까지 불러온 메일에서 검색 결과를 찾지 못했습니다."
   } else if (filter === "unread") {
     emptyTitle = "안 읽은 메일이 없습니다"
+  } else if (selectedGroup?.id) {
+    emptyTitle = "선택한 그룹의 메일이 없습니다"
+    emptyDescription = `"${selectedGroup.name}" 그룹에 속한 라벨이 적용된 메일이 없습니다.`
   } else if (selectedLabel?.id) {
     emptyTitle = "선택한 라벨의 메일이 없습니다"
     emptyDescription = `"${selectedLabel.name}" 라벨이 적용된 메일이 없습니다.`
