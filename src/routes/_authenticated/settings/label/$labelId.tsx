@@ -5,8 +5,9 @@ import { toast } from "sonner"
 
 import { Badge } from "@/components/ui/badge"
 import { Button, buttonVariants } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { Skeleton } from "@/components/ui/skeleton"
 import { LabelRuleDialog } from "@/components/label-filter-dialog"
 import { getErrorMessage } from "@/lib/http-error"
 import { useUpdateLabelRule } from "@/mutations/labels"
@@ -63,12 +64,34 @@ function LabelDetailPage() {
     return (
       <ScrollArea className="min-h-0 flex-1">
         <div className="flex flex-col gap-6 px-3 pt-1 pb-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>불러오는 중...</CardTitle>
-              <CardDescription>라벨 정보를 가져오고 있습니다.</CardDescription>
-            </CardHeader>
-          </Card>
+          <div>
+            <Skeleton className="h-8 w-40 rounded-md" />
+          </div>
+          <div className="flex flex-col gap-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <Skeleton className="size-3.5 shrink-0 rounded-sm" />
+                <Skeleton className="h-6 w-24" />
+              </div>
+              <Skeleton className="mt-2 h-4 w-80 max-w-full" />
+            </div>
+            {[0, 1].map((i) => (
+              <Card key={i} className="gap-0 overflow-hidden">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 border-b px-4 py-2.5">
+                  <Skeleton className="h-4 w-12" />
+                  <Skeleton className="size-7 rounded-md" />
+                </CardHeader>
+                <CardContent className="flex flex-col gap-2 px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <Skeleton className="h-5 w-20 rounded-full" />
+                    <Skeleton className="h-3.5 w-8" />
+                    <Skeleton className="h-5 w-36 rounded-sm" />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+            <Skeleton className="h-9 w-full rounded-md" />
+          </div>
         </div>
       </ScrollArea>
     )
@@ -138,9 +161,7 @@ function LabelDetailPage() {
                           ? ATTACHMENT_VALUE_LABELS[condition.value]
                           : OPERATOR_LABELS[condition.operator]}
                       </span>
-                      {condition.field !== "HAS_ATTACHMENT" && (
-                        <code className="font-mono text-sm">{condition.value}</code>
-                      )}
+                      {condition.field !== "HAS_ATTACHMENT" && <div className="text-sm">{condition.value}</div>}
                     </div>
                   ))}
                 </CardContent>

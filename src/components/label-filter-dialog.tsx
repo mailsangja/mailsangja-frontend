@@ -1,12 +1,18 @@
 import { useState } from "react"
-import { Minus, Plus } from "lucide-react"
+import { ChevronDown, Minus, Plus } from "lucide-react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { getErrorMessage } from "@/lib/http-error"
 import { useUpdateLabelRule } from "@/mutations/labels"
 import { useLabelDetail } from "@/queries/labels"
@@ -16,11 +22,6 @@ interface ConditionEntry {
   field: ConditionField | ""
   operator: ConditionOperator | ""
   value: string
-}
-
-const ATTACHMENT_VALUE_LABELS: Record<string, string> = {
-  true: "포함",
-  false: "포함안함",
 }
 
 const FIELD_LABELS: Record<ConditionField, string> = {
@@ -62,6 +63,11 @@ const FIELD_OPERATORS: Record<ConditionField, ConditionOperator[]> = {
   BODY_TEXT: ["CONTAINS", "NOT_CONTAINS"],
   HAS_ATTACHMENT: ["BOOLEAN"],
 }
+
+const ATTACHMENT_OPTIONS = [
+  { value: "true", label: "포함" },
+  { value: "false", label: "포함안함" },
+]
 
 const EMPTY_ENTRY: ConditionEntry = { field: "", operator: "", value: "" }
 
@@ -147,38 +153,54 @@ export function LabelRuleDialog({ open, onOpenChange, labelId }: LabelRuleDialog
           <div className="flex min-h-12 flex-col gap-3 py-0.5 pr-3 pl-0.5">
             {entries.map((entry, index) => (
               <div key={index} className="flex flex-wrap items-center gap-2">
-                <Select value={entry.field} onValueChange={(v) => handleFieldChange(index, v as ConditionField)}>
-                  <SelectTrigger className="h-9 w-36 shrink-0">
-                    {entry.field ? (
-                      <span className="truncate text-sm">{FIELD_LABELS[entry.field]}</span>
-                    ) : (
-                      <SelectValue placeholder="필드 선택" />
-                    )}
-                  </SelectTrigger>
-                  <SelectContent>
-                    {ALL_CONDITION_FIELDS.map((field) => (
-                      <SelectItem key={field} value={field}>
-                        {FIELD_LABELS[field]}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <DropdownMenu>
+                  <DropdownMenuTrigger className="flex h-9 w-36 shrink-0 items-center justify-between gap-1 rounded-md border border-input bg-background px-3 text-sm disabled:cursor-not-allowed disabled:opacity-50">
+                    <span className="truncate">
+                      {entry.field ? (
+                        FIELD_LABELS[entry.field]
+                      ) : (
+                        <span className="text-muted-foreground">필드 선택</span>
+                      )}
+                    </span>
+                    <ChevronDown className="size-4 shrink-0 opacity-50" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent>
+                    <DropdownMenuRadioGroup
+                      value={entry.field}
+                      onValueChange={(v) => handleFieldChange(index, v as ConditionField)}
+                    >
+                      {ALL_CONDITION_FIELDS.map((field) => (
+                        <DropdownMenuRadioItem key={field} value={field}>
+                          {FIELD_LABELS[field]}
+                        </DropdownMenuRadioItem>
+                      ))}
+                    </DropdownMenuRadioGroup>
+                  </DropdownMenuContent>
+                </DropdownMenu>
 
                 {entry.field === "HAS_ATTACHMENT" ? (
                   <>
-                    <Select value={entry.value} onValueChange={(v) => handleValueChange(index, v ?? "")}>
-                      <SelectTrigger className="h-9 w-28 shrink-0">
-                        {entry.value ? (
-                          <span className="truncate text-sm">{ATTACHMENT_VALUE_LABELS[entry.value]}</span>
-                        ) : (
-                          <SelectValue placeholder="선택" />
-                        )}
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="true">포함</SelectItem>
-                        <SelectItem value="false">포함안함</SelectItem>
-                      </SelectContent>
-                    </Select>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger className="flex h-9 w-28 shrink-0 items-center justify-between gap-1 rounded-md border border-input bg-background px-3 text-sm disabled:cursor-not-allowed disabled:opacity-50">
+                        <span className="truncate">
+                          {entry.value ? (
+                            ATTACHMENT_OPTIONS.find((o) => o.value === entry.value)?.label
+                          ) : (
+                            <span className="text-muted-foreground">선택</span>
+                          )}
+                        </span>
+                        <ChevronDown className="size-4 shrink-0 opacity-50" />
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent>
+                        <DropdownMenuRadioGroup value={entry.value} onValueChange={(v) => handleValueChange(index, v)}>
+                          {ATTACHMENT_OPTIONS.map((o) => (
+                            <DropdownMenuRadioItem key={o.value} value={o.value}>
+                              {o.label}
+                            </DropdownMenuRadioItem>
+                          ))}
+                        </DropdownMenuRadioGroup>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                     {entries.length > 1 && (
                       <Button variant="ghost" size="icon-sm" onClick={() => removeEntry(index)} aria-label="조건 삭제">
                         <Minus className="size-4" />
@@ -187,29 +209,34 @@ export function LabelRuleDialog({ open, onOpenChange, labelId }: LabelRuleDialog
                   </>
                 ) : (
                   <>
-                    <Select
-                      value={entry.operator}
-                      onValueChange={(v) => handleOperatorChange(index, v as ConditionOperator)}
-                      disabled={!entry.field}
-                    >
-                      <SelectTrigger className="h-9 w-24 shrink-0">
-                        {entry.operator ? (
-                          <span className="truncate text-sm">
-                            {OPERATOR_LABELS[entry.operator as ConditionOperator]}
-                          </span>
-                        ) : (
-                          <SelectValue placeholder="연산자" />
-                        )}
-                      </SelectTrigger>
-                      <SelectContent className="min-w-32">
-                        {entry.field &&
-                          FIELD_OPERATORS[entry.field].map((op) => (
-                            <SelectItem key={op} value={op}>
-                              {OPERATOR_LABELS[op]}
-                            </SelectItem>
-                          ))}
-                      </SelectContent>
-                    </Select>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger
+                        disabled={!entry.field}
+                        className="flex h-9 w-24 shrink-0 items-center justify-between gap-1 rounded-md border border-input bg-background px-3 text-sm disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        <span className="truncate">
+                          {entry.operator ? (
+                            OPERATOR_LABELS[entry.operator as ConditionOperator]
+                          ) : (
+                            <span className="text-muted-foreground">연산자</span>
+                          )}
+                        </span>
+                        <ChevronDown className="size-4 shrink-0 opacity-50" />
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent>
+                        <DropdownMenuRadioGroup
+                          value={entry.operator}
+                          onValueChange={(v) => handleOperatorChange(index, v as ConditionOperator)}
+                        >
+                          {entry.field &&
+                            FIELD_OPERATORS[entry.field].map((op) => (
+                              <DropdownMenuRadioItem key={op} value={op}>
+                                {OPERATOR_LABELS[op]}
+                              </DropdownMenuRadioItem>
+                            ))}
+                        </DropdownMenuRadioGroup>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                     <div className="flex min-w-full flex-1 items-center gap-2 sm:min-w-0">
                       <Input
                         value={entry.value}
