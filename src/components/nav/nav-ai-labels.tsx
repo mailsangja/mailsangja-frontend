@@ -16,7 +16,7 @@ import { cn } from "@/lib/utils"
 import { getErrorMessage, getHttpStatus } from "@/lib/http-error"
 import { LABEL_COLORS } from "@/lib/label-colors"
 import { useApproveLabelSuggestion, useCreateLabelSuggestions, useDeleteLabelSuggestion } from "@/mutations/labels"
-import { useLabelSuggestions } from "@/queries/labels"
+import { useLabelSuggestionDetail, useLabelSuggestions } from "@/queries/labels"
 import type { ConditionField, ConditionOperator, LabelSuggestion, NotificationPolicy } from "@/types/label"
 
 const NOTIFICATION_OPTIONS: { value: NotificationPolicy; label: string }[] = [
@@ -56,6 +56,7 @@ function ApproveDialog({
   const [selectedColor, setSelectedColor] = useState(suggestion.colorCode)
   const [notificationPolicy, setNotificationPolicy] = useState<NotificationPolicy>("INHERIT")
   const approveLabelSuggestion = useApproveLabelSuggestion()
+  const { data: detail } = useLabelSuggestionDetail(suggestion.id)
 
   function handleApprove() {
     if (approveLabelSuggestion.isPending) return
@@ -69,7 +70,7 @@ function ApproveDialog({
           colorCode: selectedColor,
           notificationPolicy,
           order: suggestion.order,
-          rule: suggestion.rule,
+          rule: detail?.rule ?? undefined,
         },
       },
       {
@@ -143,11 +144,11 @@ function ApproveDialog({
               ))}
             </div>
           </div>
-          {suggestion.rule?.groups && suggestion.rule.groups.length > 0 && (
+          {detail?.rule?.groups && detail.rule.groups.length > 0 && (
             <div>
               <p className="mb-2 text-xs text-muted-foreground">AI 제안 필터 조건</p>
               <div className="space-y-1 rounded-md border bg-muted/40 px-3 py-2 text-xs">
-                {suggestion.rule.groups.flatMap((group, gi) => [
+                {detail.rule.groups.flatMap((group, gi) => [
                   ...(gi > 0 ? [<hr key={`sep-${gi}`} className="my-1 border-border" />] : []),
                   ...group.conditions.map((cond, ci) => (
                     <p key={`${gi}-${ci}`} className="text-muted-foreground">
@@ -168,7 +169,7 @@ function ApproveDialog({
           <Button variant="outline" onClick={() => onOpenChange(false)}>
             취소
           </Button>
-          <Button onClick={handleApprove} disabled={!name.trim() || approveLabelSuggestion.isPending}>
+          <Button onClick={handleApprove} disabled={!name.trim() || approveLabelSuggestion.isPending || !detail}>
             추가하기
           </Button>
         </DialogFooter>

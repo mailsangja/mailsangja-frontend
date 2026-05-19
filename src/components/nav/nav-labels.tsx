@@ -256,11 +256,11 @@ function ApproveDialog({
               ))}
             </div>
           </div>
-          {suggestion.rule?.groups && suggestion.rule.groups.length > 0 && (
+          {detail?.rule?.groups && detail.rule.groups.length > 0 && (
             <div>
               <p className="mb-2 text-xs text-muted-foreground">AI 제안 필터 조건</p>
               <div className="space-y-1 rounded-md border bg-muted/40 px-3 py-2 text-xs">
-                {suggestion.rule.groups.flatMap((group, gi) => [
+                {detail.rule.groups.flatMap((group, gi) => [
                   ...(gi > 0 ? [<hr key={`sep-${gi}`} className="my-1 border-border" />] : []),
                   ...group.conditions.map((cond, ci) => (
                     <p key={`${gi}-${ci}`} className="text-muted-foreground">

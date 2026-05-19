@@ -79,8 +79,6 @@ export interface UpdateLabelGroupPayload {
   order?: number
 }
 
-export interface LabelSuggestion extends LabelListItem {
-  rule: LabelRule
-}
+export type LabelSuggestion = LabelListItem
 
 export type ApproveLabelSuggestionPayload = CreateLabelPayload
