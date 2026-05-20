@@ -7,42 +7,18 @@ import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { LabelFilterDialog } from "@/components/label-filter-dialog"
 import { getErrorMessage } from "@/lib/http-error"
-import { LABEL_COLORS } from "@/lib/label-colors"
 import { useCreateLabel } from "@/mutations/labels"
 import { useLabels } from "@/queries/labels"
 import { useLabelOrder } from "@/hooks/use-label-order"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { LabelFormDialog, type LabelFormData } from "@/components/label-form-dialog"
 import type { LabelListItem } from "@/types/label"
 
 export const Route = createFileRoute("/_authenticated/settings/label/")({
   component: SettingsLabelPage,
 })
-
-function ColorPicker({ selected, onSelect }: { selected: string; onSelect: (color: string) => void }) {
-  return (
-    <div className="grid grid-cols-10 gap-1.5 p-0.5">
-      {LABEL_COLORS.map((color) => (
-        <button
-          key={color}
-          type="button"
-          className="size-6 rounded-full ring-offset-2 transition-transform hover:scale-110 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-          style={{
-            backgroundColor: color,
-            boxShadow: selected === color ? `0 0 0 2px white, 0 0 0 4px ${color}` : undefined,
-          }}
-          onClick={() => onSelect(color)}
-          aria-label={color}
-          aria-pressed={selected === color}
-        />
-      ))}
-    </div>
-  )
-}
 
 function SortableLabelRow({ label }: { label: LabelListItem }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: label.id })
@@ -85,65 +61,23 @@ function SortableLabelRow({ label }: { label: LabelListItem }) {
   )
 }
 
-function CreateLabelDialog() {
-  const [open, setOpen] = useState(false)
-  const [name, setName] = useState("")
-  const [selectedColor, setSelectedColor] = useState(LABEL_COLORS[0])
-  const createLabel = useCreateLabel()
-
-  function handleCreate() {
-    if (!name.trim()) return
-    createLabel.mutate(
-      { name: name.trim(), colorCode: selectedColor, notificationPolicy: "INHERIT", order: 0 },
-      {
-        onSuccess: () => {
-          setName("")
-          setSelectedColor(LABEL_COLORS[0])
-          setOpen(false)
-        },
-        onError: (e) => toast.error(getErrorMessage(e, "라벨 생성에 실패했습니다.")),
-      }
-    )
-  }
-
-  return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={<Button variant="outline" />}>
-        <Plus data-icon="inline-start" />
-        라벨 추가
-      </DialogTrigger>
-      <DialogContent>
-        <DialogHeader>
-          <DialogTitle>새 라벨 만들기</DialogTitle>
-        </DialogHeader>
-        <div className="flex flex-col gap-4 py-2">
-          <Input
-            placeholder="라벨 이름"
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && handleCreate()}
-            autoFocus
-          />
-          <div>
-            <p className="mb-2 text-xs text-muted-foreground">색상 선택</p>
-            <ColorPicker selected={selectedColor} onSelect={setSelectedColor} />
-          </div>
-        </div>
-        <DialogFooter>
-          <Button onClick={handleCreate} disabled={!name.trim() || createLabel.isPending}>
-            만들기
-          </Button>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
-  )
-}
-
 function SettingsLabelPage() {
   const { data: serverLabels = [], isPending, isError } = useLabels()
   const { orderedLabels, sensors, handleDragEnd } = useLabelOrder(serverLabels)
   const location = useLocation()
   const createFilterRef = useRef<HTMLDivElement>(null)
+  const [createOpen, setCreateOpen] = useState(false)
+  const createLabel = useCreateLabel()
+
+  function handleCreate({ name, colorCode, notificationPolicy }: LabelFormData) {
+    createLabel.mutate(
+      { name, colorCode, notificationPolicy, order: 0 },
+      {
+        onSuccess: () => setCreateOpen(false),
+        onError: (e) => toast.error(getErrorMessage(e, "라벨 생성에 실패했습니다.")),
+      }
+    )
+  }
 
   useEffect(() => {
     if (location.hash === "create-filter") {
@@ -213,21 +147,20 @@ function SettingsLabelPage() {
             <CardDescription>이름과 색상을 지정해 새 라벨을 만들 수 있습니다.</CardDescription>
           </CardHeader>
           <CardContent>
-            <CreateLabelDialog />
+            <Button variant="outline" onClick={() => setCreateOpen(true)}>
+              <Plus data-icon="inline-start" />
+              라벨 추가
+            </Button>
+            <LabelFormDialog
+              open={createOpen}
+              onOpenChange={setCreateOpen}
+              title="새 라벨 만들기"
+              submitLabel="만들기"
+              isPending={createLabel.isPending}
+              onSubmit={handleCreate}
+            />
           </CardContent>
         </Card>
-
-        <div ref={createFilterRef}>
-          <Card>
-            <CardHeader>
-              <CardTitle>필터 만들기</CardTitle>
-              <CardDescription>검색 기준에 맞는 메일에 자동으로 라벨을 적용합니다.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <LabelFilterDialog />
-            </CardContent>
-          </Card>
-        </div>
       </div>
     </ScrollArea>
   )

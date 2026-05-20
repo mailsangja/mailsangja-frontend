@@ -93,6 +93,9 @@ export function useLabelSuggestions() {
   return useQuery(labelSuggestionQueries.list())
 }
 
-export function useLabelSuggestionDetail(id: string) {
-  return useQuery(labelSuggestionQueries.detail(id))
+export function useLabelSuggestionDetail(id: string, enabled?: boolean) {
+  return useQuery({
+    ...labelSuggestionQueries.detail(id),
+    enabled: (enabled ?? true) && !!id,
+  })
 }

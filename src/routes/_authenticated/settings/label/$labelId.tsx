@@ -1,85 +1,37 @@
 import { useState } from "react"
 import { Link, createFileRoute } from "@tanstack/react-router"
-import { ArrowLeft, Minus, Plus } from "lucide-react"
+import { ArrowLeft, Plus, X } from "lucide-react"
 import { toast } from "sonner"
 
-import { Badge } from "@/components/ui/badge"
 import { Button, buttonVariants } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { LabelFilterDialog } from "@/components/label-filter-dialog"
+import { Skeleton } from "@/components/ui/skeleton"
+import { LabelConditionList } from "@/components/label-condition-list"
+import { LabelRuleDialog } from "@/components/label-filter-dialog"
 import { getErrorMessage } from "@/lib/http-error"
 import { useUpdateLabelRule } from "@/mutations/labels"
 import { useLabelDetail } from "@/queries/labels"
-import type { ConditionField, ConditionOperator, LabelCondition } from "@/types/label"
 
 export const Route = createFileRoute("/_authenticated/settings/label/$labelId")({
   component: LabelDetailPage,
 })
 
-export const FIELD_LABELS: Record<ConditionField, string> = {
-  MAIL_ACCOUNT: "메일 계정",
-  FROM_ADDRESS: "보낸 주소",
-  FROM_DOMAIN: "보낸 도메인",
-  TO_ADDRESS: "받는 주소",
-  CC_ADDRESS: "참조",
-  SUBJECT: "제목",
-  BODY_TEXT: "본문",
-  HAS_ATTACHMENT: "첨부파일",
-}
-
-export const OPERATOR_LABELS: Record<ConditionOperator, string> = {
-  EQUALS: "같음",
-  CONTAINS: "포함",
-  NOT_CONTAINS: "미포함",
-  BOOLEAN: "해당함 여부",
-}
-
 function LabelDetailPage() {
   const { labelId } = Route.useParams()
   const { data: label, isPending, isError } = useLabelDetail(labelId)
   const updateRule = useUpdateLabelRule()
-  const [isEditing, setIsEditing] = useState(false)
-  const [editGroups, setEditGroups] = useState<{ conditions: LabelCondition[] }[] | null>(null)
-  const [filterDialogOpen, setFilterDialogOpen] = useState(false)
+  const [ruleDialogOpen, setRuleDialogOpen] = useState(false)
 
-  const savedGroups = label?.rule?.groups ?? []
-  const displayGroups = editGroups ?? savedGroups
-  const totalConditions = displayGroups.reduce((sum, g) => sum + g.conditions.length, 0)
+  const groups = label?.rule?.groups ?? []
 
-  function startEditing() {
-    setEditGroups(savedGroups.map((g) => ({ conditions: [...g.conditions] })))
-    setIsEditing(true)
-  }
-
-  function cancelEditing() {
-    setEditGroups(null)
-    setIsEditing(false)
-  }
-
-  function handleRemove(groupIndex: number, conditionIndex: number) {
-    setEditGroups((prev) =>
-      prev!
-        .map((g, gi) => (gi === groupIndex ? { conditions: g.conditions.filter((_, ci) => ci !== conditionIndex) } : g))
-        .filter((g) => g.conditions.length > 0)
-    )
-  }
-
-  function handleSave() {
-    const groups = editGroups!.filter((g) => g.conditions.length > 0)
+  function handleDeleteGroup(groupIndex: number) {
+    const newGroups = groups.filter((_, i) => i !== groupIndex)
     updateRule.mutate(
+      { labelId, data: { groups: newGroups } },
       {
-        labelId,
-        data: { rule: { groups } },
-      },
-      {
-        onSuccess: () => {
-          setEditGroups(null)
-          setIsEditing(false)
-          toast.success("필터 규칙이 저장되었습니다.")
-        },
-        onError: (e) => toast.error(getErrorMessage(e, "필터 규칙 저장에 실패했습니다.")),
+        onSuccess: () => toast.success("규칙이 삭제되었습니다."),
+        onError: (e) => toast.error(getErrorMessage(e, "규칙 삭제에 실패했습니다.")),
       }
     )
   }
@@ -88,12 +40,34 @@ function LabelDetailPage() {
     return (
       <ScrollArea className="min-h-0 flex-1">
         <div className="flex flex-col gap-6 px-3 pt-1 pb-4">
-          <Card>
-            <CardHeader>
-              <CardTitle>불러오는 중...</CardTitle>
-              <CardDescription>라벨 정보를 가져오고 있습니다.</CardDescription>
-            </CardHeader>
-          </Card>
+          <div>
+            <Skeleton className="h-8 w-40 rounded-md" />
+          </div>
+          <div className="flex flex-col gap-4">
+            <div>
+              <div className="flex items-center gap-2">
+                <Skeleton className="size-3.5 shrink-0 rounded-sm" />
+                <Skeleton className="h-6 w-24" />
+              </div>
+              <Skeleton className="mt-2 h-4 w-80 max-w-full" />
+            </div>
+            {[0, 1].map((i) => (
+              <Card key={i} className="gap-0 overflow-hidden">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 border-b px-4 py-2.5">
+                  <Skeleton className="h-4 w-12" />
+                  <Skeleton className="size-7 rounded-md" />
+                </CardHeader>
+                <CardContent className="flex flex-col gap-2 px-4 py-3">
+                  <div className="flex items-center gap-2">
+                    <Skeleton className="h-5 w-20 rounded-full" />
+                    <Skeleton className="h-3.5 w-8" />
+                    <Skeleton className="h-5 w-36 rounded-sm" />
+                  </div>
+                </CardContent>
+              </Card>
+            ))}
+            <Skeleton className="h-9 w-full rounded-md" />
+          </div>
         </div>
       </ScrollArea>
     )
@@ -118,114 +92,60 @@ function LabelDetailPage() {
       <div className="flex flex-col gap-6 px-3 pt-1 pb-4">
         <div>
           <Link to="/settings/label" className={buttonVariants({ variant: "ghost", size: "sm" })}>
-            <ArrowLeft className="size-4" />
-            라벨 목록
+            <ArrowLeft className="size-5" />
+            라벨 목록으로 돌아가기
           </Link>
         </div>
-        <Card>
-          <CardHeader>
-            <CardTitle className="flex items-center gap-2">
+
+        <div className="flex flex-col gap-4">
+          <div>
+            <div className="flex items-center gap-2">
               <span
                 className="inline-block size-3.5 shrink-0 rounded-sm"
                 style={{ backgroundColor: label.colorCode }}
               />
-              {label.name}
-            </CardTitle>
-            <CardDescription>이 라벨에 자동으로 분류될 메일의 조건을 설정합니다.</CardDescription>
-          </CardHeader>
-          <CardContent className="px-0">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>필드</TableHead>
-                  <TableHead>연산자</TableHead>
-                  <TableHead>값</TableHead>
-                  <TableHead className="w-10" />
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {totalConditions === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={4} className="text-center text-sm text-muted-foreground">
-                      설정된 필터 조건이 없습니다.
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  displayGroups.flatMap((group, groupIndex) => [
-                    ...(groupIndex > 0
-                      ? [
-                          <TableRow key={`sep-${groupIndex}`} className="hover:bg-transparent">
-                            <TableCell colSpan={4} className="py-1 text-center text-xs text-muted-foreground">
-                              또는
-                            </TableCell>
-                          </TableRow>,
-                        ]
-                      : []),
-                    ...group.conditions.map((condition, conditionIndex) => (
-                      <TableRow key={`${groupIndex}-${conditionIndex}`}>
-                        <TableCell>
-                          <Badge variant="secondary" className="font-normal">
-                            {FIELD_LABELS[condition.field]}
-                          </Badge>
-                        </TableCell>
-                        <TableCell className="text-sm text-muted-foreground">
-                          {OPERATOR_LABELS[condition.operator]}
-                        </TableCell>
-                        <TableCell className="font-mono text-sm">{condition.value}</TableCell>
-                        <TableCell>
-                          {isEditing && (
-                            <Button
-                              variant="ghost"
-                              size="icon-sm"
-                              onClick={() => handleRemove(groupIndex, conditionIndex)}
-                              aria-label="조건 삭제"
-                            >
-                              <Minus className="size-4" />
-                            </Button>
-                          )}
-                        </TableCell>
-                      </TableRow>
-                    )),
-                  ])
-                )}
-                {!isEditing && (
-                  <TableRow className="hover:bg-transparent">
-                    <TableCell colSpan={4} className="p-0">
-                      <button
-                        type="button"
-                        className="flex w-full cursor-pointer items-center justify-center py-2 text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
-                        onClick={() => setFilterDialogOpen(true)}
-                        aria-label="조건 추가"
-                      >
-                        <Plus className="size-4" />
-                      </button>
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
-            {!isEditing && (
-              <div className="flex justify-end px-4 pt-3">
-                <Button variant="outline" size="sm" onClick={startEditing} disabled={totalConditions === 0}>
-                  수정하기
-                </Button>
-              </div>
-            )}
-          </CardContent>
-          {isEditing && (
-            <CardFooter className="justify-end gap-2">
-              <Button variant="ghost" onClick={cancelEditing} disabled={updateRule.isPending}>
-                취소
-              </Button>
-              <Button onClick={handleSave} disabled={updateRule.isPending}>
-                {updateRule.isPending ? "저장 중..." : "저장하기"}
-              </Button>
-            </CardFooter>
-          )}
-        </Card>
+              <h2 className="text-lg font-semibold">{label.name}</h2>
+            </div>
+            <p className="mt-1 text-sm text-muted-foreground">
+              이 라벨에 자동으로 분류될 메일의 규칙을 설정합니다. 규칙이 여러 개이면 하나라도 만족하면 분류됩니다.
+            </p>
+          </div>
+
+          {groups.map((group, groupIndex) => (
+            <div key={groupIndex} className="flex flex-col gap-2">
+              <Card className="gap-0">
+                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
+                  <CardTitle className="text-sm font-medium text-muted-foreground">규칙 {groupIndex + 1}</CardTitle>
+                  <Button
+                    variant="ghost"
+                    size="icon-sm"
+                    onClick={() => handleDeleteGroup(groupIndex)}
+                    disabled={updateRule.isPending}
+                    aria-label="규칙 삭제"
+                  >
+                    <X className="size-4" />
+                  </Button>
+                </CardHeader>
+                <CardContent>
+                  <LabelConditionList conditions={group.conditions} />
+                </CardContent>
+              </Card>
+            </div>
+          ))}
+
+          <Button
+            variant="outline"
+            className="w-full"
+            onClick={() => setRuleDialogOpen(true)}
+            disabled={updateRule.isPending}
+          >
+            <Plus className="size-4" />
+            규칙 추가
+          </Button>
+        </div>
       </div>
 
-      <LabelFilterDialog open={filterDialogOpen} onOpenChange={setFilterDialogOpen} defaultLabelId={labelId} />
+      <LabelRuleDialog open={ruleDialogOpen} onOpenChange={setRuleDialogOpen} labelId={labelId} />
     </ScrollArea>
   )
 }

@@ -6,7 +6,6 @@ import type {
   LabelDetail,
   LabelGroupItem,
   LabelListItem,
-  LabelSuggestion,
   UpdateLabelGroupPayload,
   UpdateLabelPayload,
   UpdateLabelRulePayload,
@@ -29,7 +28,7 @@ export async function updateLabel(labelId: string, data: UpdateLabelPayload): Pr
 }
 
 export async function updateLabelRule(labelId: string, data: UpdateLabelRulePayload): Promise<LabelDetail> {
-  return apiClient.patch<LabelDetail>(`/api/v1/labels/${labelId}/rule`, data)
+  return apiClient.patch<LabelDetail>(`/api/v1/labels/${labelId}/rule`, { rule: data })
 }
 
 export async function deleteLabel(labelId: string): Promise<void> {
@@ -56,8 +55,8 @@ export async function deleteLabelGroup(labelGroupId: string): Promise<void> {
   return apiClient.delete<void>(`/api/v1/label-groups/${labelGroupId}`)
 }
 
-export async function getLabelSuggestions(): Promise<LabelSuggestion[]> {
-  return apiClient.get<LabelSuggestion[]>("/api/v1/labels/suggestions")
+export async function getLabelSuggestions(): Promise<LabelListItem[]> {
+  return apiClient.get<LabelListItem[]>("/api/v1/labels/suggestions")
 }
 
 export async function createLabelSuggestions(): Promise<LabelListItem[]> {
