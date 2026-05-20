@@ -3,39 +3,15 @@ import { Link, createFileRoute } from "@tanstack/react-router"
 import { ArrowLeft, Plus, X } from "lucide-react"
 import { toast } from "sonner"
 
-import { Badge } from "@/components/ui/badge"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Skeleton } from "@/components/ui/skeleton"
+import { LabelConditionList } from "@/components/label-condition-list"
 import { LabelRuleDialog } from "@/components/label-filter-dialog"
 import { getErrorMessage } from "@/lib/http-error"
 import { useUpdateLabelRule } from "@/mutations/labels"
 import { useLabelDetail } from "@/queries/labels"
-import type { ConditionField, ConditionOperator } from "@/types/label"
-
-export const ATTACHMENT_VALUE_LABELS: Record<string, string> = {
-  true: "포함",
-  false: "포함안함",
-}
-
-export const FIELD_LABELS: Record<ConditionField, string> = {
-  MAIL_ACCOUNT: "메일 계정",
-  FROM_ADDRESS: "보낸 주소",
-  FROM_DOMAIN: "보낸 도메인",
-  TO_ADDRESS: "받는 주소",
-  CC_ADDRESS: "참조",
-  SUBJECT: "제목",
-  BODY_TEXT: "본문",
-  HAS_ATTACHMENT: "첨부파일",
-}
-
-export const OPERATOR_LABELS: Record<ConditionOperator, string> = {
-  EQUALS: "같음",
-  CONTAINS: "포함",
-  NOT_CONTAINS: "미포함",
-  BOOLEAN: "해당함",
-}
 
 export const Route = createFileRoute("/_authenticated/settings/label/$labelId")({
   component: LabelDetailPage,
@@ -150,20 +126,8 @@ function LabelDetailPage() {
                     <X className="size-4" />
                   </Button>
                 </CardHeader>
-                <CardContent className="flex flex-col gap-2">
-                  {group.conditions.map((condition, conditionIndex) => (
-                    <div key={conditionIndex} className="flex items-center gap-2 text-sm">
-                      <Badge variant="secondary" className="shrink-0 font-normal">
-                        {FIELD_LABELS[condition.field]}
-                      </Badge>
-                      <span className="shrink-0 text-muted-foreground">
-                        {condition.field === "HAS_ATTACHMENT"
-                          ? (ATTACHMENT_VALUE_LABELS[condition.value] ?? String(condition.value))
-                          : OPERATOR_LABELS[condition.operator]}
-                      </span>
-                      {condition.field !== "HAS_ATTACHMENT" && <div className="text-sm">{condition.value}</div>}
-                    </div>
-                  ))}
+                <CardContent>
+                  <LabelConditionList conditions={group.conditions} />
                 </CardContent>
               </Card>
             </div>

@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { Link, useNavigate, useSearch } from "@tanstack/react-router"
 import { useQuery } from "@tanstack/react-query"
 import { DndContext, closestCenter } from "@dnd-kit/core"
@@ -8,7 +8,7 @@ import { Check, ChevronDown, GripVertical, MoreVertical, Plus, Sparkles, X } fro
 import { toast } from "sonner"
 
 import { Button, buttonVariants } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -32,6 +32,7 @@ import { cn } from "@/lib/utils"
 import { getErrorMessage, getHttpStatus } from "@/lib/http-error"
 import { LABEL_COLORS } from "@/lib/label-colors"
 import {
+  useApproveLabelSuggestion,
   useCreateLabel,
   useCreateLabelSuggestions,
   useDeleteLabel,
@@ -39,8 +40,8 @@ import {
   useUpdateLabel,
 } from "@/mutations/labels"
 import { emailQueries } from "@/queries/emails"
-import { labelQueries, useLabels, useLabelSuggestions } from "@/queries/labels"
-import { ApproveDialog } from "@/components/label-approve-dialog"
+import { labelQueries, useLabels, useLabelSuggestions, useLabelSuggestionDetail } from "@/queries/labels"
+import { LabelFormDialog, type LabelFormData } from "@/components/label-form-dialog"
 import { useLabelOrder } from "@/hooks/use-label-order"
 import type {
   ConditionField,
@@ -353,11 +354,36 @@ function LabelItem({
 function SuggestionItem({ suggestion }: { suggestion: LabelSuggestion }) {
   const [approveOpen, setApproveOpen] = useState(false)
   const deleteSuggestion = useDeleteLabelSuggestion()
+  const navigate = useNavigate()
+  const approveLabelSuggestion = useApproveLabelSuggestion()
+  const { data: detail } = useLabelSuggestionDetail(suggestion.id, approveOpen)
+  const groups = useMemo(() => detail?.rule?.groups ?? [], [detail])
 
   function handleReject() {
     deleteSuggestion.mutate(suggestion.id, {
       onError: (e) => toast.error(getErrorMessage(e, "라벨 제안 거부에 실패했습니다.")),
     })
+  }
+
+  function handleApprove({ name, colorCode, notificationPolicy }: LabelFormData) {
+    const rule = groups.length > 0 ? { groups } : undefined
+    approveLabelSuggestion.mutate(
+      { suggestionId: suggestion.id, data: { name, colorCode, notificationPolicy, order: suggestion.order, rule } },
+      {
+        onSuccess: (label) => {
+          setApproveOpen(false)
+          toast.success(`${name} 라벨이 추가되었습니다`)
+          void navigate({ to: "/settings/label/$labelId", params: { labelId: label.id } })
+        },
+        onError: (e) => {
+          if (getHttpStatus(e) === 409) {
+            toast.error("이미 존재하는 라벨입니다.")
+          } else {
+            toast.error(getErrorMessage(e, "라벨 추가에 실패했습니다."))
+          }
+        },
+      }
+    )
   }
 
   return (
@@ -393,7 +419,18 @@ function SuggestionItem({ suggestion }: { suggestion: LabelSuggestion }) {
         </button>
       </div>
 
-      <ApproveDialog open={approveOpen} onOpenChange={setApproveOpen} suggestion={suggestion} />
+      <LabelFormDialog
+        open={approveOpen}
+        onOpenChange={setApproveOpen}
+        title="AI 추천 라벨 추가"
+        defaultName={suggestion.name}
+        defaultColor={suggestion.colorCode}
+        groups={groups}
+        onSubmit={handleApprove}
+        isPending={approveLabelSuggestion.isPending}
+        submitLabel="추가하기"
+        submitDisabled={!detail}
+      />
     </SidebarMenuItem>
   )
 }
@@ -413,22 +450,15 @@ export function NavLabels({ activeLabelId, onLabelToggle, className }: NavLabels
   const createSuggestions = useCreateLabelSuggestions()
   const { orderedLabels, sensors, handleDragEnd } = useLabelOrder(serverLabels)
   const [open, setOpen] = useState(false)
-  const [name, setName] = useState("")
-  const [selectedColor, setSelectedColor] = useState(LABEL_COLORS[0])
   const [showAll, setShowAll] = useState(false)
 
   const visibleLabels = showAll ? orderedLabels : orderedLabels.slice(0, LABELS_LIMIT)
   const hasMore = orderedLabels.length > LABELS_LIMIT
 
-  function handleCreate() {
-    if (!name.trim()) return
-    const nameToCreate = name.trim()
-    const colorToCreate = selectedColor
-    setName("")
-    setSelectedColor(LABEL_COLORS[0])
+  function handleCreate({ name, colorCode, notificationPolicy }: LabelFormData) {
     const maxOrder = serverLabels.length > 0 ? Math.max(...serverLabels.map((l) => l.order)) : 0
     createLabel.mutate(
-      { name: nameToCreate, colorCode: colorToCreate, notificationPolicy: "INHERIT", order: maxOrder + 1 },
+      { name, colorCode, notificationPolicy, order: maxOrder + 1 },
       {
         onSuccess: () => setOpen(false),
         onError: (e) => {
@@ -457,52 +487,10 @@ export function NavLabels({ activeLabelId, onLabelToggle, className }: NavLabels
             <Sparkles className="size-3.5" />
             <span className="sr-only">AI 라벨 추천 받기</span>
           </button>
-          <Dialog open={open} onOpenChange={setOpen}>
-            <DialogTrigger asChild>
-              <Button variant="ghost" size="icon-xs" title="라벨 추가">
-                <Plus />
-                <span className="sr-only">라벨 추가</span>
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>새 라벨 만들기</DialogTitle>
-              </DialogHeader>
-              <div className="flex flex-col gap-4 py-2">
-                <Input
-                  placeholder="라벨 이름"
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  onKeyDown={(e) => e.key === "Enter" && handleCreate()}
-                  autoFocus
-                />
-                <div>
-                  <p className="mb-2 text-xs text-muted-foreground">색상 선택</p>
-                  <div className="grid grid-cols-10 gap-1.5">
-                    {LABEL_COLORS.map((color) => (
-                      <button
-                        key={color}
-                        type="button"
-                        className="size-6 rounded-full ring-offset-2 transition-transform hover:scale-110 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
-                        style={{
-                          backgroundColor: color,
-                          boxShadow: selectedColor === color ? `0 0 0 2px white, 0 0 0 4px ${color}` : undefined,
-                        }}
-                        onClick={() => setSelectedColor(color)}
-                        aria-label={color}
-                        aria-pressed={selectedColor === color}
-                      />
-                    ))}
-                  </div>
-                </div>
-              </div>
-              <DialogFooter>
-                <Button onClick={handleCreate} disabled={!name.trim() || createLabel.isPending}>
-                  만들기
-                </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+          <Button variant="ghost" size="icon-xs" title="라벨 추가" onClick={() => setOpen(true)}>
+            <Plus />
+            <span className="sr-only">라벨 추가</span>
+          </Button>
         </div>
       </SidebarGroupLabel>
 
@@ -538,6 +526,15 @@ export function NavLabels({ activeLabelId, onLabelToggle, className }: NavLabels
           ))}
         </SidebarMenu>
       )}
+
+      <LabelFormDialog
+        open={open}
+        onOpenChange={setOpen}
+        title="새 라벨 만들기"
+        submitLabel="만들기"
+        isPending={createLabel.isPending}
+        onSubmit={handleCreate}
+      />
     </SidebarGroup>
   )
 }

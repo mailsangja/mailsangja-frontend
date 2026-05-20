@@ -3,7 +3,14 @@ import { ChevronDown, Minus, Plus } from "lucide-react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
-import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -39,7 +46,7 @@ const OPERATOR_LABELS: Record<ConditionOperator, string> = {
   EQUALS: "같음",
   CONTAINS: "포함",
   NOT_CONTAINS: "미포함",
-  BOOLEAN: "해당함",
+  BOOLEAN: "해당함 여부",
 }
 
 const ALL_CONDITION_FIELDS: ConditionField[] = [
@@ -147,6 +154,7 @@ export function LabelRuleDialog({ open, onOpenChange, labelId }: LabelRuleDialog
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
           <DialogTitle>규칙 만들기</DialogTitle>
+          <DialogDescription>모든 조건을 만족하는 메일에 라벨이 적용됩니다.</DialogDescription>
         </DialogHeader>
 
         <ScrollArea className="max-h-[40vh]">
