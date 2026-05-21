@@ -66,7 +66,10 @@ export function ThreadList({
   const { mutate: deleteThread } = useDeleteThread()
   const { mutate: restoreThread } = useRestoreTrashThread()
   const { data: labelsList } = useSuspenseLabels()
-  const labelsColorMap = useMemo(() => new Map(labelsList.map((l) => [l.id, l.colorCode])), [labelsList])
+  const labelsColorMap = useMemo(
+    () => new Map(labelsList.map((l) => [l.id, { colorCode: l.colorCode, name: l.name }])),
+    [labelsList]
+  )
   const isSelectionMode = selectedIds.size > 0
 
   const toggleSelected = (id: string) => {

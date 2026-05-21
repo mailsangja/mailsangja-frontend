@@ -1,10 +1,10 @@
-import { useMemo, useState } from "react"
+import { useState } from "react"
 import { Link, useNavigate, useSearch } from "@tanstack/react-router"
 import { useQuery } from "@tanstack/react-query"
 import { DndContext, closestCenter } from "@dnd-kit/core"
 import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
-import { Check, ChevronDown, GripVertical, MoreVertical, Plus, Sparkles, X } from "lucide-react"
+import { Check, GripVertical, MoreVertical, Plus, Sparkles, X } from "lucide-react"
 import { toast } from "sonner"
 
 import { Button, buttonVariants } from "@/components/ui/button"
@@ -357,7 +357,7 @@ function SuggestionItem({ suggestion }: { suggestion: LabelSuggestion }) {
   const navigate = useNavigate()
   const approveLabelSuggestion = useApproveLabelSuggestion()
   const { data: detail } = useLabelSuggestionDetail(suggestion.id, approveOpen)
-  const groups = useMemo(() => detail?.rule?.groups ?? [], [detail])
+  const groups = detail?.rule?.groups ?? []
 
   function handleReject() {
     deleteSuggestion.mutate(suggestion.id, {
@@ -435,8 +435,6 @@ function SuggestionItem({ suggestion }: { suggestion: LabelSuggestion }) {
   )
 }
 
-const LABELS_LIMIT = 4
-
 interface NavLabelsProps {
   activeLabelId?: string
   onLabelToggle: (labelId: string) => void
@@ -450,10 +448,6 @@ export function NavLabels({ activeLabelId, onLabelToggle, className }: NavLabels
   const createSuggestions = useCreateLabelSuggestions()
   const { orderedLabels, sensors, handleDragEnd } = useLabelOrder(serverLabels)
   const [open, setOpen] = useState(false)
-  const [showAll, setShowAll] = useState(false)
-
-  const visibleLabels = showAll ? orderedLabels : orderedLabels.slice(0, LABELS_LIMIT)
-  const hasMore = orderedLabels.length > LABELS_LIMIT
 
   function handleCreate({ name, colorCode, notificationPolicy }: LabelFormData) {
     const maxOrder = serverLabels.length > 0 ? Math.max(...serverLabels.map((l) => l.order)) : 0
@@ -497,8 +491,8 @@ export function NavLabels({ activeLabelId, onLabelToggle, className }: NavLabels
       {orderedLabels.length > 0 && (
         <SidebarMenu>
           <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-            <SortableContext items={visibleLabels.map((l) => l.id)} strategy={verticalListSortingStrategy}>
-              {visibleLabels.map((label) => (
+            <SortableContext items={orderedLabels.map((l) => l.id)} strategy={verticalListSortingStrategy}>
+              {orderedLabels.map((label) => (
                 <LabelItem
                   key={label.id}
                   label={label}
@@ -508,14 +502,6 @@ export function NavLabels({ activeLabelId, onLabelToggle, className }: NavLabels
               ))}
             </SortableContext>
           </DndContext>
-          {hasMore && (
-            <SidebarMenuItem>
-              <SidebarMenuButton size="sm" onClick={() => setShowAll((v) => !v)}>
-                <ChevronDown className={cn("size-4 transition-transform", showAll && "rotate-180")} />
-                <span>{showAll ? "접기" : "더보기"}</span>
-              </SidebarMenuButton>
-            </SidebarMenuItem>
-          )}
         </SidebarMenu>
       )}
 
