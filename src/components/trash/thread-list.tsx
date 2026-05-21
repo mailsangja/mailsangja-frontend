@@ -75,7 +75,10 @@ export function TrashThreadList({
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const { mutateAsync: restoreThread } = useRestoreTrashThread()
   const { data: labelsList } = useLabels()
-  const labelsColorMap = useMemo(() => new Map(labelsList?.map((l) => [l.id, l.colorCode]) ?? []), [labelsList])
+  const labelsColorMap = useMemo(
+    () => new Map(labelsList?.map((l) => [l.id, { colorCode: l.colorCode, name: l.name }]) ?? []),
+    [labelsList]
+  )
 
   const toggleSelected = (id: string) => {
     setSelectedIds((prev) => {

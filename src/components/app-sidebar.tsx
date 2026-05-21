@@ -6,6 +6,7 @@ import { buttonVariants } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
 import { NavAccounts } from "@/components/nav/nav-accounts"
 import { NavFolders } from "@/components/nav/nav-folders"
+import { NavLabelGroups } from "@/components/nav/nav-label-groups"
 import { NavLabels } from "@/components/nav/nav-labels"
 import { NavUser } from "@/components/nav/nav-user"
 import {
@@ -25,18 +26,22 @@ interface AppSidebarProps {
   mailbox: PrimaryMailboxId | null
   activeAccountId?: string
   activeLabelId?: string
+  activeLabelGroupId?: string
   onMailboxChange: (mailbox: PrimaryMailboxId) => void
   onAccountToggle: (accountId: string) => void
   onLabelToggle: (labelId: string) => void
+  onLabelGroupToggle: (groupId: string) => void
 }
 
 export function AppSidebar({
   mailbox,
   activeAccountId,
   activeLabelId,
+  activeLabelGroupId,
   onMailboxChange,
   onAccountToggle,
   onLabelToggle,
+  onLabelGroupToggle,
   ...props
 }: AppSidebarProps & React.ComponentProps<typeof Sidebar>) {
   const { data: user } = useUser()
@@ -95,7 +100,12 @@ export function AppSidebar({
         </div>
 
         <NavFolders mailbox={mailbox} onMailboxChange={onMailboxChange} />
-        <NavLabels activeLabelId={activeLabelId} onLabelToggle={onLabelToggle} className="mt-4" />
+        <NavLabelGroups
+          activeLabelGroupId={activeLabelGroupId}
+          onLabelGroupToggle={onLabelGroupToggle}
+          className="mt-2"
+        />
+        <NavLabels activeLabelId={activeLabelId} onLabelToggle={onLabelToggle} className="mt-2" />
         <NavAccounts activeAccountId={activeAccountId} onAccountToggle={onAccountToggle} className="mt-auto" />
       </SidebarContent>
 
