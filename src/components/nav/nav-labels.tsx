@@ -474,11 +474,21 @@ export function NavLabels({ activeLabelId, onLabelToggle, className }: NavLabels
           <button
             type="button"
             title="AI 라벨 추천 받기"
-            className={buttonVariants({ variant: "ghost", size: "icon-xs" })}
-            onClick={() => createSuggestions.mutate()}
+            className={cn(
+              buttonVariants({ variant: "ghost", size: "icon-xs" }),
+              "text-primary hover:bg-primary/10 hover:text-primary",
+              createSuggestions.isPending && "animate-pulse"
+            )}
+            onClick={() => {
+              const toastId = toast.loading("AI 추천 라벨을 생성 중입니다...")
+              createSuggestions.mutate(undefined, {
+                onSuccess: () => toast.success("AI 추천 라벨 생성이 완료되었습니다!", { id: toastId }),
+                onError: (e) => toast.error(getErrorMessage(e, "AI 추천 라벨 생성에 실패했습니다."), { id: toastId }),
+              })
+            }}
             disabled={createSuggestions.isPending}
           >
-            <Sparkles className="size-3.5" />
+            <Sparkles className="ai-sparkle-icon size-3.5" />
             <span className="sr-only">AI 라벨 추천 받기</span>
           </button>
           <Button variant="ghost" size="icon-xs" title="라벨 추가" onClick={() => setOpen(true)}>
