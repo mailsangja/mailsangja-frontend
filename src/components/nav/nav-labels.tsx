@@ -41,7 +41,7 @@ import {
 } from "@/mutations/labels"
 import { emailQueries } from "@/queries/emails"
 import { labelQueries, useLabels, useLabelSuggestions, useLabelSuggestionDetail } from "@/queries/labels"
-import { LabelFormDialog, type LabelFormData } from "@/components/label-form-dialog"
+import { LabelFormDialog, type LabelFormData } from "@/components/label/label-form-dialog"
 import { useLabelOrder } from "@/hooks/use-label-order"
 import type {
   ConditionField,

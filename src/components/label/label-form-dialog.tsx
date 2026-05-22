@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/lib/utils"
 import { LABEL_COLORS } from "@/lib/label-colors"
-import { LabelConditionList } from "@/components/label-condition-list"
+import { LabelConditionList } from "@/components/label/label-condition-list"
 import type { LabelConditionGroup, NotificationPolicy } from "@/types/label"
 
 const NOTIFICATION_OPTIONS: { value: NotificationPolicy; label: string; icon: ElementType }[] = [
