@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react"
 import { Paperclip } from "lucide-react"
 
+import { LabelChipList, type LabelChipMap } from "@/components/label/label-chip"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { useIsMobile } from "@/hooks/use-mobile"
@@ -8,10 +9,8 @@ import { formatFullDateTime, formatRelativeDate } from "@/lib/date"
 import { AccountIcon } from "@/lib/icon-entries"
 import { getMailAddressLabel } from "@/lib/mail-address"
 import { cn } from "@/lib/utils"
-import type { InboxThreadSummary, LabelSummary } from "@/types/email"
+import type { InboxThreadSummary } from "@/types/email"
 import type { MailAccount } from "@/types/mail-account"
-
-type LabelsColorMap = Map<string, { colorCode: string; name: string }>
 
 interface ThreadListItemProps {
   thread: InboxThreadSummary
@@ -19,30 +18,9 @@ interface ThreadListItemProps {
   isChecked: boolean
   isSelectionMode: boolean
   account?: MailAccount
-  labelsColorMap: LabelsColorMap
+  labelsColorMap: LabelChipMap
   onSelect: () => void
   onToggleCheck: () => void
-}
-
-function LabelChips({ labels, labelsColorMap }: { labels: LabelSummary[]; labelsColorMap: LabelsColorMap }) {
-  const visibleLabels = labels.filter((label) => labelsColorMap.has(label.labelId))
-  if (visibleLabels.length === 0) return null
-  return (
-    <>
-      {visibleLabels.map((label) => {
-        const entry = labelsColorMap.get(label.labelId)
-        return (
-          <span
-            key={label.labelId}
-            className="inline-flex max-w-48 shrink-0 items-center truncate rounded-full px-1.5 py-0.5 text-xs font-medium text-white"
-            style={{ backgroundColor: entry?.colorCode ?? label.colorCode }}
-          >
-            {entry?.name ?? label.name}
-          </span>
-        )
-      })}
-    </>
-  )
 }
 
 function SenderTooltipContent({ participant }: { participant: InboxThreadSummary["participant"] }) {
@@ -89,7 +67,7 @@ function ThreadListItemContent({
   isSelectionMode: boolean
   account?: MailAccount
   participantLabel: string
-  labelsColorMap: LabelsColorMap
+  labelsColorMap: LabelChipMap
   onToggleCheck: () => void
 }) {
   const showThreadCount = thread.messageCount > 1
@@ -196,7 +174,12 @@ function ThreadListItemContent({
                   </TooltipContent>
                 </Tooltip>
               ) : null}
-              <LabelChips labels={thread.labels} labelsColorMap={labelsColorMap} />
+              <LabelChipList
+                labels={thread.labels}
+                labelsColorMap={labelsColorMap}
+                hideMissingLabels
+                className="max-w-48 shrink-0 truncate"
+              />
             </span>
           ) : null}
         </div>
