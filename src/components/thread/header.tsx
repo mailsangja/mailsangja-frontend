@@ -2,7 +2,7 @@ import { LabelChipList } from "@/components/label/label-chip"
 import { Badge } from "@/components/ui/badge"
 import { AccountIcon } from "@/lib/icon-entries"
 import { cn } from "@/lib/utils"
-import type { LabelSummary } from "@/types/email"
+import type { ThreadLabel } from "@/types/label"
 import type { MailAccount } from "@/types/mail-account"
 
 interface ThreadHeaderData {
@@ -13,7 +13,7 @@ interface ThreadHeaderData {
 interface ThreadHeaderProps {
   thread: ThreadHeaderData
   account?: MailAccount
-  labels?: LabelSummary[]
+  labels?: ThreadLabel[]
   className?: string
 }
 

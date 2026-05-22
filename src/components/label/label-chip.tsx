@@ -1,15 +1,15 @@
 import { cn } from "@/lib/utils"
-import type { LabelSummary } from "@/types/email"
+import type { ThreadLabel } from "@/types/label"
 
-export type LabelChipMap = Map<string, Pick<LabelSummary, "name" | "colorCode">>
+export type LabelChipMap = Map<string, Pick<ThreadLabel, "name" | "colorCode">>
 
 interface LabelChipProps {
-  label: Pick<LabelSummary, "name" | "colorCode">
+  label: Pick<ThreadLabel, "name" | "colorCode">
   className?: string
 }
 
 interface LabelChipListProps {
-  labels: LabelSummary[]
+  labels: ThreadLabel[]
   labelsColorMap?: LabelChipMap
   hideMissingLabels?: boolean
   className?: string

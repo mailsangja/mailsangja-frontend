@@ -43,31 +43,8 @@ import { emailQueries } from "@/queries/emails"
 import { labelQueries, useLabels, useLabelSuggestions, useLabelSuggestionDetail } from "@/queries/labels"
 import { LabelFormDialog, type LabelFormData } from "@/components/label/label-form-dialog"
 import { useLabelOrder } from "@/hooks/use-label-order"
-import type {
-  ConditionField,
-  ConditionOperator,
-  LabelListItem,
-  LabelSuggestion,
-  NotificationPolicy,
-} from "@/types/label"
-
-const FIELD_LABELS: Record<ConditionField, string> = {
-  MAIL_ACCOUNT: "메일 계정",
-  FROM_ADDRESS: "보낸 주소",
-  FROM_DOMAIN: "보낸 도메인",
-  TO_ADDRESS: "받는 주소",
-  CC_ADDRESS: "참조",
-  SUBJECT: "제목",
-  BODY_TEXT: "본문",
-  HAS_ATTACHMENT: "첨부파일",
-}
-
-const OPERATOR_LABELS: Record<ConditionOperator, string> = {
-  EQUALS: "같음",
-  CONTAINS: "포함",
-  NOT_CONTAINS: "미포함",
-  BOOLEAN: "해당함 여부",
-}
+import { LABEL_CONDITION_FIELD_LABELS, LABEL_CONDITION_OPERATOR_LABELS } from "@/types/label"
+import type { LabelListItem, LabelSuggestion, NotificationPolicy } from "@/types/label"
 
 function LabelDeleteDialog({
   open,
@@ -130,8 +107,10 @@ function LabelDeleteDialog({
                       ...(gi > 0 ? [<hr key={`sep-${gi}`} className="my-1 border-border" />] : []),
                       ...group.conditions.map((cond, ci) => (
                         <p key={`${gi}-${ci}`} className="text-muted-foreground">
-                          <span className="font-medium text-foreground">{FIELD_LABELS[cond.field]}</span>{" "}
-                          {OPERATOR_LABELS[cond.operator]}{" "}
+                          <span className="font-medium text-foreground">
+                            {LABEL_CONDITION_FIELD_LABELS[cond.field]}
+                          </span>{" "}
+                          {LABEL_CONDITION_OPERATOR_LABELS[cond.operator]}{" "}
                           {cond.operator !== "BOOLEAN" && (
                             <span className="font-mono text-foreground">&quot;{cond.value}&quot;</span>
                           )}

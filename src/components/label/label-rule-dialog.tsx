@@ -23,58 +23,21 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { getErrorMessage } from "@/lib/http-error"
 import { useUpdateLabelRule } from "@/mutations/labels"
 import { useLabelDetail } from "@/queries/labels"
-import type { ConditionField, ConditionOperator } from "@/types/label"
+import {
+  LABEL_ATTACHMENT_OPTIONS,
+  LABEL_CONDITION_FIELDS,
+  LABEL_CONDITION_FIELD_LABELS,
+  LABEL_CONDITION_OPERATOR_LABELS,
+  LABEL_FIELD_OPERATORS,
+  type ConditionField,
+  type ConditionOperator,
+} from "@/types/label"
 
 interface ConditionEntry {
   field: ConditionField | ""
   operator: ConditionOperator | ""
   value: string
 }
-
-const FIELD_LABELS: Record<ConditionField, string> = {
-  MAIL_ACCOUNT: "메일 계정",
-  FROM_ADDRESS: "보낸 주소",
-  FROM_DOMAIN: "보낸 도메인",
-  TO_ADDRESS: "받는 주소",
-  CC_ADDRESS: "참조",
-  SUBJECT: "제목",
-  BODY_TEXT: "본문",
-  HAS_ATTACHMENT: "첨부파일",
-}
-
-const OPERATOR_LABELS: Record<ConditionOperator, string> = {
-  EQUALS: "같음",
-  CONTAINS: "포함",
-  NOT_CONTAINS: "미포함",
-  BOOLEAN: "해당함 여부",
-}
-
-const ALL_CONDITION_FIELDS: ConditionField[] = [
-  "MAIL_ACCOUNT",
-  "FROM_ADDRESS",
-  "FROM_DOMAIN",
-  "TO_ADDRESS",
-  "CC_ADDRESS",
-  "SUBJECT",
-  "BODY_TEXT",
-  "HAS_ATTACHMENT",
-]
-
-const FIELD_OPERATORS: Record<ConditionField, ConditionOperator[]> = {
-  MAIL_ACCOUNT: ["EQUALS", "CONTAINS", "NOT_CONTAINS"],
-  FROM_ADDRESS: ["EQUALS", "CONTAINS", "NOT_CONTAINS"],
-  FROM_DOMAIN: ["EQUALS", "CONTAINS", "NOT_CONTAINS"],
-  TO_ADDRESS: ["EQUALS", "CONTAINS", "NOT_CONTAINS"],
-  CC_ADDRESS: ["EQUALS", "CONTAINS", "NOT_CONTAINS"],
-  SUBJECT: ["EQUALS", "CONTAINS", "NOT_CONTAINS"],
-  BODY_TEXT: ["CONTAINS", "NOT_CONTAINS"],
-  HAS_ATTACHMENT: ["BOOLEAN"],
-}
-
-const ATTACHMENT_OPTIONS = [
-  { value: "true", label: "포함" },
-  { value: "false", label: "포함안함" },
-]
 
 const EMPTY_ENTRY: ConditionEntry = { field: "", operator: "", value: "" }
 
@@ -165,7 +128,7 @@ export function LabelRuleDialog({ open, onOpenChange, labelId }: LabelRuleDialog
                   <DropdownMenuTrigger className="flex h-9 w-36 shrink-0 items-center justify-between gap-1 rounded-md border border-input bg-background px-3 text-sm disabled:cursor-not-allowed disabled:opacity-50">
                     <span className="truncate">
                       {entry.field ? (
-                        FIELD_LABELS[entry.field]
+                        LABEL_CONDITION_FIELD_LABELS[entry.field]
                       ) : (
                         <span className="text-muted-foreground">필드 선택</span>
                       )}
@@ -177,9 +140,9 @@ export function LabelRuleDialog({ open, onOpenChange, labelId }: LabelRuleDialog
                       value={entry.field}
                       onValueChange={(v) => handleFieldChange(index, v as ConditionField)}
                     >
-                      {ALL_CONDITION_FIELDS.map((field) => (
+                      {LABEL_CONDITION_FIELDS.map((field) => (
                         <DropdownMenuRadioItem key={field} value={field}>
-                          {FIELD_LABELS[field]}
+                          {LABEL_CONDITION_FIELD_LABELS[field]}
                         </DropdownMenuRadioItem>
                       ))}
                     </DropdownMenuRadioGroup>
@@ -192,7 +155,7 @@ export function LabelRuleDialog({ open, onOpenChange, labelId }: LabelRuleDialog
                       <DropdownMenuTrigger className="flex h-9 w-28 shrink-0 items-center justify-between gap-1 rounded-md border border-input bg-background px-3 text-sm disabled:cursor-not-allowed disabled:opacity-50">
                         <span className="truncate">
                           {entry.value ? (
-                            ATTACHMENT_OPTIONS.find((o) => o.value === entry.value)?.label
+                            LABEL_ATTACHMENT_OPTIONS.find((o) => o.value === entry.value)?.label
                           ) : (
                             <span className="text-muted-foreground">선택</span>
                           )}
@@ -201,7 +164,7 @@ export function LabelRuleDialog({ open, onOpenChange, labelId }: LabelRuleDialog
                       </DropdownMenuTrigger>
                       <DropdownMenuContent>
                         <DropdownMenuRadioGroup value={entry.value} onValueChange={(v) => handleValueChange(index, v)}>
-                          {ATTACHMENT_OPTIONS.map((o) => (
+                          {LABEL_ATTACHMENT_OPTIONS.map((o) => (
                             <DropdownMenuRadioItem key={o.value} value={o.value}>
                               {o.label}
                             </DropdownMenuRadioItem>
@@ -224,7 +187,7 @@ export function LabelRuleDialog({ open, onOpenChange, labelId }: LabelRuleDialog
                       >
                         <span className="truncate">
                           {entry.operator ? (
-                            OPERATOR_LABELS[entry.operator as ConditionOperator]
+                            LABEL_CONDITION_OPERATOR_LABELS[entry.operator as ConditionOperator]
                           ) : (
                             <span className="text-muted-foreground">연산자</span>
                           )}
@@ -237,9 +200,9 @@ export function LabelRuleDialog({ open, onOpenChange, labelId }: LabelRuleDialog
                           onValueChange={(v) => handleOperatorChange(index, v as ConditionOperator)}
                         >
                           {entry.field &&
-                            FIELD_OPERATORS[entry.field].map((op) => (
+                            LABEL_FIELD_OPERATORS[entry.field].map((op) => (
                               <DropdownMenuRadioItem key={op} value={op}>
-                                {OPERATOR_LABELS[op]}
+                                {LABEL_CONDITION_OPERATOR_LABELS[op]}
                               </DropdownMenuRadioItem>
                             ))}
                         </DropdownMenuRadioGroup>

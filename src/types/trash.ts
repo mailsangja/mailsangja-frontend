@@ -1,6 +1,7 @@
-import type { Attachment, InboxMessage, LabelSummary, MailAddress } from "./email"
+import type { Attachment, InboxMessage, MailAddress } from "./email"
+import type { ThreadLabel } from "./label"
 
-export type { LabelSummary }
+export type { ThreadLabel }
 
 export interface TrashThreadSummary {
   threadId: string
@@ -13,7 +14,7 @@ export interface TrashThreadSummary {
   lastMessageAt: string
   attachments: Attachment[]
   messageCount: number
-  labels: LabelSummary[]
+  labels: ThreadLabel[]
 }
 
 export interface TrashThreadDetail {
@@ -23,6 +24,6 @@ export interface TrashThreadDetail {
   latestSubject: string
   isRead: boolean
   lastMessageAt: string
-  labels: LabelSummary[]
+  labels: ThreadLabel[]
   messages: InboxMessage[]
 }

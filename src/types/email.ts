@@ -1,3 +1,5 @@
+import type { ThreadLabel } from "./label"
+
 export const PRIMARY_MAILBOX_IDS = ["inbox", "sent", "spam", "trash"] as const
 export const SUPPORTED_MAILBOX_IDS = ["inbox", "sent"] as const
 
@@ -37,12 +39,6 @@ export interface MailAddress {
   email: string
 }
 
-export interface LabelSummary {
-  labelId: string
-  name: string
-  colorCode: string
-}
-
 export interface InboxMessage {
   id: string
   gmailMessageId: string
@@ -71,7 +67,7 @@ export interface InboxThreadSummary {
   lastMessageAt: string
   attachments: Attachment[]
   messageCount: number
-  labels: LabelSummary[]
+  labels: ThreadLabel[]
 }
 
 export interface InboxThreadDetail {
@@ -81,7 +77,7 @@ export interface InboxThreadDetail {
   latestSubject: string
   isRead: boolean
   lastMessageAt: string
-  labels: LabelSummary[]
+  labels: ThreadLabel[]
   messages: InboxMessage[]
 }
 
