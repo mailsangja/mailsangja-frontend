@@ -19,8 +19,8 @@ type ThemeProviderState = {
 const COLOR_SCHEME_QUERY = "(prefers-color-scheme: dark)"
 const THEME_VALUES: Theme[] = ["dark", "light", "system"]
 const THEME_COLORS: Record<ResolvedTheme, string> = {
-  light: "#faf9f5",
-  dark: "#262624",
+  light: "#ffffff",
+  dark: "#191f28",
 }
 
 const ThemeProviderContext = React.createContext<ThemeProviderState | undefined>(undefined)
