@@ -1,11 +1,11 @@
 import { useCallback, useEffect, useState, useSyncExternalStore } from "react"
 import { Link, createFileRoute, Outlet, redirect, useLocation, useNavigate } from "@tanstack/react-router"
-import { Bell, BellOff, Mail, Search } from "lucide-react"
+import { Bell, BellOff, Mail, Search, X } from "lucide-react"
 
 import { AppSidebar } from "@/components/sidebar/app-sidebar"
 import { LoadingLayout } from "@/components/layout/loading-layout"
 import { PushNotificationListener } from "@/components/push-notification-listener"
-import { buttonVariants } from "@/components/ui/button"
+import { Button, buttonVariants } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { useDebounce } from "@/hooks/use-debounce"
@@ -133,8 +133,26 @@ function MailSearchForm({ mailbox, query, accountId }: MailSearchFormProps) {
         onChange={(e) => {
           setDraft(e.target.value)
         }}
-        className="h-9 rounded-md bg-muted/50 pr-9 pl-9 shadow-none"
+        className="h-9 rounded-md bg-muted/50 pr-8 pl-9 shadow-none"
       />
+      {currentDraft ? (
+        <Button
+          type="button"
+          variant="ghost"
+          size="icon"
+          aria-label="검색어 지우기"
+          className="absolute top-1/2 right-1 size-7 -translate-y-1/2 active:not-aria-[haspopup]:-translate-y-1/2"
+          onClick={() => {
+            setDraft("")
+
+            if (mailbox) {
+              commitMailboxSearch(mailbox, "")
+            }
+          }}
+        >
+          <X />
+        </Button>
+      ) : null}
     </form>
   )
 }
