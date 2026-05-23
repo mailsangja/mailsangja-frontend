@@ -8,12 +8,12 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/lib/utils"
 import { LABEL_COLORS } from "@/lib/label-colors"
 import { LabelConditionList } from "@/components/label/label-condition-list"
-import type { LabelConditionGroup, NotificationPolicy } from "@/types/label"
+import { NOTIFICATION_POLICY_LABELS, type LabelConditionGroup, type NotificationPolicy } from "@/types/label"
 
-const NOTIFICATION_OPTIONS: { value: NotificationPolicy; label: string; icon: ElementType }[] = [
-  { value: "URGENT", label: "항상 알림", icon: BellRing },
-  { value: "INHERIT", label: "기본", icon: Bell },
-  { value: "SILENT", label: "알림 안함", icon: BellOff },
+const NOTIFICATION_OPTIONS: { value: NotificationPolicy; icon: ElementType }[] = [
+  { value: "URGENT", icon: BellRing },
+  { value: "INHERIT", icon: Bell },
+  { value: "SILENT", icon: BellOff },
 ]
 
 export interface LabelFormData {
@@ -103,7 +103,7 @@ function LabelFormContent({
           <div>
             <p className="mb-2 text-xs text-muted-foreground">알림 설정</p>
             <div className="flex gap-2">
-              {NOTIFICATION_OPTIONS.map(({ value, label, icon: Icon }) => (
+              {NOTIFICATION_OPTIONS.map(({ value, icon: Icon }) => (
                 <button
                   key={value}
                   type="button"
@@ -116,7 +116,7 @@ function LabelFormContent({
                   )}
                 >
                   <Icon className="size-3.5" />
-                  {label}
+                  {NOTIFICATION_POLICY_LABELS[value]}
                 </button>
               ))}
             </div>

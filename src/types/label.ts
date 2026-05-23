@@ -1,5 +1,11 @@
 export type NotificationPolicy = "URGENT" | "INHERIT" | "SILENT"
 
+export const NOTIFICATION_POLICY_LABELS: Record<NotificationPolicy, string> = {
+  URGENT: "항상 알림",
+  INHERIT: "기본",
+  SILENT: "알림 안함",
+}
+
 export type ConditionField =
   | "MAIL_ACCOUNT"
   | "FROM_ADDRESS"
