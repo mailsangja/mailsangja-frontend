@@ -1,10 +1,17 @@
-import { createFileRoute, Link } from "@tanstack/react-router"
+import { createFileRoute, Link, redirect } from "@tanstack/react-router"
 import { ArrowRight, ArrowUp, Check, ChevronDown, Mail, PenLine, Reply, Sparkles, Tag } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 
 import { buttonVariants } from "@/components/ui/button"
+import { userQueries } from "@/queries/user"
 
 export const Route = createFileRoute("/")({
+  beforeLoad: async ({ context }) => {
+    const user = await context.queryClient.ensureQueryData(userQueries.me())
+    if (user) {
+      throw redirect({ to: "/mail/$mailbox", params: { mailbox: "inbox" } })
+    }
+  },
   component: RouteComponent,
 })
 
