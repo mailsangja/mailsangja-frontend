@@ -4,6 +4,7 @@ import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { getErrorMessage } from "@/lib/http-error"
 import { useDeleteLabel } from "@/mutations/labels"
 import { emailQueries } from "@/queries/emails"
 import { labelQueries } from "@/queries/labels"
@@ -33,11 +34,12 @@ export function LabelDeleteDialog({ open, onOpenChange, label }: LabelDeleteDial
     deleteLabel.mutate(label.id, {
       onSuccess: () => {
         onOpenChange(false)
-        toast.success(`${label.name} 라벨이 삭제되었습니다`)
+        toast.warning(`${label.name} 라벨이 삭제되었습니다`)
         if ("labelId" in search && search.labelId === label.id) {
           void navigate({ to: "/mail/$mailbox", params: { mailbox: "inbox" }, replace: true })
         }
       },
+      onError: (e) => toast.error(getErrorMessage(e, "라벨 삭제에 실패했습니다.")),
     })
   }
 
