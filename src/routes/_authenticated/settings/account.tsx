@@ -5,12 +5,12 @@ import { Plus, Trash2 } from "lucide-react"
 import { ScrollArea } from "@/components/ui/scroll-area"
 
 import { AddAccountDialog } from "@/components/add-account-dialog"
+import { MailAccountIcon } from "@/components/mail-account-icon"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { AccountIcon } from "@/lib/icon-entries"
 import { useMailAccounts } from "@/queries/mail-accounts"
 import { useUser } from "@/queries/user"
 import { useUpdateDefaultAccount } from "@/mutations/user"
@@ -162,12 +162,12 @@ function SettingsAccountPage() {
                   <TableRow key={mailAccount.id}>
                     <TableCell className="text-center">
                       {mailAccount.icon ? (
-                        <div
-                          className="mx-auto flex size-8 items-center justify-center rounded-full"
-                          style={{ backgroundColor: mailAccount.color || "#6B7280" }}
-                        >
-                          <AccountIcon name={mailAccount.icon} className="size-4 text-white" />
-                        </div>
+                        <MailAccountIcon
+                          icon={mailAccount.icon}
+                          color={mailAccount.color}
+                          size="md"
+                          className="mx-auto"
+                        />
                       ) : (
                         "-"
                       )}

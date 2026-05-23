@@ -2,11 +2,11 @@ import { useEffect, useRef } from "react"
 import { Paperclip } from "lucide-react"
 
 import { LabelChipList, type LabelChipMap } from "@/components/label/label-chip"
+import { MailAccountIcon } from "@/components/mail-account-icon"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { formatFullDateTime, formatRelativeDate } from "@/lib/date"
-import { AccountIcon } from "@/lib/icon-entries"
 import { getMailAddressLabel } from "@/lib/mail-address"
 import { cn } from "@/lib/utils"
 import type { InboxThreadSummary } from "@/types/email"
@@ -106,15 +106,8 @@ function ThreadListItemContent({
           <Tooltip>
             <TooltipTrigger
               aria-label="계정 정보"
-              render={
-                <span
-                  className="flex size-5 shrink-0 items-center justify-center rounded-full"
-                  style={{ backgroundColor: account?.color || "#6B7280" }}
-                />
-              }
-            >
-              <AccountIcon name={account?.icon ?? "mail"} className="size-3.5 text-white" />
-            </TooltipTrigger>
+              render={<MailAccountIcon icon={account?.icon} color={account?.color} />}
+            />
             <TooltipContent side="bottom" align="start" className="max-w-72 items-start">
               <AccountTooltipContent account={account} />
             </TooltipContent>

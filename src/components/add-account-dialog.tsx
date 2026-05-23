@@ -2,9 +2,10 @@ import { useState } from "react"
 import { Check } from "lucide-react"
 
 import { authorizeGoogle } from "@/api/mail-accounts"
+import { MailAccountIcon } from "@/components/mail-account-icon"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
-import { AccountIcon, ICON_ENTRIES, type AccountIconName } from "@/lib/icon-entries"
+import { ICON_ENTRIES, type AccountIconName } from "@/lib/icon-entries"
 import { cn } from "@/lib/utils"
 
 const COLORS = ["#EF4444", "#F97316", "#EAB308", "#22C55E", "#3B82F6", "#8B5CF6", "#EC4899", "#6B7280"]
@@ -53,12 +54,7 @@ export function AddAccountDialog({ children }: { children: React.ReactNode }) {
             </DialogHeader>
 
             <div className="flex flex-col items-center gap-6 py-4">
-              <div
-                className="flex size-20 items-center justify-center rounded-full"
-                style={{ backgroundColor: selectedColor }}
-              >
-                <AccountIcon name={selectedIcon} className="size-8 text-white" />
-              </div>
+              <MailAccountIcon icon={selectedIcon} color={selectedColor} size="lg" />
 
               <input
                 type="text"
@@ -120,12 +116,7 @@ export function AddAccountDialog({ children }: { children: React.ReactNode }) {
 
             <div className="flex flex-col items-center gap-6 py-4">
               {/* 아이콘 미리보기 */}
-              <div
-                className="flex size-16 items-center justify-center rounded-full"
-                style={{ backgroundColor: selectedColor }}
-              >
-                <AccountIcon name={selectedIcon} className="size-6 text-white" />
-              </div>
+              <MailAccountIcon icon={selectedIcon} color={selectedColor} size="lg" />
 
               <p className="text-sm text-muted-foreground">아래 버튼을 눌러 Google 계정을 연결하세요.</p>
 

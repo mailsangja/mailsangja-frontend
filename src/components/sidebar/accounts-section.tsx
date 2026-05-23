@@ -5,7 +5,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
-import { AccountIcon } from "@/lib/icon-entries"
+import { MailAccountIcon } from "@/components/mail-account-icon"
 import { cn } from "@/lib/utils"
 import { useMailAccounts } from "@/queries/mail-accounts"
 
@@ -32,12 +32,7 @@ export function SidebarAccountsSection({ activeAccountId, onAccountToggle, class
               isActive={activeAccountId === account.id}
               onClick={() => onAccountToggle(account.id)}
             >
-              <span
-                className="flex size-5 shrink-0 items-center justify-center rounded-full"
-                style={{ backgroundColor: account.color || "#6B7280" }}
-              >
-                <AccountIcon name={account.icon} className="size-3 text-white" />
-              </span>
+              <MailAccountIcon icon={account.icon} color={account.color} />
               <span className="truncate text-xs">{account.emailAddress}</span>
             </SidebarMenuButton>
           </SidebarMenuItem>
