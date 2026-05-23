@@ -15,7 +15,7 @@ import { useLogout } from "@/mutations/auth"
 import { useUser } from "@/queries/user"
 import { ChevronsUpDown, LogOut, Settings, UserIcon } from "lucide-react"
 
-export function NavUser() {
+export function SidebarUserMenu() {
   const { data: user } = useUser()
   const logoutMutation = useLogout()
   const { isMobile } = useSidebar()

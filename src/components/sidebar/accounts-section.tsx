@@ -9,13 +9,13 @@ import { AccountIcon } from "@/lib/icon-entries"
 import { cn } from "@/lib/utils"
 import { useMailAccounts } from "@/queries/mail-accounts"
 
-interface NavAccountsProps {
+interface SidebarAccountsSectionProps {
   activeAccountId?: string
   onAccountToggle: (accountId: string) => void
   className?: string
 }
 
-export function NavAccounts({ activeAccountId, onAccountToggle, className }: NavAccountsProps) {
+export function SidebarAccountsSection({ activeAccountId, onAccountToggle, className }: SidebarAccountsSectionProps) {
   const { data: accounts } = useMailAccounts()
 
   if (!accounts?.length) return null

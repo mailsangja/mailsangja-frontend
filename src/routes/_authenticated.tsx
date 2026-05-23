@@ -2,7 +2,7 @@ import { useSyncExternalStore } from "react"
 import { Link, createFileRoute, Outlet, redirect, useLocation, useNavigate } from "@tanstack/react-router"
 import { Bell, BellOff, Mail, Search } from "lucide-react"
 
-import { AppSidebar } from "@/components/app-sidebar"
+import { AppSidebar } from "@/components/sidebar/app-sidebar"
 import { LoadingLayout } from "@/components/layout/loading-layout"
 import { PushNotificationListener } from "@/components/push-notification-listener"
 import { buttonVariants } from "@/components/ui/button"

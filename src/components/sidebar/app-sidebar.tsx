@@ -4,11 +4,11 @@ import { ChevronDown, Mail, Pencil } from "lucide-react"
 import { Badge } from "@/components/ui/badge"
 import { buttonVariants } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { NavAccounts } from "@/components/nav/nav-accounts"
-import { NavFolders } from "@/components/nav/nav-folders"
-import { NavLabelGroups } from "@/components/nav/nav-label-groups"
-import { NavLabels } from "@/components/nav/nav-labels"
-import { NavUser } from "@/components/nav/nav-user"
+import { SidebarAccountsSection } from "@/components/sidebar/accounts-section"
+import { SidebarInboxSection } from "@/components/sidebar/inbox-section"
+import { SidebarLabelGroupsSection } from "@/components/sidebar/label-groups-section"
+import { SidebarLabelsSection } from "@/components/sidebar/labels-section"
+import { SidebarUserMenu } from "@/components/sidebar/user-menu"
 import {
   Sidebar,
   SidebarContent,
@@ -99,18 +99,22 @@ export function AppSidebar({
           </DropdownMenu>
         </div>
 
-        <NavFolders mailbox={mailbox} onMailboxChange={onMailboxChange} />
-        <NavLabelGroups
+        <SidebarInboxSection mailbox={mailbox} onMailboxChange={onMailboxChange} />
+        <SidebarLabelGroupsSection
           activeLabelGroupId={activeLabelGroupId}
           onLabelGroupToggle={onLabelGroupToggle}
           className="mt-2"
         />
-        <NavLabels activeLabelId={activeLabelId} onLabelToggle={onLabelToggle} className="mt-2" />
-        <NavAccounts activeAccountId={activeAccountId} onAccountToggle={onAccountToggle} className="mt-auto" />
+        <SidebarLabelsSection activeLabelId={activeLabelId} onLabelToggle={onLabelToggle} className="mt-2" />
+        <SidebarAccountsSection
+          activeAccountId={activeAccountId}
+          onAccountToggle={onAccountToggle}
+          className="mt-auto"
+        />
       </SidebarContent>
 
       <SidebarFooter>
-        <NavUser />
+        <SidebarUserMenu />
       </SidebarFooter>
     </Sidebar>
   )

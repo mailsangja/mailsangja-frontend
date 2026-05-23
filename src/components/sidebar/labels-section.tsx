@@ -414,13 +414,13 @@ function SuggestionItem({ suggestion }: { suggestion: LabelSuggestion }) {
   )
 }
 
-interface NavLabelsProps {
+interface SidebarLabelsSectionProps {
   activeLabelId?: string
   onLabelToggle: (labelId: string) => void
   className?: string
 }
 
-export function NavLabels({ activeLabelId, onLabelToggle, className }: NavLabelsProps) {
+export function SidebarLabelsSection({ activeLabelId, onLabelToggle, className }: SidebarLabelsSectionProps) {
   const { data: serverLabels = [] } = useLabels()
   const { data: suggestions = [] } = useLabelSuggestions()
   const createLabel = useCreateLabel()

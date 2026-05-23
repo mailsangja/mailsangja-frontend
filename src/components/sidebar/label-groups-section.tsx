@@ -350,13 +350,17 @@ function GroupItem({
   )
 }
 
-interface NavLabelGroupsProps {
+interface SidebarLabelGroupsSectionProps {
   activeLabelGroupId?: string
   onLabelGroupToggle: (groupId: string) => void
   className?: string
 }
 
-export function NavLabelGroups({ activeLabelGroupId, onLabelGroupToggle, className }: NavLabelGroupsProps) {
+export function SidebarLabelGroupsSection({
+  activeLabelGroupId,
+  onLabelGroupToggle,
+  className,
+}: SidebarLabelGroupsSectionProps) {
   const { data: groups = [] } = useLabelGroups()
   const { data: labels = [] } = useLabels()
   const [createOpen, setCreateOpen] = useState(false)
