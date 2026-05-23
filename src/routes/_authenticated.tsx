@@ -1,4 +1,4 @@
-import { useSyncExternalStore } from "react"
+import { useCallback, useEffect, useState, useSyncExternalStore } from "react"
 import { Link, createFileRoute, Outlet, redirect, useLocation, useNavigate } from "@tanstack/react-router"
 import { Bell, BellOff, Mail, Search } from "lucide-react"
 
@@ -8,6 +8,7 @@ import { PushNotificationListener } from "@/components/push-notification-listene
 import { buttonVariants } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
+import { useDebounce } from "@/hooks/use-debounce"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { getPushNotificationPermission, getStoredFcmToken, subscribeToFcmToken } from "@/lib/fcm"
 import { parseMailRouteSearch } from "@/lib/mail-routing"
@@ -59,25 +60,91 @@ function NotificationSettingsLink() {
   )
 }
 
+interface MailSearchFormProps {
+  mailbox: PrimaryMailboxId | null
+  query: string
+  accountId?: string
+}
+
+function MailSearchForm({ mailbox, query, accountId }: MailSearchFormProps) {
+  const navigate = useNavigate()
+  const [syncedQuery, setSyncedQuery] = useState(query)
+  const [draft, setDraft] = useState(query)
+
+  if (query !== syncedQuery) {
+    setSyncedQuery(query)
+    setDraft(query)
+  }
+
+  const currentDraft = query === syncedQuery ? draft : query
+  const debouncedDraft = useDebounce(currentDraft)
+
+  const commitMailboxSearch = useCallback(
+    (nextMailbox: PrimaryMailboxId, nextQuery: string) => {
+      void navigate({
+        to: "/mail/$mailbox",
+        params: { mailbox: nextMailbox },
+        search: (previous) => ({
+          ...previous,
+          query: nextQuery.trim() ? nextQuery : undefined,
+          thread: undefined,
+        }),
+        replace: true,
+      })
+    },
+    [navigate]
+  )
+
+  useEffect(() => {
+    if (!mailbox) return
+    if (debouncedDraft !== currentDraft) return
+    if (debouncedDraft === query) return
+
+    commitMailboxSearch(mailbox, debouncedDraft)
+  }, [debouncedDraft, currentDraft, mailbox, query, commitMailboxSearch])
+
+  return (
+    <form
+      className="relative mx-auto w-full max-w-xl"
+      onSubmit={(event) => {
+        event.preventDefault()
+
+        if (mailbox) {
+          commitMailboxSearch(mailbox, currentDraft)
+          return
+        }
+
+        void navigate({
+          to: "/mail/$mailbox",
+          params: { mailbox: "inbox" },
+          search: {
+            ...(currentDraft.trim() ? { query: currentDraft } : {}),
+            ...(accountId ? { accountId } : {}),
+          },
+        })
+      }}
+    >
+      <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+      <Input
+        name="query"
+        aria-label="메일 검색"
+        placeholder="메일 검색"
+        value={currentDraft}
+        onChange={(e) => {
+          setDraft(e.target.value)
+        }}
+        className="h-9 rounded-md bg-muted/50 pr-9 pl-9 shadow-none"
+      />
+    </form>
+  )
+}
+
 function AuthenticatedRouteLayout() {
   const isMobile = useIsMobile()
   const navigate = useNavigate()
   const { mailbox, query, filter, accountId, labelId, labelGroupId } = useLocation({
     select: (currentLocation) => getMailRouteState(currentLocation.pathname, currentLocation.search),
   })
-
-  const submitMailSearch = (mailbox: PrimaryMailboxId, nextQuery: string) => {
-    void navigate({
-      to: "/mail/$mailbox",
-      params: { mailbox },
-      search: (previous) => ({
-        ...previous,
-        query: nextQuery || undefined,
-        thread: undefined,
-      }),
-      replace: true,
-    })
-  }
 
   return (
     <SidebarProvider className="h-svh flex-col overflow-hidden bg-background">
@@ -91,53 +158,7 @@ function AuthenticatedRouteLayout() {
           </Link>
         )}
 
-        <form
-          className="relative mx-auto w-full max-w-xl"
-          onSubmit={(event) => {
-            event.preventDefault()
-
-            const formData = new FormData(event.currentTarget)
-            const value = formData.get("query")
-            const q = typeof value === "string" ? value.trim() : ""
-
-            if (mailbox) {
-              submitMailSearch(mailbox, q)
-              return
-            }
-
-            void navigate({
-              to: "/mail/$mailbox",
-              params: { mailbox: "inbox" },
-              search: {
-                ...(q ? { query: q } : {}),
-                ...(accountId ? { accountId } : {}),
-              },
-            })
-          }}
-        >
-          <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-          {mailbox ? (
-            <Input
-              key="mail-search"
-              name="query"
-              aria-label="메일 검색"
-              placeholder="메일 검색"
-              value={query}
-              onChange={(e) => {
-                submitMailSearch(mailbox, e.target.value.trim())
-              }}
-              className="h-9 rounded-md bg-muted/50 pr-9 pl-9 shadow-none"
-            />
-          ) : (
-            <Input
-              key="global-search"
-              name="query"
-              aria-label="메일 검색"
-              placeholder="메일 검색"
-              className="h-9 rounded-md bg-muted/50 pr-9 pl-9 shadow-none"
-            />
-          )}
-        </form>
+        <MailSearchForm mailbox={mailbox} query={query} accountId={accountId} />
 
         <div className="flex shrink-0 items-center gap-1">
           <NotificationSettingsLink />
