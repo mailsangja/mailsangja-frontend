@@ -1,3 +1,4 @@
+import { useQueryClient } from "@tanstack/react-query"
 import { createFileRoute, redirect } from "@tanstack/react-router"
 import { toast } from "sonner"
 
@@ -13,7 +14,7 @@ import { getMailAddressSearchText } from "@/lib/mail-address"
 import { cn } from "@/lib/utils"
 import { useMarkThreadAsRead } from "@/mutations/emails"
 import { useMailAccounts, mailAccountQueries } from "@/queries/mail-accounts"
-import { useMailboxThreads } from "@/queries/emails"
+import { emailKeys, useMailboxThreads } from "@/queries/emails"
 import { useLabels, labelQueries, useLabelGroups, labelGroupQueries } from "@/queries/labels"
 import { useTrashThreads } from "@/queries/trash"
 import { isSupportedMailboxId, MAILBOX_LABELS, parseMailboxId, type PrimaryMailboxId } from "@/types/email"
@@ -114,6 +115,7 @@ function MailboxView({ mailbox }: { mailbox: PrimaryMailboxId }) {
     thread: selectedThreadId = null,
   } = Route.useSearch()
   const navigate = Route.useNavigate()
+  const queryClient = useQueryClient()
   const isMobile = useIsMobile()
   const { data: accounts } = useMailAccounts()
   const { data: labels } = useLabels()
@@ -165,6 +167,14 @@ function MailboxView({ mailbox }: { mailbox: PrimaryMailboxId }) {
 
   const getAccount = (accountId: string) => {
     return accounts?.find((account) => account.id === accountId)
+  }
+
+  const refreshMailbox = () => {
+    if (!supportedMailbox) return
+
+    void queryClient.invalidateQueries({
+      queryKey: [...emailKeys.all(), "mailbox", supportedMailbox],
+    })
   }
 
   const visibleSelectedThreadId = threads.some((thread) => thread.threadId === selectedThreadId)
@@ -232,7 +242,7 @@ function MailboxView({ mailbox }: { mailbox: PrimaryMailboxId }) {
           void fetchNextPage()
         }
       }}
-      onRefresh={supportedMailbox ? () => void refetch() : undefined}
+      onRefresh={supportedMailbox ? refreshMailbox : undefined}
       getAccount={getAccount}
       emptyTitle={emptyTitle}
       emptyDescription={emptyDescription}
