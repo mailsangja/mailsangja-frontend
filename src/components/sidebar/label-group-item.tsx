@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { MoreVertical } from "lucide-react"
+import { MoreVertical, Pencil, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 
 import { EditLabelGroupDialog } from "@/components/label/label-group-form-dialog"
@@ -111,6 +111,7 @@ export function SidebarLabelGroupItem({ group, allLabels, isActive, onGroupToggl
               setDropdownOpen(false)
             }}
           >
+            <Pencil />
             라벨 그룹 수정
           </DropdownMenuItem>
           <DropdownMenuSeparator className="my-0.5" />
@@ -121,6 +122,7 @@ export function SidebarLabelGroupItem({ group, allLabels, isActive, onGroupToggl
               setDropdownOpen(false)
             }}
           >
+            <Trash2 />
             삭제
           </DropdownMenuItem>
         </DropdownMenuContent>

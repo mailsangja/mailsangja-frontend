@@ -1,9 +1,20 @@
-import { useState } from "react"
+import { useState, type ElementType } from "react"
 import { useQuery } from "@tanstack/react-query"
 import { Link } from "@tanstack/react-router"
 import { useSortable } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
-import { Check, GripVertical, MoreVertical } from "lucide-react"
+import {
+  Bell,
+  BellOff,
+  BellRing,
+  Check,
+  GripVertical,
+  MoreVertical,
+  Palette,
+  Pencil,
+  SlidersHorizontal,
+  Trash2,
+} from "lucide-react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -29,6 +40,11 @@ import { labelQueries } from "@/queries/labels"
 import { NOTIFICATION_POLICY_LABELS, type LabelListItem, type NotificationPolicy } from "@/types/label"
 
 const NOTIFICATION_POLICIES: NotificationPolicy[] = ["URGENT", "INHERIT", "SILENT"]
+const notificationPolicyIcons = {
+  URGENT: BellRing,
+  INHERIT: Bell,
+  SILENT: BellOff,
+} satisfies Record<NotificationPolicy, ElementType>
 
 interface LabelItemProps {
   label: LabelListItem
@@ -122,7 +138,10 @@ export function LabelItem({ label, isActive, onLabelToggle }: LabelItemProps) {
         </DropdownMenuTrigger>
         <DropdownMenuContent side="right" align="start" className="min-w-44 ring-foreground/6">
           <DropdownMenuSub>
-            <DropdownMenuSubTrigger>색상 변경</DropdownMenuSubTrigger>
+            <DropdownMenuSubTrigger>
+              <Palette />
+              색상 변경
+            </DropdownMenuSubTrigger>
             <DropdownMenuSubContent className="w-auto min-w-0" sideOffset={6}>
               <div className="grid grid-cols-5 gap-1 p-0.5">
                 {LABEL_COLORS.map((color) => (
@@ -146,16 +165,27 @@ export function LabelItem({ label, isActive, onLabelToggle }: LabelItemProps) {
           <DropdownMenuSeparator />
 
           <DropdownMenuSub>
-            <DropdownMenuSubTrigger>알림</DropdownMenuSubTrigger>
+            <DropdownMenuSubTrigger>
+              <Bell />
+              알림
+            </DropdownMenuSubTrigger>
             <DropdownMenuSubContent sideOffset={6} className="min-w-36">
-              {NOTIFICATION_POLICIES.map((policy) => (
-                <DropdownMenuItem key={policy} onClick={() => handleNotificationChange(policy)}>
-                  <Check
-                    className={cn("size-3.5 shrink-0", labelDetail?.notificationPolicy !== policy && "invisible")}
-                  />
-                  {NOTIFICATION_POLICY_LABELS[policy]}
-                </DropdownMenuItem>
-              ))}
+              {NOTIFICATION_POLICIES.map((policy) => {
+                const Icon = notificationPolicyIcons[policy]
+
+                return (
+                  <DropdownMenuItem key={policy} onClick={() => handleNotificationChange(policy)}>
+                    <Icon />
+                    {NOTIFICATION_POLICY_LABELS[policy]}
+                    <Check
+                      className={cn(
+                        "ml-auto size-3.5 shrink-0",
+                        labelDetail?.notificationPolicy !== policy && "invisible"
+                      )}
+                    />
+                  </DropdownMenuItem>
+                )
+              })}
             </DropdownMenuSubContent>
           </DropdownMenuSub>
 
@@ -168,9 +198,11 @@ export function LabelItem({ label, isActive, onLabelToggle }: LabelItemProps) {
               setDropdownOpen(false)
             }}
           >
+            <Pencil />
             이름 수정
           </DropdownMenuItem>
           <DropdownMenuItem render={<Link to="/settings/label/$labelId" params={{ labelId: String(label.id) }} />}>
+            <SlidersHorizontal />
             라벨 규칙 수정
           </DropdownMenuItem>
 
@@ -183,6 +215,7 @@ export function LabelItem({ label, isActive, onLabelToggle }: LabelItemProps) {
               setDropdownOpen(false)
             }}
           >
+            <Trash2 />
             삭제
           </DropdownMenuItem>
         </DropdownMenuContent>
