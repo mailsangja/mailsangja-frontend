@@ -28,6 +28,7 @@ export function useMailboxThreads(mailbox: SupportedMailboxId | null, options: O
     size,
     labelId: options.labelId,
     read: options.read,
+    q: options.q,
   }
 
   return useInfiniteQuery({

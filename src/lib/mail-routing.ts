@@ -15,7 +15,7 @@ export function parseMailRouteSearch(search: unknown): MailRouteSearch {
   }
 
   const values = search as Record<string, unknown>
-  const query = typeof values.query === "string" ? values.query.trim() : undefined
+  const query = typeof values.query === "string" ? values.query : undefined
   const filter = values.filter === "unread" ? "unread" : values.filter === "all" ? "all" : undefined
   const accountId = typeof values.accountId === "string" ? values.accountId.trim() : undefined
   const thread = typeof values.thread === "string" ? values.thread.trim() : undefined
@@ -23,7 +23,7 @@ export function parseMailRouteSearch(search: unknown): MailRouteSearch {
   const labelGroupId = typeof values.labelGroupId === "string" ? values.labelGroupId.trim() : undefined
 
   return {
-    ...(query ? { query } : {}),
+    ...(query?.trim() ? { query } : {}),
     ...(filter && filter !== "all" ? { filter } : {}),
     ...(accountId ? { accountId } : {}),
     ...(thread ? { thread } : {}),
