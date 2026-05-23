@@ -8,7 +8,7 @@ import {
   themeStylesToPanelOverrides,
 } from "@react-email/editor/plugins"
 import type { JSONContent } from "@tiptap/core"
-import { Loader2, Paperclip, X } from "lucide-react"
+import { Loader2, Paperclip, Star, X } from "lucide-react"
 import { useNavigate } from "@tanstack/react-router"
 import { toast } from "sonner"
 
@@ -16,6 +16,7 @@ import { LocalAttachmentChip } from "@/components/attachment/local-chip"
 import { ComposeAiDraftPanel } from "@/components/compose/compose-ai-draft-panel"
 import { ComposeEditorToolbar, type ComposeEditor } from "@/components/compose/compose-editor-toolbar"
 import { ComposeSendPreviewDialog, type ComposeSendPreviewData } from "@/components/compose/compose-send-preview-dialog"
+import { MailAccountLabel } from "@/components/mail-account-label"
 import { RecipientInput } from "@/components/compose/recipient-input"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
@@ -361,7 +362,7 @@ export function ComposeEmail({
     () =>
       (activeMailAccounts ?? []).map((mailAccount) => ({
         value: mailAccount.emailAddress,
-        label: mailAccount.emailAddress,
+        label: mailAccount.alias ? `${mailAccount.alias} (${mailAccount.emailAddress})` : mailAccount.emailAddress,
       })),
     [activeMailAccounts]
   )
@@ -819,9 +820,13 @@ export function ComposeEmail({
           <SelectContent align="start" alignItemWithTrigger={false}>
             {(activeMailAccounts ?? []).map((mailAccount) => (
               <SelectItem key={mailAccount.id} value={mailAccount.emailAddress} className="px-3 py-2">
-                <span className="flex items-center gap-2">
-                  {mailAccount.emailAddress}
-                  {mailAccount.id === user?.defaultMailAccountId && <Badge variant="secondary">default</Badge>}
+                <span className="flex min-w-0 items-center gap-2">
+                  <MailAccountLabel account={mailAccount} />
+                  {mailAccount.id === user?.defaultMailAccountId && (
+                    <Badge variant="secondary" className="px-1.5" aria-label="기본 발신 계정" title="기본 발신 계정">
+                      <Star stroke="var(--secondary-foreground)" fill="var(--secondary-foreground)" />
+                    </Badge>
+                  )}
                 </span>
               </SelectItem>
             ))}

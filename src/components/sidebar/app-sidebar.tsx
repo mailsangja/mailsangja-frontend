@@ -1,6 +1,7 @@
 import { Link } from "@tanstack/react-router"
-import { ChevronDown, Mail, Pencil } from "lucide-react"
+import { ChevronDown, Mail, Pencil, Star } from "lucide-react"
 
+import { MailAccountLabel } from "@/components/mail-account-label"
 import { Badge } from "@/components/ui/badge"
 import { buttonVariants } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -89,9 +90,13 @@ export function AppSidebar({
                   key={mailAccount.id}
                   render={<Link to="/compose" search={{ from: mailAccount.emailAddress }} />}
                 >
-                  <span className="flex flex-1 items-center gap-2">
-                    <span className="truncate">{mailAccount.emailAddress}</span>
-                    {mailAccount.id === user?.defaultMailAccountId && <Badge variant="secondary">default</Badge>}
+                  <span className="flex min-w-0 flex-1 items-center gap-2">
+                    <MailAccountLabel account={mailAccount} />
+                    {mailAccount.id === user?.defaultMailAccountId && (
+                      <Badge variant="secondary" className="px-1.5" aria-label="기본 발신 계정" title="기본 발신 계정">
+                        <Star stroke="var(--secondary-foreground)" fill="var(--secondary-foreground)" />
+                      </Badge>
+                    )}
                   </span>
                 </DropdownMenuItem>
               ))}

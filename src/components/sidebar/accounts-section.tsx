@@ -6,7 +6,7 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
-import { MailAccountIcon } from "@/components/mail-account-icon"
+import { MailAccountLabel } from "@/components/mail-account-label"
 import { cn } from "@/lib/utils"
 import { useMailAccounts } from "@/queries/mail-accounts"
 
@@ -37,13 +37,7 @@ export function SidebarAccountsSection({ activeAccountId, onAccountToggle, class
                   />
                 }
               >
-                <MailAccountIcon icon={account.icon} color={account.color} />
-                <span className="min-w-0 truncate text-xs">
-                  {account.alias || account.emailAddress}
-                  {account.alias ? (
-                    <span className="ml-1 tracking-tight text-muted-foreground">({account.emailAddress})</span>
-                  ) : null}
-                </span>
+                <MailAccountLabel account={account} />
               </TooltipTrigger>
               <TooltipContent align="center">{account.emailAddress}</TooltipContent>
             </Tooltip>

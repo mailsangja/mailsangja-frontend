@@ -53,7 +53,8 @@ export function MailAccountIcon({
     >
       <AccountIcon
         name={icon || DEFAULT_MAIL_ACCOUNT_ICON_NAME}
-        className={cn("text-white", sizeClassNames.icon, iconClassName)}
+        className={cn(sizeClassNames.icon, iconClassName)}
+        stroke="var(--color-white)"
         aria-hidden="true"
       />
     </span>
