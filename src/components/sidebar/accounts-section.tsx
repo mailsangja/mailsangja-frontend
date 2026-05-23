@@ -5,6 +5,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { MailAccountIcon } from "@/components/mail-account-icon"
 import { cn } from "@/lib/utils"
 import { useMailAccounts } from "@/queries/mail-accounts"
@@ -26,15 +27,26 @@ export function SidebarAccountsSection({ activeAccountId, onAccountToggle, class
       <SidebarMenu>
         {accounts.map((account) => (
           <SidebarMenuItem key={account.id}>
-            <SidebarMenuButton
-              type="button"
-              tooltip={account.emailAddress}
-              isActive={activeAccountId === account.id}
-              onClick={() => onAccountToggle(account.id)}
-            >
-              <MailAccountIcon icon={account.icon} color={account.color} />
-              <span className="truncate text-xs">{account.emailAddress}</span>
-            </SidebarMenuButton>
+            <Tooltip>
+              <TooltipTrigger
+                render={
+                  <SidebarMenuButton
+                    type="button"
+                    isActive={activeAccountId === account.id}
+                    onClick={() => onAccountToggle(account.id)}
+                  />
+                }
+              >
+                <MailAccountIcon icon={account.icon} color={account.color} />
+                <span className="min-w-0 truncate text-xs">
+                  {account.alias || account.emailAddress}
+                  {account.alias ? (
+                    <span className="ml-1 tracking-tight text-muted-foreground">({account.emailAddress})</span>
+                  ) : null}
+                </span>
+              </TooltipTrigger>
+              <TooltipContent align="center">{account.emailAddress}</TooltipContent>
+            </Tooltip>
           </SidebarMenuItem>
         ))}
       </SidebarMenu>
