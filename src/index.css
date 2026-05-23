@@ -613,3 +613,81 @@
   color: var(--muted-foreground);
   opacity: 0.72;
 }
+
+/* Landing page animations */
+@keyframes blob {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(28px, -44px) scale(1.06);
+  }
+  66% {
+    transform: translate(-22px, 18px) scale(0.94);
+  }
+}
+
+@keyframes blob-delay {
+  0%,
+  100% {
+    transform: translate(0, 0) scale(1);
+  }
+  33% {
+    transform: translate(-32px, 28px) scale(0.93);
+  }
+  66% {
+    transform: translate(24px, -36px) scale(1.07);
+  }
+}
+
+@keyframes scroll-bounce {
+  0%,
+  100% {
+    transform: translateY(0);
+    opacity: 0.4;
+  }
+  50% {
+    transform: translateY(8px);
+    opacity: 0.85;
+  }
+}
+
+.animate-blob {
+  animation: blob 9s ease-in-out infinite;
+}
+
+.animate-blob-delay {
+  animation: blob-delay 11s ease-in-out infinite;
+}
+
+.animate-scroll-bounce {
+  animation: scroll-bounce 1.8s ease-in-out infinite;
+}
+
+.hero-grid {
+  background-image: radial-gradient(color-mix(in oklch, var(--primary) 20%, transparent) 1px, transparent 1px);
+  background-size: 28px 28px;
+}
+
+.pricing-card-featured {
+  border-color: color-mix(in oklch, var(--primary) 40%, transparent);
+  background: color-mix(in oklch, var(--primary) 3%, var(--background));
+  box-shadow:
+    0 0 0 1px color-mix(in oklch, var(--primary) 18%, transparent),
+    0 12px 48px -8px color-mix(in oklch, var(--primary) 22%, transparent);
+}
+
+.pricing-card-featured:hover {
+  box-shadow:
+    0 0 0 1px color-mix(in oklch, var(--primary) 35%, transparent),
+    0 24px 64px -12px color-mix(in oklch, var(--primary) 35%, transparent);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-blob,
+  .animate-blob-delay,
+  .animate-scroll-bounce {
+    animation: none;
+  }
+}
