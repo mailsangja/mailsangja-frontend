@@ -13,7 +13,7 @@ import { useCreateLabel } from "@/mutations/labels"
 import { useLabels } from "@/queries/labels"
 import { useLabelOrder } from "@/hooks/use-label-order"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { LabelFormDialog, type LabelFormData } from "@/components/label-form-dialog"
+import { LabelFormDialog, type LabelFormData } from "@/components/label/label-form-dialog"
 import type { LabelListItem } from "@/types/label"
 
 export const Route = createFileRoute("/_authenticated/settings/label/")({

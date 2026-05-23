@@ -1,7 +1,8 @@
+import { LabelChipList } from "@/components/label/label-chip"
 import { Badge } from "@/components/ui/badge"
 import { AccountIcon } from "@/lib/icon-entries"
 import { cn } from "@/lib/utils"
-import type { LabelSummary } from "@/types/email"
+import type { ThreadLabel } from "@/types/label"
 import type { MailAccount } from "@/types/mail-account"
 
 interface ThreadHeaderData {
@@ -12,7 +13,7 @@ interface ThreadHeaderData {
 interface ThreadHeaderProps {
   thread: ThreadHeaderData
   account?: MailAccount
-  labels?: LabelSummary[]
+  labels?: ThreadLabel[]
   className?: string
 }
 
@@ -44,18 +45,10 @@ export function ThreadHeader({ thread, account, labels, className }: ThreadHeade
             발신
           </Badge>
         )}
-        <Badge variant="secondary" className="font-normal">
+        <Badge variant="outline" className="font-normal">
           메시지 {messageCount}개
         </Badge>
-        {labels?.map((label) => (
-          <span
-            key={label.labelId}
-            className="inline-flex items-center rounded-full px-1.5 py-0.5 text-xs font-medium text-white"
-            style={{ backgroundColor: label.colorCode }}
-          >
-            {label.name}
-          </span>
-        ))}
+        {labels ? <LabelChipList labels={labels} /> : null}
       </div>
     </div>
   )
