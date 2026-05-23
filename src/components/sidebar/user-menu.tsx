@@ -13,7 +13,7 @@ import {
 import { SidebarMenu, SidebarMenuButton, SidebarMenuItem, useSidebar } from "@/components/ui/sidebar"
 import { useLogout } from "@/mutations/auth"
 import { useUser } from "@/queries/user"
-import { ChevronsUpDown, LogOut, Settings, UserIcon } from "lucide-react"
+import { ChevronsUpDown, LogOut, Settings, Tag, UserIcon } from "lucide-react"
 
 export function SidebarUserMenu() {
   const { data: user } = useUser()
@@ -69,6 +69,10 @@ export function SidebarUserMenu() {
               <DropdownMenuItem render={<Link to="/settings" />}>
                 <Settings />
                 <span>설정</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem render={<Link to="/settings/label" />}>
+                <Tag />
+                <span>라벨 관리</span>
               </DropdownMenuItem>
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
