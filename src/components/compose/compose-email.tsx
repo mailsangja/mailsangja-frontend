@@ -37,6 +37,7 @@ interface ComposeEmailProps {
   initialTo?: string
   initialSubject?: string
   initialCc?: string
+  initialBody?: string
 }
 
 interface PendingInlineImage extends ComposeInlineImage {
@@ -318,6 +319,7 @@ export function ComposeEmail({
   initialTo,
   initialSubject,
   initialCc,
+  initialBody,
 }: ComposeEmailProps) {
   const navigate = useNavigate()
   const editorRef = useRef<EmailEditorRef>(null)
@@ -349,6 +351,7 @@ export function ComposeEmail({
   const [draftStreamPhase, setDraftStreamPhase] = useState<MailDraftStreamPhase>("idle")
   const [draftUsage, setDraftUsage] = useState<MailDraftUsage | null>(null)
 
+  const isReplyMode = !!messageId
   const activeFromAddressSet = useMemo(
     () => new Set((activeMailAccounts ?? []).map((mailAccount) => mailAccount.emailAddress)),
     [activeMailAccounts]
@@ -542,14 +545,16 @@ export function ComposeEmail({
     }
 
     const abortController = new AbortController()
-    let draftSubject = ""
+    let draftSubject = isReplyMode ? subject : ""
     let draftBody = ""
 
     draftAbortControllerRef.current = abortController
-    setSubject("")
+    if (!isReplyMode) {
+      setSubject("")
+    }
     replaceEditorBodyText("")
     setDraftUsage(null)
-    setDraftStreamPhase("subject")
+    setDraftStreamPhase(isReplyMode ? "body" : "subject")
     setIsDraftStreaming(true)
 
     try {
@@ -569,6 +574,10 @@ export function ComposeEmail({
             }
 
             if (event.type === "subject") {
+              if (isReplyMode) {
+                return
+              }
+
               draftSubject += event.delta
               setSubject(draftSubject)
               setDraftStreamPhase("subject")
@@ -803,7 +812,7 @@ export function ComposeEmail({
           value={subject}
           onChange={(e) => setSubject(e.target.value)}
           placeholder="메일 제목 입력"
-          disabled={isDraftStreaming}
+          disabled={isReplyMode || isDraftStreaming}
           className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-60"
         />
       </div>
@@ -856,10 +865,15 @@ export function ComposeEmail({
           editable={!isDraftStreaming}
           onUploadImage={uploadInlineImage}
           onReady={(ref) => {
-            applyEditorTheme(ref.editor)
+            const readyEditor = ref.editor
+
+            applyEditorTheme(readyEditor)
+            if (initialBody && readyEditor) {
+              readyEditor.commands.setContent(textToEditorContent(initialBody))
+            }
             setIsEditorReady(true)
             setIsEditorEmpty(isEditorContentEmpty(ref.getJSON()))
-            setEditor(ref.editor)
+            setEditor(readyEditor)
           }}
           onUpdate={(ref) => {
             const content = ref.getJSON()

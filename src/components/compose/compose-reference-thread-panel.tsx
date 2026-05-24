@@ -1,4 +1,3 @@
-import { useState } from "react"
 import { Mail } from "lucide-react"
 
 import { MailErrorState } from "@/components/mail-error-state"
@@ -6,6 +5,7 @@ import { ThreadHeader } from "@/components/thread/header"
 import { ThreadMessageList } from "@/components/thread/message-list"
 import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
+import { useThreadMessageExpansion } from "@/hooks/use-thread-message-expansion"
 import { getErrorMessage, getHttpStatus } from "@/lib/http-error"
 import { useThread } from "@/queries/emails"
 import { useMailAccounts } from "@/queries/mail-accounts"
@@ -68,31 +68,17 @@ function LoadingState() {
 
 interface ComposeReferenceThreadPanelProps {
   threadId: string | null
+  messageId?: string | null
 }
 
-export function ComposeReferenceThreadPanel({ threadId }: ComposeReferenceThreadPanelProps) {
+export function ComposeReferenceThreadPanel({ threadId, messageId = null }: ComposeReferenceThreadPanelProps) {
   const { data: thread, isLoading, isError, error, refetch } = useThread(threadId)
   const { data: accounts } = useMailAccounts()
-
-  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
-  const [expandedThreadId, setExpandedThreadId] = useState<string | null>(null)
-
-  if (thread && thread.threadId !== expandedThreadId) {
-    const next = new Set<string>()
-    const last = thread.messages.at(-1)
-    if (last) next.add(last.id)
-    setExpandedIds(next)
-    setExpandedThreadId(thread.threadId)
-  }
-
-  const toggleExpanded = (id: string) => {
-    setExpandedIds((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
-  }
+  const { expandedIds, toggleExpanded } = useThreadMessageExpansion({
+    threadId,
+    messages: thread?.messages ?? [],
+    messageId,
+  })
 
   const errorCopy = isError ? getThreadDetailErrorCopy(error) : null
   const account = thread ? accounts?.find((item) => item.id === thread.accountId) : undefined

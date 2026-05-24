@@ -105,6 +105,7 @@ function MailboxView({ mailbox }: { mailbox: PrimaryMailboxId }) {
     labelId,
     labelGroupId,
     thread: selectedThreadId = null,
+    message: selectedMessageId = null,
   } = Route.useSearch()
   const navigate = Route.useNavigate()
   const queryClient = useQueryClient()
@@ -216,6 +217,7 @@ function MailboxView({ mailbox }: { mailbox: PrimaryMailboxId }) {
           search: (previous) => ({
             ...previous,
             thread: threadId,
+            message: undefined,
           }),
         })
       }}
@@ -243,11 +245,13 @@ function MailboxView({ mailbox }: { mailbox: PrimaryMailboxId }) {
         {hasSelection ? (
           <ThreadDetail
             threadId={visibleSelectedThreadId}
+            messageId={selectedMessageId}
             onClose={() => {
               void navigate({
                 search: (previous) => ({
                   ...previous,
                   thread: undefined,
+                  message: undefined,
                 }),
                 replace: true,
               })
@@ -276,11 +280,13 @@ function MailboxView({ mailbox }: { mailbox: PrimaryMailboxId }) {
           <div className="min-h-0 min-w-0 basis-2/3">
             <ThreadDetail
               threadId={visibleSelectedThreadId}
+              messageId={selectedMessageId}
               onClose={() => {
                 void navigate({
                   search: (previous) => ({
                     ...previous,
                     thread: undefined,
+                    message: undefined,
                   }),
                   replace: true,
                 })

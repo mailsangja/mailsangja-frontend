@@ -1,4 +1,3 @@
-import { useState } from "react"
 import { Archive, ArrowLeft, Copy, Forward, MailOpen, Mail, Reply, Trash2 } from "lucide-react"
 import { useNavigate } from "@tanstack/react-router"
 import { toast } from "sonner"
@@ -6,10 +5,12 @@ import { toast } from "sonner"
 import { MailErrorState } from "@/components/mail-error-state"
 import { ThreadHeader } from "@/components/thread/header"
 import { ThreadMessageList } from "@/components/thread/message-list"
+import { ReplyDraftSuggestionAction } from "@/components/thread/reply-draft-suggestion-action"
 import { Button } from "@/components/ui/button"
 import { DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu"
 import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
+import { useThreadMessageExpansion } from "@/hooks/use-thread-message-expansion"
 import { copyTextToClipboard } from "@/lib/clipboard"
 import { getErrorMessage, getHttpStatus } from "@/lib/http-error"
 import {
@@ -89,6 +90,18 @@ function LoadingState() {
   )
 }
 
+function getLatestInboundMessage(messages: readonly InboxMessage[]) {
+  for (let index = messages.length - 1; index >= 0; index -= 1) {
+    const message = messages[index]
+
+    if (message?.direction === "INBOUND") {
+      return message
+    }
+  }
+
+  return null
+}
+
 interface ThreadToolbarProps {
   isRead: boolean
   onClose?: () => void
@@ -152,18 +165,23 @@ function ThreadToolbar({
   )
 }
 
-function ThreadFooter({ onReply }: { onReply: () => void }) {
+function ThreadFooter({
+  onReply,
+  replyDraftMessage,
+  threadId,
+}: {
+  onReply: () => void
+  replyDraftMessage: InboxMessage | null
+  threadId: string
+}) {
   return (
     <div className="shrink-0 border-t px-6 py-2">
-      <div className="flex flex-wrap gap-2">
+      <div className="flex min-w-0 items-center gap-2 overflow-x-auto">
         <Button variant="outline" size="sm" onClick={onReply}>
           <Reply />
           답장
         </Button>
-        <Button variant="outline" size="sm" disabled title="전달 기능은 아직 지원되지 않습니다.">
-          <Forward />
-          전달
-        </Button>
+        {replyDraftMessage ? <ReplyDraftSuggestionAction threadId={threadId} message={replyDraftMessage} /> : null}
       </div>
     </div>
   )
@@ -171,10 +189,11 @@ function ThreadFooter({ onReply }: { onReply: () => void }) {
 
 interface ThreadDetailProps {
   threadId: string | null
+  messageId?: string | null
   onClose?: () => void
 }
 
-export function ThreadDetail({ threadId, onClose }: ThreadDetailProps) {
+export function ThreadDetail({ threadId, messageId = null, onClose }: ThreadDetailProps) {
   const navigate = useNavigate()
   const { data: thread, isLoading, isError, error, refetch } = useThread(threadId)
   const { data: accounts } = useMailAccounts()
@@ -186,29 +205,11 @@ export function ThreadDetail({ threadId, onClose }: ThreadDetailProps) {
   const { mutate: markThreadUnread, isPending: isMarkingThreadUnread } = useMarkThreadAsUnread()
   const { mutate: markMessageRead } = useMarkMessageAsRead()
   const { mutate: markMessageUnread } = useMarkMessageAsUnread()
-
-  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
-  const [expandedThreadId, setExpandedThreadId] = useState<string | null>(null)
-
-  if (thread && thread.threadId !== expandedThreadId) {
-    const next = new Set<string>()
-    const last = thread.messages.at(-1)
-    if (last) next.add(last.id)
-    for (const message of thread.messages) {
-      if (!message.isRead) next.add(message.id)
-    }
-    setExpandedIds(next)
-    setExpandedThreadId(thread.threadId)
-  }
-
-  const toggleExpanded = (id: string) => {
-    setExpandedIds((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
-  }
+  const { expandedIds, toggleExpanded } = useThreadMessageExpansion({
+    threadId,
+    messages: thread?.messages ?? [],
+    messageId,
+  })
 
   const handleDeleteMessage = (message: InboxMessage, isLast: boolean) => {
     deleteMessage(message.id, {
@@ -245,8 +246,8 @@ export function ThreadDetail({ threadId, onClose }: ThreadDetailProps) {
     void navigate({
       to: "/compose",
       search: {
-        replyThreadId: thread.threadId,
-        ...(message ? { replyMessageId: message.id } : {}),
+        thread: thread.threadId,
+        ...(message ? { message: message.id } : {}),
       },
     })
   }
@@ -309,6 +310,7 @@ export function ThreadDetail({ threadId, onClose }: ThreadDetailProps) {
 
   const messages = thread.messages
   const account = accounts?.find((item) => item.id === thread.accountId)
+  const replyDraftMessage = getLatestInboundMessage(messages)
 
   return (
     <div className="flex h-full w-full min-w-0 flex-1 flex-col">
@@ -354,7 +356,7 @@ export function ThreadDetail({ threadId, onClose }: ThreadDetailProps) {
           </>
         )}
       />
-      <ThreadFooter onReply={() => handleReply()} />
+      <ThreadFooter onReply={() => handleReply()} threadId={thread.threadId} replyDraftMessage={replyDraftMessage} />
     </div>
   )
 }
