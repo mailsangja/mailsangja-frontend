@@ -13,6 +13,8 @@ import type {
   MailReviewRequest,
   MailReviewResult,
   MarkerSliceResponse,
+  ReplyDraftSuggestion,
+  ReplyDraftSuggestionListResponse,
   SupportedMailboxId,
   UnreadCountResponse,
 } from "@/types/email"
@@ -209,6 +211,14 @@ export async function markMessageAsUnread(messageId: string): Promise<void> {
 
 export async function getUnreadCount(): Promise<UnreadCountResponse> {
   return apiClient.get<UnreadCountResponse>("/api/v1/threads/inbox/unread-count")
+}
+
+export async function getReplyDraftSuggestions(messageId: string): Promise<ReplyDraftSuggestionListResponse> {
+  return apiClient.get<ReplyDraftSuggestionListResponse>(`/api/v1/mail/messages/${messageId}/reply-draft-suggestions`)
+}
+
+export async function selectReplyDraftSuggestion(suggestionId: string): Promise<ReplyDraftSuggestion> {
+  return apiClient.post<ReplyDraftSuggestion>(`/api/v1/mail/reply-draft-suggestions/${suggestionId}/select`)
 }
 
 export function getAttachmentDownloadUrl(attachmentId: string) {

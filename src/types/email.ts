@@ -101,6 +101,17 @@ export interface UnreadCountResponse {
   unreadCount: number
 }
 
+export interface ReplyDraftSuggestion {
+  id: string
+  type: string
+  subject: string
+  body: string
+}
+
+export interface ReplyDraftSuggestionListResponse {
+  suggestions: ReplyDraftSuggestion[]
+}
+
 export interface ComposeInlineImage {
   file: File
   cid: string

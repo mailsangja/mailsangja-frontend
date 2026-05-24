@@ -1,7 +1,12 @@
 import { useMutation } from "@tanstack/react-query"
 import { toast } from "sonner"
 
-import type { ComposeEmailData, MailReviewRequest } from "@/types/email"
+import type {
+  ComposeEmailData,
+  MailReviewRequest,
+  ReplyDraftSuggestion,
+  ReplyDraftSuggestionListResponse,
+} from "@/types/email"
 
 import {
   markMessageAsRead,
@@ -9,11 +14,17 @@ import {
   markThreadAsRead,
   markThreadAsUnread,
   reviewMail,
+  selectReplyDraftSuggestion,
   sendMail,
 } from "@/api/emails"
 import { queryClient } from "@/lib/query-client"
 import { emailKeys } from "@/queries/emails"
 import { labelKeys } from "@/queries/labels"
+
+interface SelectReplyDraftSuggestionVariables {
+  messageId: string
+  suggestionId: string
+}
 
 function invalidateEmailAndLabelQueries() {
   void queryClient.invalidateQueries({ queryKey: emailKeys.all() })
@@ -26,6 +37,16 @@ export const emailMutationOptions = {
     mutationFn: (data: ComposeEmailData) => sendMail(data),
     onSuccess: () => {
       void queryClient.invalidateQueries({ queryKey: emailKeys.all() })
+    },
+  }),
+  selectReplyDraftSuggestion: () => ({
+    mutationKey: [...emailKeys.all(), "reply-draft-suggestions", "select"] as const,
+    mutationFn: ({ suggestionId }: SelectReplyDraftSuggestionVariables) => selectReplyDraftSuggestion(suggestionId),
+    onSuccess: (_selectedSuggestion: ReplyDraftSuggestion, { messageId }: SelectReplyDraftSuggestionVariables) => {
+      queryClient.setQueryData<ReplyDraftSuggestionListResponse>(emailKeys.replyDraftSuggestions(messageId), {
+        suggestions: [],
+      })
+      void queryClient.invalidateQueries({ queryKey: emailKeys.replyDraftSuggestions(messageId) })
     },
   }),
 }
@@ -78,4 +99,8 @@ export function useReviewMail() {
   return useMutation({
     mutationFn: (request: MailReviewRequest) => reviewMail(request),
   })
+}
+
+export function useSelectReplyDraftSuggestion() {
+  return useMutation(emailMutationOptions.selectReplyDraftSuggestion())
 }

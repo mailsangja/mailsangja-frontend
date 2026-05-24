@@ -1,6 +1,6 @@
 import { queryOptions, useInfiniteQuery, useQuery } from "@tanstack/react-query"
 
-import { getMailboxThreads, getThreadDetail } from "@/api/emails"
+import { getMailboxThreads, getReplyDraftSuggestions, getThreadDetail } from "@/api/emails"
 import type { ListThreadsParams, SupportedMailboxId } from "@/types/email"
 
 export const emailKeys = {
@@ -8,6 +8,7 @@ export const emailKeys = {
   mailbox: (mailbox: SupportedMailboxId | null, params: Omit<ListThreadsParams, "marker">) =>
     [...emailKeys.all(), "mailbox", mailbox, params] as const,
   thread: (id: string) => [...emailKeys.all(), "thread", id] as const,
+  replyDraftSuggestions: (messageId: string) => [...emailKeys.all(), "reply-draft-suggestions", messageId] as const,
 }
 
 export const emailQueries = {
@@ -19,6 +20,12 @@ export const emailQueries = {
     queryOptions({
       queryKey: [...emailKeys.all(), "label-count", labelId] as const,
       queryFn: () => getMailboxThreads("inbox", { size: 1, labelId: [labelId] }),
+    }),
+  replyDraftSuggestions: (messageId: string) =>
+    queryOptions({
+      queryKey: emailKeys.replyDraftSuggestions(messageId),
+      queryFn: () => getReplyDraftSuggestions(messageId),
+      enabled: !!messageId,
     }),
 }
 
@@ -50,5 +57,12 @@ export function useThread(id: string | null) {
   return useQuery({
     ...emailQueries.thread(id ?? ""),
     enabled: id != null,
+  })
+}
+
+export function useReplyDraftSuggestions(messageId: string | null, enabled?: boolean) {
+  return useQuery({
+    ...emailQueries.replyDraftSuggestions(messageId ?? ""),
+    enabled: (enabled ?? true) && messageId != null,
   })
 }
