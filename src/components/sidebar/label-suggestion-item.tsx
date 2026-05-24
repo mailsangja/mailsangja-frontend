@@ -5,6 +5,7 @@ import { toast } from "sonner"
 
 import { LabelFormDialog, type LabelFormData } from "@/components/label/label-form-dialog"
 import { SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar"
+import { trackEvent } from "@/lib/analytics"
 import { getErrorMessage, getHttpStatus } from "@/lib/http-error"
 import { useApproveLabelSuggestion, useDeleteLabelSuggestion } from "@/mutations/labels"
 import { useLabelSuggestionDetail } from "@/queries/labels"
@@ -24,6 +25,9 @@ export function LabelSuggestionItem({ suggestion }: LabelSuggestionItemProps) {
 
   function handleReject() {
     deleteSuggestion.mutate(suggestion.id, {
+      onSuccess: () => {
+        trackEvent("ai_label_suggestion_reject")
+      },
       onError: (e) => toast.error(getErrorMessage(e, "라벨 제안 거부에 실패했습니다.")),
     })
   }
@@ -34,6 +38,10 @@ export function LabelSuggestionItem({ suggestion }: LabelSuggestionItemProps) {
       { suggestionId: suggestion.id, data: { name, colorCode, notificationPolicy, order: suggestion.order, rule } },
       {
         onSuccess: (label) => {
+          trackEvent("ai_label_suggestion_approve", {
+            has_rule: groups.length > 0,
+            notification_policy: notificationPolicy,
+          })
           setApproveOpen(false)
           toast.success(`${name} 라벨이 추가되었습니다`)
           void navigate({ to: "/settings/label/$labelId", params: { labelId: label.id } })

@@ -10,6 +10,7 @@ import { LabelSuggestionItem } from "@/components/sidebar/label-suggestion-item"
 import { Button, buttonVariants } from "@/components/ui/button"
 import { SidebarGroup, SidebarGroupLabel, SidebarMenu } from "@/components/ui/sidebar"
 import { useLabelOrder } from "@/hooks/use-label-order"
+import { trackEvent } from "@/lib/analytics"
 import { getErrorMessage, getHttpStatus } from "@/lib/http-error"
 import { cn } from "@/lib/utils"
 import { useCreateLabel, useCreateLabelSuggestions } from "@/mutations/labels"
@@ -34,7 +35,10 @@ export function SidebarLabelsSection({ activeLabelId, onLabelToggle, className }
     createLabel.mutate(
       { name, colorCode, notificationPolicy, order: maxOrder + 1 },
       {
-        onSuccess: () => setOpen(false),
+        onSuccess: () => {
+          trackEvent("label_create", { notification_policy: notificationPolicy })
+          setOpen(false)
+        },
         onError: (e) => {
           if (getHttpStatus(e) === 409) {
             toast.error("이미 존재하는 라벨입니다.")
@@ -62,7 +66,10 @@ export function SidebarLabelsSection({ activeLabelId, onLabelToggle, className }
             onClick={() => {
               const toastId = toast.loading("AI 추천 라벨을 생성 중입니다...")
               createSuggestions.mutate(undefined, {
-                onSuccess: () => toast.success("AI 추천 라벨 생성이 완료되었습니다!", { id: toastId }),
+                onSuccess: () => {
+                  trackEvent("ai_label_suggestions_generate")
+                  toast.success("AI 추천 라벨 생성이 완료되었습니다!", { id: toastId })
+                },
                 onError: (e) => toast.error(getErrorMessage(e, "AI 추천 라벨 생성에 실패했습니다."), { id: toastId }),
               })
             }}

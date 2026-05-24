@@ -22,6 +22,7 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { MailDraftStreamError, streamMailDraft } from "@/api/emails"
+import { trackEvent } from "@/lib/analytics"
 import { getErrorMessage } from "@/lib/http-error"
 import { formatMailAddressesForSend, parseMailRecipients } from "@/lib/mail-address"
 import { cn } from "@/lib/utils"
@@ -600,6 +601,11 @@ export function ComposeEmail({
       )
 
       if (isMountedRef.current && draftAbortControllerRef.current === abortController) {
+        trackEvent("ai_draft_generate", {
+          is_reply: isReplyMode,
+          has_reference_message: Boolean(messageId),
+          has_recipients: to.length > 0 || cc.length > 0,
+        })
         setDraftStreamPhase("done")
       }
     } catch (error) {
@@ -632,6 +638,10 @@ export function ComposeEmail({
   }
 
   const handleStopDraft = () => {
+    trackEvent("ai_draft_stop", {
+      is_reply: isReplyMode,
+      has_reference_message: Boolean(messageId),
+    })
     draftAbortControllerRef.current?.abort()
   }
 
@@ -708,6 +718,14 @@ export function ComposeEmail({
 
       if (preview) {
         setSendPreview(preview)
+        trackEvent("compose_preview_open", {
+          is_reply: Boolean(preview.mail.messageId),
+          recipient_count: preview.mail.to.length,
+          cc_count: preview.mail.cc?.length ?? 0,
+          bcc_count: preview.mail.bcc?.length ?? 0,
+          attachment_count: preview.mail.attachments?.length ?? 0,
+          inline_image_count: preview.mail.inlineImages?.length ?? 0,
+        })
         reviewMutation.mutate({
           subject: preview.mail.subject,
           body: preview.text,
@@ -729,6 +747,14 @@ export function ComposeEmail({
 
     try {
       await sendMailMutation.mutateAsync(sendPreview.mail)
+      trackEvent("email_send", {
+        is_reply: Boolean(sendPreview.mail.messageId),
+        recipient_count: sendPreview.mail.to.length,
+        cc_count: sendPreview.mail.cc?.length ?? 0,
+        bcc_count: sendPreview.mail.bcc?.length ?? 0,
+        attachment_count: sendPreview.mail.attachments?.length ?? 0,
+        inline_image_count: sendPreview.mail.inlineImages?.length ?? 0,
+      })
       toast.success("메일이 발송되었습니다")
       setSendPreview(null)
       await navigate({ to: "/mail/$mailbox", params: { mailbox: "inbox" } })
