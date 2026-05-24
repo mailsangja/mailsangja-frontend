@@ -25,7 +25,7 @@ import { MailDraftStreamError, streamMailDraft } from "@/api/emails"
 import { getErrorMessage } from "@/lib/http-error"
 import { formatMailAddressesForSend, parseMailRecipients } from "@/lib/mail-address"
 import { cn } from "@/lib/utils"
-import { useSendMail } from "@/mutations/emails"
+import { useReviewMail, useSendMail } from "@/mutations/emails"
 import { useActiveMailAccounts } from "@/queries/mail-accounts"
 import { useUser } from "@/queries/user"
 import type { ComposeInlineImage, MailAddress, MailDraftStreamPhase, MailDraftUsage } from "@/types/email"
@@ -329,6 +329,7 @@ export function ComposeEmail({
   const { data: user, isPending: isUserPending } = useUser()
   const { data: activeMailAccounts, isPending: isMailAccountsPending } = useActiveMailAccounts()
   const sendMailMutation = useSendMail()
+  const reviewMutation = useReviewMail()
   const [editor, setEditor] = useState<ComposeEditor | null>(null)
   const [to, setTo] = useState<MailAddress[]>(() => parseMailRecipients(initialTo ?? ""))
   const [cc, setCc] = useState<MailAddress[]>(() => parseMailRecipients(initialCc ?? ""))
@@ -698,6 +699,12 @@ export function ComposeEmail({
 
       if (preview) {
         setSendPreview(preview)
+        reviewMutation.mutate({
+          subject: preview.mail.subject,
+          body: preview.text,
+          attachmentCount: preview.mail.attachments?.length ?? 0,
+          attachmentNames: preview.mail.attachments?.map((f) => f.name) ?? [],
+        })
       }
     } catch (error) {
       toast.error("메일 미리보기를 생성하지 못했습니다", {
@@ -925,8 +932,14 @@ export function ComposeEmail({
         open={isSendPreviewOpen}
         preview={sendPreview}
         isSending={sendMailMutation.isPending}
+        isReviewing={reviewMutation.isPending}
+        reviewResult={reviewMutation.data ?? null}
+        reviewError={reviewMutation.isError}
         onOpenChange={(open) => {
-          if (!open) setSendPreview(null)
+          if (!open) {
+            setSendPreview(null)
+            reviewMutation.reset()
+          }
         }}
         onConfirm={handleConfirmSend}
       />
