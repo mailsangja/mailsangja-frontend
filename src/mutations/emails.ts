@@ -1,9 +1,16 @@
 import { useMutation } from "@tanstack/react-query"
 import { toast } from "sonner"
 
-import type { ComposeEmailData } from "@/types/email"
+import type { ComposeEmailData, MailReviewRequest } from "@/types/email"
 
-import { markMessageAsRead, markMessageAsUnread, markThreadAsRead, markThreadAsUnread, sendMail } from "@/api/emails"
+import {
+  markMessageAsRead,
+  markMessageAsUnread,
+  markThreadAsRead,
+  markThreadAsUnread,
+  reviewMail,
+  sendMail,
+} from "@/api/emails"
 import { queryClient } from "@/lib/query-client"
 import { emailKeys } from "@/queries/emails"
 import { labelKeys } from "@/queries/labels"
@@ -65,4 +72,10 @@ export function useMarkMessageAsUnread() {
 
 export function useSendMail() {
   return useMutation(emailMutationOptions.sendMail())
+}
+
+export function useReviewMail() {
+  return useMutation({
+    mutationFn: (request: MailReviewRequest) => reviewMail(request),
+  })
 }

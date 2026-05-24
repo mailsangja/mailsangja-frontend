@@ -142,3 +142,41 @@ export type MailDraftStreamEvent =
   | { type: "usage"; usage: MailDraftUsage }
   | { type: "done" }
   | { type: "error"; code?: string; message: string }
+
+export interface MailReviewRequest {
+  subject: string
+  body: string
+  attachmentCount?: number
+  attachmentNames?: string[]
+}
+
+export type MailReviewIssueField = "SUBJECT" | "BODY"
+export type MailReviewIssueType =
+  | "SPELLING"
+  | "SPACING"
+  | "GRAMMAR"
+  | "CONTEXT"
+  | "TONE"
+  | "CLARITY"
+  | "ATTACHMENT_MISSING"
+export type MailReviewIssueSeverity = "LOW" | "MEDIUM" | "HIGH"
+
+export interface MailReviewIssue {
+  segmentId: string
+  field: MailReviewIssueField
+  type: MailReviewIssueType
+  severity: MailReviewIssueSeverity
+  segmentText: string
+  originalText: string
+  replacementText: string
+  localStartOffset: number
+  localEndOffset: number
+  globalStartOffset: number
+  globalEndOffset: number
+  reason: string
+}
+
+export interface MailReviewResult {
+  hasIssues: boolean
+  issues: MailReviewIssue[]
+}

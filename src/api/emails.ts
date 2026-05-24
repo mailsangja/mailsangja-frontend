@@ -10,6 +10,8 @@ import type {
   MailDraftStreamEvent,
   MailDraftStreamRequest,
   MailDraftUsage,
+  MailReviewRequest,
+  MailReviewResult,
   MarkerSliceResponse,
   SupportedMailboxId,
   UnreadCountResponse,
@@ -331,4 +333,8 @@ export async function sendMail(data: ComposeEmailData): Promise<void> {
       messageId: data.messageId,
     },
   })
+}
+
+export async function reviewMail(request: MailReviewRequest): Promise<MailReviewResult> {
+  return apiClient.post<MailReviewResult>("/api/v1/mail/reviews", request)
 }
