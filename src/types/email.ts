@@ -142,3 +142,56 @@ export type MailDraftStreamEvent =
   | { type: "usage"; usage: MailDraftUsage }
   | { type: "done" }
   | { type: "error"; code?: string; message: string }
+
+export interface MailReviewRequest {
+  subject: string
+  body: string
+  attachmentCount?: number
+  attachmentNames?: string[]
+}
+
+export type MailReviewIssueField = "SUBJECT" | "BODY"
+export type MailReviewIssueType =
+  | "SPELLING"
+  | "SPACING"
+  | "GRAMMAR"
+  | "CONTEXT"
+  | "TONE"
+  | "CLARITY"
+  | "ATTACHMENT_MISSING"
+export type MailReviewIssueSeverity = "LOW" | "MEDIUM" | "HIGH"
+
+export const MAIL_REVIEW_ISSUE_TYPE_LABELS: Record<MailReviewIssueType, string> = {
+  SPELLING: "맞춤법",
+  SPACING: "띄어쓰기",
+  GRAMMAR: "문법",
+  CONTEXT: "문맥",
+  TONE: "어조",
+  CLARITY: "명확성",
+  ATTACHMENT_MISSING: "첨부파일 누락",
+}
+
+export const MAIL_REVIEW_ISSUE_FIELD_LABELS: Record<MailReviewIssueField, string> = {
+  SUBJECT: "제목",
+  BODY: "본문",
+}
+
+export interface MailReviewIssue {
+  segmentId: string
+  field: MailReviewIssueField
+  type: MailReviewIssueType
+  severity: MailReviewIssueSeverity
+  segmentText: string
+  originalText: string
+  replacementText: string
+  localStartOffset: number
+  localEndOffset: number
+  globalStartOffset: number
+  globalEndOffset: number
+  reason: string
+}
+
+export interface MailReviewResult {
+  hasIssues: boolean
+  issues: MailReviewIssue[]
+}
