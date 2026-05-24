@@ -55,9 +55,9 @@ export function ReplyDraftSuggestionAction({ threadId, message }: ReplyDraftSugg
     void navigate({
       to: "/compose",
       search: {
-        replyThreadId: threadId,
-        replyMessageId: message.id,
-        replySuggestionId: suggestion.id,
+        thread: threadId,
+        message: message.id,
+        suggestion: suggestion.id,
       },
     })
   }
@@ -108,7 +108,7 @@ export function ReplyDraftSuggestionAction({ threadId, message }: ReplyDraftSugg
       <span className="mx-1 h-5 w-px bg-border" aria-hidden />
       <div className="mr-1 flex shrink-0 items-center gap-1.5 text-xs font-medium text-muted-foreground">
         <Sparkles className="size-3.5" />
-        AI 답장 제안
+        AI 답장
       </div>
       {suggestions.map((suggestion) => (
         <Popover key={suggestion.id}>

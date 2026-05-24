@@ -12,42 +12,43 @@ import type { ReplyDraftSuggestionListResponse } from "@/types/email"
 
 interface ComposeRouteSearch {
   from?: string
-  replyThreadId?: string
-  replyMessageId?: string
-  replySuggestionId?: string
+  thread?: string
+  message?: string
+  suggestion?: string
 }
 
 export const Route = createFileRoute("/_authenticated/compose")({
   validateSearch: (search: Record<string, unknown>): ComposeRouteSearch => {
     const from = typeof search.from === "string" ? search.from.trim() : ""
-    const replyThreadId = typeof search.replyThreadId === "string" ? search.replyThreadId.trim() : ""
-    const replyMessageId = typeof search.replyMessageId === "string" ? search.replyMessageId.trim() : ""
-    const replySuggestionId = typeof search.replySuggestionId === "string" ? search.replySuggestionId.trim() : ""
+    const thread = typeof search.thread === "string" ? search.thread.trim() : ""
+    const message = typeof search.message === "string" ? search.message.trim() : ""
+    const suggestion = typeof search.suggestion === "string" ? search.suggestion.trim() : ""
+
     return {
       ...(from ? { from } : {}),
-      ...(replyThreadId ? { replyThreadId } : {}),
-      ...(replyMessageId ? { replyMessageId } : {}),
-      ...(replySuggestionId ? { replySuggestionId } : {}),
+      ...(thread ? { thread } : {}),
+      ...(message ? { message } : {}),
+      ...(suggestion ? { suggestion } : {}),
     }
   },
-  loaderDeps: ({ search: { replyThreadId, replyMessageId } }) => ({ replyThreadId, replyMessageId }),
+  loaderDeps: ({ search: { thread, message } }) => ({ thread, message }),
   beforeLoad: async ({ context, search }) => {
-    const replySuggestionId = search.replySuggestionId
+    const suggestionId = search.suggestion
 
-    if (!replySuggestionId) {
+    if (!suggestionId) {
       return { replyDraftSuggestion: null }
     }
 
     try {
       const replyDraftSuggestion = await context.queryClient.ensureQueryData({
-        queryKey: emailKeys.selectedReplyDraftSuggestion(replySuggestionId),
-        queryFn: () => selectReplyDraftSuggestion(replySuggestionId),
+        queryKey: emailKeys.selectedReplyDraftSuggestion(suggestionId),
+        queryFn: () => selectReplyDraftSuggestion(suggestionId),
         staleTime: Infinity,
       })
 
-      if (search.replyMessageId) {
+      if (search.message) {
         context.queryClient.setQueryData<ReplyDraftSuggestionListResponse>(
-          emailKeys.replyDraftSuggestions(search.replyMessageId),
+          emailKeys.replyDraftSuggestions(search.message),
           { suggestions: [] }
         )
       }
@@ -57,16 +58,16 @@ export const Route = createFileRoute("/_authenticated/compose")({
       return { replyDraftSuggestion: null }
     }
   },
-  loader: async ({ context, deps: { replyThreadId, replyMessageId } }) => {
-    if (!replyThreadId) return null
+  loader: async ({ context, deps: { thread: threadId, message: messageId } }) => {
+    if (!threadId) return null
 
     const [thread, accounts] = await Promise.all([
-      context.queryClient.ensureQueryData(emailQueries.thread(replyThreadId)),
+      context.queryClient.ensureQueryData(emailQueries.thread(threadId)),
       context.queryClient.ensureQueryData(mailAccountQueries.list()),
     ])
 
-    const replyMessage = replyMessageId
-      ? thread.messages.find((message) => message.id === replyMessageId)
+    const replyMessage = messageId
+      ? thread.messages.find((message) => message.id === messageId)
       : thread.messages.at(-1)
     if (!replyMessage) return null
 
@@ -91,7 +92,7 @@ export const Route = createFileRoute("/_authenticated/compose")({
 
 function ComposePage() {
   const isMobile = useIsMobile()
-  const { from, replyThreadId } = Route.useSearch()
+  const { from, thread } = Route.useSearch()
   const loaderData = Route.useLoaderData()
   const { replyDraftSuggestion } = Route.useRouteContext()
   const navigate = Route.useNavigate()
@@ -126,7 +127,7 @@ function ComposePage() {
   return (
     <div className="flex min-h-0 w-full min-w-0 flex-1 overflow-hidden">
       <div className="min-h-0 min-w-0 basis-1/2 border-r-0">
-        <ComposeReferenceThreadPanel threadId={replyThreadId ?? null} />
+        <ComposeReferenceThreadPanel threadId={thread ?? null} />
       </div>
       <Separator orientation="vertical" />
       <div className="min-h-0 min-w-0 basis-2/3">

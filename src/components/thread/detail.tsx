@@ -263,8 +263,8 @@ export function ThreadDetail({ threadId, onClose }: ThreadDetailProps) {
     void navigate({
       to: "/compose",
       search: {
-        replyThreadId: thread.threadId,
-        ...(message ? { replyMessageId: message.id } : {}),
+        thread: thread.threadId,
+        ...(message ? { message: message.id } : {}),
       },
     })
   }
