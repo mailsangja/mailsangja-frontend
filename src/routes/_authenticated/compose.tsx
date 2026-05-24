@@ -92,7 +92,7 @@ export const Route = createFileRoute("/_authenticated/compose")({
 
 function ComposePage() {
   const isMobile = useIsMobile()
-  const { from, thread } = Route.useSearch()
+  const { from, thread, message } = Route.useSearch()
   const loaderData = Route.useLoaderData()
   const { replyDraftSuggestion } = Route.useRouteContext()
   const navigate = Route.useNavigate()
@@ -127,7 +127,7 @@ function ComposePage() {
   return (
     <div className="flex min-h-0 w-full min-w-0 flex-1 overflow-hidden">
       <div className="min-h-0 min-w-0 basis-1/2 border-r-0">
-        <ComposeReferenceThreadPanel threadId={thread ?? null} />
+        <ComposeReferenceThreadPanel threadId={thread ?? null} messageId={message ?? null} />
       </div>
       <Separator orientation="vertical" />
       <div className="min-h-0 min-w-0 basis-2/3">

@@ -5,6 +5,7 @@ export interface MailRouteSearch {
   filter?: EmailFilter
   accountId?: string
   thread?: string
+  message?: string
   labelId?: string
   labelGroupId?: string
 }
@@ -19,6 +20,7 @@ export function parseMailRouteSearch(search: unknown): MailRouteSearch {
   const filter = values.filter === "unread" ? "unread" : values.filter === "all" ? "all" : undefined
   const accountId = typeof values.accountId === "string" ? values.accountId.trim() : undefined
   const thread = typeof values.thread === "string" ? values.thread.trim() : undefined
+  const message = typeof values.message === "string" ? values.message.trim() : undefined
   const labelId = typeof values.labelId === "string" ? values.labelId.trim() : undefined
   const labelGroupId = typeof values.labelGroupId === "string" ? values.labelGroupId.trim() : undefined
 
@@ -27,6 +29,7 @@ export function parseMailRouteSearch(search: unknown): MailRouteSearch {
     ...(filter && filter !== "all" ? { filter } : {}),
     ...(accountId ? { accountId } : {}),
     ...(thread ? { thread } : {}),
+    ...(message ? { message } : {}),
     ...(labelId ? { labelId } : {}),
     ...(labelGroupId ? { labelGroupId } : {}),
   }

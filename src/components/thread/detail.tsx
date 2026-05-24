@@ -1,4 +1,3 @@
-import { useState } from "react"
 import { Archive, ArrowLeft, Copy, Forward, MailOpen, Mail, Reply, Trash2 } from "lucide-react"
 import { useNavigate } from "@tanstack/react-router"
 import { toast } from "sonner"
@@ -11,6 +10,7 @@ import { Button } from "@/components/ui/button"
 import { DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu"
 import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
+import { useThreadMessageExpansion } from "@/hooks/use-thread-message-expansion"
 import { copyTextToClipboard } from "@/lib/clipboard"
 import { getErrorMessage, getHttpStatus } from "@/lib/http-error"
 import {
@@ -189,10 +189,11 @@ function ThreadFooter({
 
 interface ThreadDetailProps {
   threadId: string | null
+  messageId?: string | null
   onClose?: () => void
 }
 
-export function ThreadDetail({ threadId, onClose }: ThreadDetailProps) {
+export function ThreadDetail({ threadId, messageId = null, onClose }: ThreadDetailProps) {
   const navigate = useNavigate()
   const { data: thread, isLoading, isError, error, refetch } = useThread(threadId)
   const { data: accounts } = useMailAccounts()
@@ -204,29 +205,11 @@ export function ThreadDetail({ threadId, onClose }: ThreadDetailProps) {
   const { mutate: markThreadUnread, isPending: isMarkingThreadUnread } = useMarkThreadAsUnread()
   const { mutate: markMessageRead } = useMarkMessageAsRead()
   const { mutate: markMessageUnread } = useMarkMessageAsUnread()
-
-  const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set())
-  const [expandedThreadId, setExpandedThreadId] = useState<string | null>(null)
-
-  if (thread && thread.threadId !== expandedThreadId) {
-    const next = new Set<string>()
-    const last = thread.messages.at(-1)
-    if (last) next.add(last.id)
-    for (const message of thread.messages) {
-      if (!message.isRead) next.add(message.id)
-    }
-    setExpandedIds(next)
-    setExpandedThreadId(thread.threadId)
-  }
-
-  const toggleExpanded = (id: string) => {
-    setExpandedIds((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
-  }
+  const { expandedIds, toggleExpanded } = useThreadMessageExpansion({
+    threadId,
+    messages: thread?.messages ?? [],
+    messageId,
+  })
 
   const handleDeleteMessage = (message: InboxMessage, isLast: boolean) => {
     deleteMessage(message.id, {
