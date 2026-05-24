@@ -4,14 +4,8 @@ import { LocalAttachmentChip } from "@/components/attachment/local-chip"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
-import type {
-  ComposeEmailData,
-  MailReviewIssue,
-  MailReviewIssueField,
-  MailReviewIssueSeverity,
-  MailReviewIssueType,
-  MailReviewResult,
-} from "@/types/email"
+import { MAIL_REVIEW_ISSUE_FIELD_LABELS, MAIL_REVIEW_ISSUE_TYPE_LABELS } from "@/types/email"
+import type { ComposeEmailData, MailReviewIssue, MailReviewIssueSeverity, MailReviewResult } from "@/types/email"
 
 export interface ComposeSendPreviewData {
   mail: ComposeEmailData
@@ -28,21 +22,6 @@ interface ComposeSendPreviewDialogProps {
   reviewError: boolean
   onOpenChange: (open: boolean) => void
   onConfirm: () => void
-}
-
-const ISSUE_TYPE_LABELS: Record<MailReviewIssueType, string> = {
-  SPELLING: "맞춤법",
-  SPACING: "띄어쓰기",
-  GRAMMAR: "문법",
-  CONTEXT: "문맥",
-  TONE: "어조",
-  CLARITY: "명확성",
-  ATTACHMENT_MISSING: "첨부파일 누락",
-}
-
-const ISSUE_FIELD_LABELS: Record<MailReviewIssueField, string> = {
-  SUBJECT: "제목",
-  BODY: "본문",
 }
 
 function getSeverityClass(severity: MailReviewIssueSeverity) {
@@ -108,8 +87,8 @@ function ReviewIssueItem({ issue }: { issue: MailReviewIssue }) {
       <AlertTriangle className={cn("mt-0.5 size-4 shrink-0", severityClass)} />
       <div className="min-w-0 flex-1 space-y-1">
         <div className="flex flex-wrap items-center gap-1.5 text-xs">
-          <span className={cn("font-medium", severityClass)}>{ISSUE_TYPE_LABELS[issue.type]}</span>
-          <span className="text-muted-foreground">{ISSUE_FIELD_LABELS[issue.field]}</span>
+          <span className={cn("font-medium", severityClass)}>{MAIL_REVIEW_ISSUE_TYPE_LABELS[issue.type]}</span>
+          <span className="text-muted-foreground">{MAIL_REVIEW_ISSUE_FIELD_LABELS[issue.field]}</span>
         </div>
         <p className="text-sm">{issue.reason}</p>
         {issue.originalText && issue.replacementText && (

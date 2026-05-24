@@ -161,6 +161,21 @@ export type MailReviewIssueType =
   | "ATTACHMENT_MISSING"
 export type MailReviewIssueSeverity = "LOW" | "MEDIUM" | "HIGH"
 
+export const MAIL_REVIEW_ISSUE_TYPE_LABELS: Record<MailReviewIssueType, string> = {
+  SPELLING: "맞춤법",
+  SPACING: "띄어쓰기",
+  GRAMMAR: "문법",
+  CONTEXT: "문맥",
+  TONE: "어조",
+  CLARITY: "명확성",
+  ATTACHMENT_MISSING: "첨부파일 누락",
+}
+
+export const MAIL_REVIEW_ISSUE_FIELD_LABELS: Record<MailReviewIssueField, string> = {
+  SUBJECT: "제목",
+  BODY: "본문",
+}
+
 export interface MailReviewIssue {
   segmentId: string
   field: MailReviewIssueField
