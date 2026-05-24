@@ -9,6 +9,8 @@ export const emailKeys = {
     [...emailKeys.all(), "mailbox", mailbox, params] as const,
   thread: (id: string) => [...emailKeys.all(), "thread", id] as const,
   replyDraftSuggestions: (messageId: string) => [...emailKeys.all(), "reply-draft-suggestions", messageId] as const,
+  selectedReplyDraftSuggestion: (suggestionId: string) =>
+    [...emailKeys.all(), "reply-draft-suggestions", "selected", suggestionId] as const,
 }
 
 export const emailQueries = {

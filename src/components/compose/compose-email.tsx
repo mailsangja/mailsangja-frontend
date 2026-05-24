@@ -37,6 +37,7 @@ interface ComposeEmailProps {
   initialTo?: string
   initialSubject?: string
   initialCc?: string
+  initialBody?: string
 }
 
 interface PendingInlineImage extends ComposeInlineImage {
@@ -318,6 +319,7 @@ export function ComposeEmail({
   initialTo,
   initialSubject,
   initialCc,
+  initialBody,
 }: ComposeEmailProps) {
   const navigate = useNavigate()
   const editorRef = useRef<EmailEditorRef>(null)
@@ -856,10 +858,15 @@ export function ComposeEmail({
           editable={!isDraftStreaming}
           onUploadImage={uploadInlineImage}
           onReady={(ref) => {
-            applyEditorTheme(ref.editor)
+            const readyEditor = ref.editor
+
+            applyEditorTheme(readyEditor)
+            if (initialBody && readyEditor) {
+              readyEditor.commands.setContent(textToEditorContent(initialBody))
+            }
             setIsEditorReady(true)
             setIsEditorEmpty(isEditorContentEmpty(ref.getJSON()))
-            setEditor(ref.editor)
+            setEditor(readyEditor)
           }}
           onUpdate={(ref) => {
             const content = ref.getJSON()

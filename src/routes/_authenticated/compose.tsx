@@ -1,17 +1,20 @@
 import { createFileRoute } from "@tanstack/react-router"
 
+import { selectReplyDraftSuggestion } from "@/api/emails"
 import { ComposeEmail } from "@/components/compose/compose-email"
 import { ComposeReferenceThreadPanel } from "@/components/compose/compose-reference-thread-panel"
 import { Separator } from "@/components/ui/separator"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { formatMailAddressList } from "@/lib/mail-address"
-import { emailQueries } from "@/queries/emails"
+import { emailKeys, emailQueries } from "@/queries/emails"
 import { mailAccountQueries } from "@/queries/mail-accounts"
+import type { ReplyDraftSuggestionListResponse } from "@/types/email"
 
 interface ComposeRouteSearch {
   from?: string
   replyThreadId?: string
   replyMessageId?: string
+  replySuggestionId?: string
 }
 
 export const Route = createFileRoute("/_authenticated/compose")({
@@ -19,13 +22,41 @@ export const Route = createFileRoute("/_authenticated/compose")({
     const from = typeof search.from === "string" ? search.from.trim() : ""
     const replyThreadId = typeof search.replyThreadId === "string" ? search.replyThreadId.trim() : ""
     const replyMessageId = typeof search.replyMessageId === "string" ? search.replyMessageId.trim() : ""
+    const replySuggestionId = typeof search.replySuggestionId === "string" ? search.replySuggestionId.trim() : ""
     return {
       ...(from ? { from } : {}),
       ...(replyThreadId ? { replyThreadId } : {}),
       ...(replyMessageId ? { replyMessageId } : {}),
+      ...(replySuggestionId ? { replySuggestionId } : {}),
     }
   },
   loaderDeps: ({ search: { replyThreadId, replyMessageId } }) => ({ replyThreadId, replyMessageId }),
+  beforeLoad: async ({ context, search }) => {
+    const replySuggestionId = search.replySuggestionId
+
+    if (!replySuggestionId) {
+      return { replyDraftSuggestion: null }
+    }
+
+    try {
+      const replyDraftSuggestion = await context.queryClient.ensureQueryData({
+        queryKey: emailKeys.selectedReplyDraftSuggestion(replySuggestionId),
+        queryFn: () => selectReplyDraftSuggestion(replySuggestionId),
+        staleTime: Infinity,
+      })
+
+      if (search.replyMessageId) {
+        context.queryClient.setQueryData<ReplyDraftSuggestionListResponse>(
+          emailKeys.replyDraftSuggestions(search.replyMessageId),
+          { suggestions: [] }
+        )
+      }
+
+      return { replyDraftSuggestion }
+    } catch {
+      return { replyDraftSuggestion: null }
+    }
+  },
   loader: async ({ context, deps: { replyThreadId, replyMessageId } }) => {
     if (!replyThreadId) return null
 
@@ -62,6 +93,7 @@ function ComposePage() {
   const isMobile = useIsMobile()
   const { from, replyThreadId } = Route.useSearch()
   const loaderData = Route.useLoaderData()
+  const { replyDraftSuggestion } = Route.useRouteContext()
   const navigate = Route.useNavigate()
 
   const handleFromAddressChange = (nextFrom: string | null) => {
@@ -72,6 +104,8 @@ function ComposePage() {
   }
 
   const fromAddress = from ?? loaderData?.defaultFrom ?? null
+  const initialSubject = replyDraftSuggestion?.subject ?? loaderData?.replySubject
+  const initialBody = replyDraftSuggestion?.body
 
   if (isMobile) {
     return (
@@ -81,8 +115,9 @@ function ComposePage() {
           onFromAddressChange={handleFromAddressChange}
           messageId={loaderData?.messageId}
           initialTo={loaderData?.replyTo}
-          initialSubject={loaderData?.replySubject}
+          initialSubject={initialSubject}
           initialCc={loaderData?.replyCc}
+          initialBody={initialBody}
         />
       </div>
     )
@@ -100,8 +135,9 @@ function ComposePage() {
           onFromAddressChange={handleFromAddressChange}
           messageId={loaderData?.messageId}
           initialTo={loaderData?.replyTo}
-          initialSubject={loaderData?.replySubject}
+          initialSubject={initialSubject}
           initialCc={loaderData?.replyCc}
+          initialBody={initialBody}
         />
       </div>
     </div>
