@@ -9,6 +9,7 @@ import {
   markThreadAsRead,
   markThreadAsUnread,
   reviewMail,
+  selectReplyDraftSuggestion,
   sendMail,
 } from "@/api/emails"
 import { queryClient } from "@/lib/query-client"
@@ -77,5 +78,11 @@ export function useSendMail() {
 export function useReviewMail() {
   return useMutation({
     mutationFn: (request: MailReviewRequest) => reviewMail(request),
+  })
+}
+
+export function useSelectReplyDraftSuggestion() {
+  return useMutation({
+    mutationFn: (suggestionId: string) => selectReplyDraftSuggestion(suggestionId),
   })
 }
