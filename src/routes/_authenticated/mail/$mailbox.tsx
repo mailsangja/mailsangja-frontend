@@ -1,3 +1,4 @@
+import { useQueryClient } from "@tanstack/react-query"
 import { createFileRoute, redirect } from "@tanstack/react-router"
 import { toast } from "sonner"
 
@@ -9,15 +10,13 @@ import { Separator } from "@/components/ui/separator"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { getErrorMessage, getHttpStatus } from "@/lib/http-error"
 import { parseMailRouteSearch } from "@/lib/mail-routing"
-import { getMailAddressSearchText } from "@/lib/mail-address"
 import { cn } from "@/lib/utils"
 import { useMarkThreadAsRead } from "@/mutations/emails"
 import { useMailAccounts, mailAccountQueries } from "@/queries/mail-accounts"
-import { useMailboxThreads } from "@/queries/emails"
+import { emailKeys, useMailboxThreads } from "@/queries/emails"
 import { useLabels, labelQueries, useLabelGroups, labelGroupQueries } from "@/queries/labels"
 import { useTrashThreads } from "@/queries/trash"
 import { isSupportedMailboxId, MAILBOX_LABELS, parseMailboxId, type PrimaryMailboxId } from "@/types/email"
-import type { TrashThreadSummary } from "@/types/trash"
 
 export const Route = createFileRoute("/_authenticated/mail/$mailbox")({
   params: {
@@ -68,12 +67,6 @@ export const Route = createFileRoute("/_authenticated/mail/$mailbox")({
   component: MailboxPage,
 })
 
-function matchesSearch(value: string, terms: string[]) {
-  const normalized = value.toLowerCase()
-
-  return terms.every((term) => normalized.includes(term))
-}
-
 function getMailboxThreadsErrorCopy(error: unknown) {
   switch (getHttpStatus(error)) {
     case 400:
@@ -114,6 +107,7 @@ function MailboxView({ mailbox }: { mailbox: PrimaryMailboxId }) {
     thread: selectedThreadId = null,
   } = Route.useSearch()
   const navigate = Route.useNavigate()
+  const queryClient = useQueryClient()
   const isMobile = useIsMobile()
   const { data: accounts } = useMailAccounts()
   const { data: labels } = useLabels()
@@ -123,6 +117,7 @@ function MailboxView({ mailbox }: { mailbox: PrimaryMailboxId }) {
   const selectedLabel = labelId ? (labels?.find((label) => label.id === labelId) ?? null) : null
   const selectedGroup = labelGroupId ? (groups?.find((g) => g.id === labelGroupId) ?? null) : null
   const effectiveLabelIds = selectedGroup ? selectedGroup.labelIds : labelId ? [labelId] : undefined
+  const hasSearchQuery = Boolean(query.trim())
   const {
     data,
     isLoading,
@@ -137,27 +132,16 @@ function MailboxView({ mailbox }: { mailbox: PrimaryMailboxId }) {
   } = useMailboxThreads(supportedMailbox, {
     read: filter === "unread" ? false : undefined,
     labelId: effectiveLabelIds,
+    q: hasSearchQuery ? query : undefined,
   })
 
   const loadedThreads = data?.pages.flatMap((page) => page.content) ?? []
   const totalThreadCount = data?.pages[0]?.totalCount ?? 0
-  const searchTerms = query.trim().toLowerCase().split(/\s+/).filter(Boolean)
   const selectedAccount = accountId ? (accounts?.find((account) => account.id === accountId) ?? null) : null
 
   const threads = supportedMailbox
     ? loadedThreads.filter((thread) => {
-        if (selectedAccount && thread.accountId !== selectedAccount.id) {
-          return false
-        }
-
-        if (searchTerms.length === 0) {
-          return true
-        }
-
-        return matchesSearch(
-          [thread.latestSubject, getMailAddressSearchText(thread.participant), thread.snippet].join(" "),
-          searchTerms
-        )
+        return !selectedAccount || thread.accountId === selectedAccount.id
       })
     : []
   const mailboxErrorCopy = isError ? getMailboxThreadsErrorCopy(error) : null
@@ -165,6 +149,14 @@ function MailboxView({ mailbox }: { mailbox: PrimaryMailboxId }) {
 
   const getAccount = (accountId: string) => {
     return accounts?.find((account) => account.id === accountId)
+  }
+
+  const refreshMailbox = () => {
+    if (!supportedMailbox) return
+
+    void queryClient.invalidateQueries({
+      queryKey: [...emailKeys.all(), "mailbox", supportedMailbox],
+    })
   }
 
   const visibleSelectedThreadId = threads.some((thread) => thread.threadId === selectedThreadId)
@@ -178,9 +170,9 @@ function MailboxView({ mailbox }: { mailbox: PrimaryMailboxId }) {
   if (!supportedMailbox) {
     emptyTitle = "아직 지원되지 않는 메일함입니다"
     emptyDescription = "현재 백엔드 API는 받은편지함과 보낸편지함만 지원합니다."
-  } else if (searchTerms.length > 0) {
+  } else if (hasSearchQuery) {
     emptyTitle = "검색 결과가 없습니다"
-    emptyDescription = "현재까지 불러온 메일에서 검색 결과를 찾지 못했습니다."
+    emptyDescription = "검색 조건에 맞는 메일을 찾지 못했습니다."
   } else if (filter === "unread") {
     emptyTitle = "안 읽은 메일이 없습니다"
   } else if (selectedGroup?.id) {
@@ -232,7 +224,7 @@ function MailboxView({ mailbox }: { mailbox: PrimaryMailboxId }) {
           void fetchNextPage()
         }
       }}
-      onRefresh={supportedMailbox ? () => void refetch() : undefined}
+      onRefresh={supportedMailbox ? refreshMailbox : undefined}
       getAccount={getAccount}
       emptyTitle={emptyTitle}
       emptyDescription={emptyDescription}
@@ -301,23 +293,12 @@ function MailboxView({ mailbox }: { mailbox: PrimaryMailboxId }) {
   )
 }
 
-function matchTrashThread(thread: TrashThreadSummary, terms: string[]): boolean {
-  if (terms.length === 0) {
-    return true
-  }
-
-  const text = [thread.latestSubject, thread.snippet, thread.participant.email, thread.participant.name]
-    .filter(Boolean)
-    .join(" ")
-
-  return matchesSearch(text, terms)
-}
-
 function TrashMailboxView() {
   const { query = "", accountId, thread: selectedThreadId = null } = Route.useSearch()
   const navigate = Route.useNavigate()
   const isMobile = useIsMobile()
   const { data: accounts } = useMailAccounts()
+  const hasSearchQuery = Boolean(query.trim())
   const {
     data,
     isLoading,
@@ -328,19 +309,16 @@ function TrashMailboxView() {
     hasNextPage,
     isFetchingNextPage,
     isFetchNextPageError,
-  } = useTrashThreads()
+  } = useTrashThreads({
+    q: hasSearchQuery ? query : undefined,
+  })
 
   const loadedThreads = data?.pages.flatMap((page) => page.content) ?? []
   const totalThreadCount = data?.pages[0]?.totalCount ?? 0
-  const searchTerms = query.trim().toLowerCase().split(/\s+/).filter(Boolean)
   const selectedAccount = accountId ? (accounts?.find((account) => account.id === accountId) ?? null) : null
 
   const threads = loadedThreads.filter((thread) => {
-    if (selectedAccount && thread.accountId !== selectedAccount.id) {
-      return false
-    }
-
-    return matchTrashThread(thread, searchTerms)
+    return !selectedAccount || thread.accountId === selectedAccount.id
   })
 
   const mailboxErrorCopy = isError ? getMailboxThreadsErrorCopy(error) : null
@@ -356,9 +334,9 @@ function TrashMailboxView() {
   let emptyTitle = "휴지통이 비어있습니다"
   let emptyDescription: string | undefined
 
-  if (searchTerms.length > 0) {
+  if (hasSearchQuery) {
     emptyTitle = "검색 결과가 없습니다"
-    emptyDescription = "현재까지 불러온 휴지통 항목에서 검색 결과를 찾지 못했습니다."
+    emptyDescription = "검색 조건에 맞는 휴지통 항목을 찾지 못했습니다."
   } else if (selectedAccount?.id) {
     emptyTitle = "선택한 계정의 휴지통 항목이 없습니다"
     emptyDescription = `${selectedAccount.alias} (${selectedAccount.emailAddress}) 계정에서 삭제된 메일이 없습니다.`

@@ -1,6 +1,6 @@
 import { LabelChipList } from "@/components/label/label-chip"
+import { MailAccountIcon } from "@/components/mail-account-icon"
 import { Badge } from "@/components/ui/badge"
-import { AccountIcon } from "@/lib/icon-entries"
 import { cn } from "@/lib/utils"
 import type { ThreadLabel } from "@/types/label"
 import type { MailAccount } from "@/types/mail-account"
@@ -26,14 +26,12 @@ export function ThreadHeader({ thread, account, labels, className }: ThreadHeade
       <h2 className="text-xl leading-snug font-semibold wrap-break-word">{thread.latestSubject || "(제목 없음)"}</h2>
       <div className="mt-2 flex flex-wrap items-center gap-1">
         {account?.icon ? (
-          <span
-            className="inline-flex size-5 shrink-0 items-center justify-center rounded-full"
-            style={{ backgroundColor: account.color }}
+          <MailAccountIcon
+            icon={account.icon}
+            color={account.color}
             aria-label={`${account.emailAddress} 계정`}
             title={account.emailAddress}
-          >
-            <AccountIcon name={account.icon} className="size-3 text-white" />
-          </span>
+          />
         ) : null}
         {hasInbound && (
           <Badge variant="outline" className="font-normal">

@@ -20,7 +20,7 @@ const folderIcons: Record<PrimaryMailboxId, React.ReactNode> = {
   trash: <Trash2 />,
 }
 
-interface NavFoldersProps {
+interface SidebarInboxSectionProps {
   mailbox: PrimaryMailboxId | null
   onMailboxChange: (mailbox: PrimaryMailboxId) => void
 }
@@ -29,7 +29,7 @@ function formatUnreadCount(count: number) {
   return count > 99 ? "99+" : count.toLocaleString()
 }
 
-export function NavFolders({ mailbox, onMailboxChange }: NavFoldersProps) {
+export function SidebarInboxSection({ mailbox, onMailboxChange }: SidebarInboxSectionProps) {
   const { data: inboxData } = useMailboxThreads("inbox", { size: 1 })
   const { data: sentData } = useMailboxThreads("sent", { size: 1 })
   const { data: trashData } = useTrashThreads({ size: 1 })

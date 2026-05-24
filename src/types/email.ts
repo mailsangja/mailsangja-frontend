@@ -94,6 +94,7 @@ export interface ListThreadsParams {
   size?: number
   labelId?: string[]
   read?: boolean
+  q?: string
 }
 
 export interface UnreadCountResponse {

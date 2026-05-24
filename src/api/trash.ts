@@ -31,7 +31,7 @@ export async function getTrashThreads(
   params: ListThreadsParams = {}
 ): Promise<MarkerSliceResponse<TrashThreadSummary>> {
   const response = await apiClient.get<MarkerSliceResponse<TrashThreadSummary>>("/api/v1/trash/threads", {
-    params: params as Record<string, string | number | boolean | null | undefined>,
+    params: params as Record<string, string | string[] | number | boolean | null | undefined>,
   })
 
   return {
