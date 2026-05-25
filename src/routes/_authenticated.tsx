@@ -10,6 +10,7 @@ import { Input } from "@/components/ui/input"
 import { SidebarProvider, SidebarTrigger } from "@/components/ui/sidebar"
 import { useDebounce } from "@/hooks/use-debounce"
 import { useIsMobile } from "@/hooks/use-mobile"
+import { identifyAnalyticsUser } from "@/lib/analytics"
 import { getPushNotificationPermission, getStoredFcmToken, subscribeToFcmToken } from "@/lib/fcm"
 import { parseMailRouteSearch } from "@/lib/mail-routing"
 import { cn } from "@/lib/utils"
@@ -160,9 +161,16 @@ function MailSearchForm({ mailbox, query, accountId }: MailSearchFormProps) {
 function AuthenticatedRouteLayout() {
   const isMobile = useIsMobile()
   const navigate = useNavigate()
+  const { data: user } = useUser()
   const { mailbox, query, filter, accountId, labelId, labelGroupId } = useLocation({
     select: (currentLocation) => getMailRouteState(currentLocation.pathname, currentLocation.search),
   })
+
+  useEffect(() => {
+    if (user) {
+      identifyAnalyticsUser(user)
+    }
+  }, [user])
 
   return (
     <SidebarProvider className="h-svh flex-col overflow-hidden bg-background">

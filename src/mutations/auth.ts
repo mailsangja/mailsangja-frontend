@@ -8,7 +8,7 @@ import type { User } from "@/types/user"
 
 import { login, logout, register } from "@/api/auth"
 import { unregisterFcmToken } from "@/api/users"
-import { trackEvent } from "@/lib/analytics"
+import { identifyAnalyticsUser, resetAnalyticsUser, trackEvent } from "@/lib/analytics"
 import { clearFcmToken, disableFcm } from "@/lib/fcm"
 import { getErrorMessage, getHttpStatus } from "@/lib/http-error"
 import { userKeys } from "@/queries/user"
@@ -27,6 +27,7 @@ export const authMutationOptions = {
   login: (queryClient: ReturnType<typeof useQueryClient>, navigate: NavigateFn) => ({
     mutationFn: (data: LoginPayload) => login(data),
     onSuccess: (user: User) => {
+      identifyAnalyticsUser(user)
       trackEvent("login", { method: "password" })
       queryClient.setQueryData(userKeys.me(), user)
       void navigate({
@@ -58,6 +59,7 @@ export const authMutationOptions = {
     },
     onSuccess: async () => {
       trackEvent("logout")
+      resetAnalyticsUser()
       await queryClient.cancelQueries()
       queryClient.clear()
       void navigate({ to: "/login" })
