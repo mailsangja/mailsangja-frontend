@@ -425,7 +425,15 @@ function RouteComponent() {
             <Mail className="size-4" />
             <span>메일상자</span>
           </div>
-          <span>© 2026 메일상자. All rights reserved.</span>
+          <div className="flex items-center gap-4">
+            <Link to="/terms" className="transition-colors hover:text-foreground">
+              이용약관
+            </Link>
+            <Link to="/privacy" className="transition-colors hover:text-foreground">
+              개인정보처리방침
+            </Link>
+            <span>© 2026 메일상자. All rights reserved.</span>
+          </div>
         </div>
       </footer>
     </div>
