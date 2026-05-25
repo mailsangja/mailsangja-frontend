@@ -5,6 +5,7 @@ import { authorizeGoogle } from "@/api/mail-accounts"
 import { MailAccountIcon } from "@/components/mail-account-icon"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
+import { trackEvent } from "@/lib/analytics"
 import { ICON_ENTRIES, type AccountIconName } from "@/lib/icon-entries"
 import { cn } from "@/lib/utils"
 
@@ -31,6 +32,11 @@ export function AddAccountDialog({ children }: { children: React.ReactNode }) {
 
   const handleGoogleLogin = async () => {
     setIsLoading(true)
+    trackEvent("mail_account_connect_start", {
+      provider: "google",
+      has_alias: alias.trim().length > 0,
+    })
+
     try {
       const { authorizationUrl } = await authorizeGoogle({
         alias,
