@@ -165,8 +165,8 @@ function SettingsPage() {
         <div className="flex flex-col gap-3">
           <Card>
             <CardHeader>
-              <CardTitle>마우스 오버 작업 사용</CardTitle>
-              <CardDescription>마우스 오버 동작으로 메일 내용 미리보기 등의 기능을 사용할 수 있습니다.</CardDescription>
+              <CardTitle>메일 미리보기 활성화</CardTitle>
+              <CardDescription>메일 위에 마우스를 올리면 내용을 미리 확인할 수 있습니다.</CardDescription>
             </CardHeader>
             <CardContent className="pt-1 pb-5">
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
