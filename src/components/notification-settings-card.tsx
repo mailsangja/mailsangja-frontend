@@ -4,7 +4,7 @@ import { toast } from "sonner"
 
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { Card, CardAction, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Switch } from "@/components/ui/switch"
 import {
   disableFcm,
@@ -139,18 +139,20 @@ export function NotificationSettingsCard() {
 
   return (
     <Card>
-      <CardHeader>
-        <CardTitle>푸시 알림</CardTitle>
+      <CardHeader className="gap-2">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <CardTitle>푸시 알림</CardTitle>
+          <div className="flex items-center gap-3">
+            <Badge variant={statusVariant}>{statusLabel}</Badge>
+            <Switch
+              checked={isEnabled}
+              onCheckedChange={handleSwitchChange}
+              disabled={isMutating || !user || permission === "unsupported" || permission === "denied"}
+              aria-label="푸시 알림 활성화"
+            />
+          </div>
+        </div>
         <CardDescription>{description}</CardDescription>
-        <CardAction className="flex items-center gap-3">
-          <Badge variant={statusVariant}>{statusLabel}</Badge>
-          <Switch
-            checked={isEnabled}
-            onCheckedChange={handleSwitchChange}
-            disabled={isMutating || !user || permission === "unsupported" || permission === "denied"}
-            aria-label="푸시 알림 활성화"
-          />
-        </CardAction>
       </CardHeader>
       <CardContent className="flex flex-wrap items-center gap-3">
         <Button

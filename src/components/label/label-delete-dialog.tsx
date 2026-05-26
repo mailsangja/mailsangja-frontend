@@ -8,15 +8,17 @@ import { getErrorMessage } from "@/lib/http-error"
 import { useDeleteLabel } from "@/mutations/labels"
 import { emailQueries } from "@/queries/emails"
 import { labelQueries } from "@/queries/labels"
-import { LABEL_CONDITION_FIELD_LABELS, LABEL_CONDITION_OPERATOR_LABELS, type LabelListItem } from "@/types/label"
+import { type Label } from "@/types/label"
+import { LabelConditionList } from "@/components/label/label-condition-list"
 
 interface LabelDeleteDialogProps {
   open: boolean
   onOpenChange: (open: boolean) => void
-  label: LabelListItem
+  label: Label
+  onSuccess?: () => void
 }
 
-export function LabelDeleteDialog({ open, onOpenChange, label }: LabelDeleteDialogProps) {
+export function LabelDeleteDialog({ open, onOpenChange, label, onSuccess }: LabelDeleteDialogProps) {
   const navigate = useNavigate()
   const search = useSearch({ strict: false })
   const deleteLabel = useDeleteLabel()
@@ -35,7 +37,9 @@ export function LabelDeleteDialog({ open, onOpenChange, label }: LabelDeleteDial
       onSuccess: () => {
         onOpenChange(false)
         toast.warning(`${label.name} 라벨이 삭제되었습니다`)
-        if ("labelId" in search && search.labelId === label.id) {
+        if (onSuccess) {
+          onSuccess()
+        } else if ("labelId" in search && search.labelId === label.id) {
           void navigate({ to: "/mail/$mailbox", params: { mailbox: "inbox" }, replace: true })
         }
       },
@@ -63,23 +67,13 @@ export function LabelDeleteDialog({ open, onOpenChange, label }: LabelDeleteDial
                 </p>
               )}
               {labelDetail?.rule?.groups && (
-                <div className="space-y-1.5">
-                  <div className="space-y-1 rounded-md border bg-muted/40 px-3 py-2 text-xs">
-                    {labelDetail.rule.groups.flatMap((group, gi) => [
-                      ...(gi > 0 ? [<hr key={`sep-${gi}`} className="my-1 border-border" />] : []),
-                      ...group.conditions.map((cond, ci) => (
-                        <p key={`${gi}-${ci}`} className="text-muted-foreground">
-                          <span className="font-medium text-foreground">
-                            {LABEL_CONDITION_FIELD_LABELS[cond.field]}
-                          </span>{" "}
-                          {LABEL_CONDITION_OPERATOR_LABELS[cond.operator]}{" "}
-                          {cond.operator !== "BOOLEAN" && (
-                            <span className="font-mono text-foreground">&quot;{cond.value}&quot;</span>
-                          )}
-                        </p>
-                      )),
-                    ])}
-                  </div>
+                <div className="flex flex-col gap-1.5 rounded-xl border px-4 py-3">
+                  {labelDetail.rule.groups.map((group, gi) => (
+                    <div key={gi}>
+                      {gi > 0 && <hr className="my-1 border-border" />}
+                      <LabelConditionList conditions={group.conditions} />
+                    </div>
+                  ))}
                 </div>
               )}
             </>

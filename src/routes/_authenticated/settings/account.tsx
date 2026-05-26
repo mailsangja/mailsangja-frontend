@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { createFileRoute } from "@tanstack/react-router"
 import { Plus, Trash2 } from "lucide-react"
 
@@ -25,6 +25,7 @@ function SettingsAccountPage() {
   const [toggledIds, setToggledIds] = useState<Set<string>>(new Set())
   const [defaultAccount, setDefaultAccount] = useState<string | null>(null)
   const updateDefaultAccountMutation = useUpdateDefaultAccount()
+  const { mutate: mutateDefaultAccount } = updateDefaultAccountMutation
 
   // 추후 API 구현 후, 연동 예정
   const accounts = useMemo(() => {
@@ -45,6 +46,20 @@ function SettingsAccountPage() {
 
   const selectedDefaultAccount = defaultAccount ?? user?.defaultMailAccountId ?? null
 
+  useEffect(() => {
+    if (
+      !isUserPending &&
+      user &&
+      !isAccountsPending &&
+      !isAccountsError &&
+      !user.defaultMailAccountId &&
+      mailAccounts &&
+      mailAccounts.length > 0
+    ) {
+      mutateDefaultAccount({ mailAccountId: mailAccounts[0].id })
+    }
+  }, [mailAccounts, user, isUserPending, isAccountsPending, isAccountsError, mutateDefaultAccount])
+
   const handleSaveDefaultAccount = () => {
     if (!selectedDefaultAccount) return
     updateDefaultAccountMutation.mutate({ mailAccountId: selectedDefaultAccount })
@@ -64,24 +79,7 @@ function SettingsAccountPage() {
 
   return (
     <ScrollArea className="min-h-0 flex-1">
-      <div className="flex flex-col gap-6 px-3 pt-1 pb-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>계정 정보</CardTitle>
-            <CardDescription>현재 로그인한 사용자와 구독 플랜 정보를 확인합니다.</CardDescription>
-          </CardHeader>
-          <CardContent className="flex items-center justify-between gap-4">
-            <div className="flex flex-col gap-1">
-              <p className="font-medium">{isUserPending ? "불러오는 중..." : (user?.name ?? "-")}</p>
-              <p className="text-sm text-muted-foreground">아이디: {user?.username ?? "-"}</p>
-              <p className="text-sm text-muted-foreground">플랜: {user?.plan ?? "-"}</p>
-            </div>
-            <Button variant="outline" disabled>
-              회원 탈퇴
-            </Button>
-          </CardContent>
-        </Card>
-
+      <div className="flex flex-col gap-4 pb-4">
         <Card>
           <CardHeader>
             <CardTitle>기본 메일 계정</CardTitle>
@@ -123,7 +121,7 @@ function SettingsAccountPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>계정 관리</CardTitle>
+            <CardTitle>메일 계정 관리</CardTitle>
             <CardDescription>연결된 메일 계정의 활성화 상태와 별칭을 확인합니다.</CardDescription>
           </CardHeader>
           <CardContent className="px-0">
@@ -202,7 +200,7 @@ function SettingsAccountPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>계정 추가하기</CardTitle>
+            <CardTitle>메일 계정 추가하기</CardTitle>
             <CardDescription>
               계정의 별칭, 아이콘, 색상을 선택한 뒤 로그인 절차를 거쳐 메일 계정을 연결할 수 있습니다.
             </CardDescription>
