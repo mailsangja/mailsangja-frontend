@@ -1,7 +1,8 @@
-import { useEffect } from "react"
+import { useEffect, useState } from "react"
 import { Link, createFileRoute, useLocation } from "@tanstack/react-router"
-import { Check, Monitor, Moon, Sparkles, Sun } from "lucide-react"
+import { Check, LayoutList, List, Monitor, Moon, Sparkles, Sun } from "lucide-react"
 
+import { InboxSingleLinePreview, InboxTwoLinePreview } from "@/components/inbox-preview"
 import { NotificationSettingsCard } from "@/components/notification-settings-card"
 import { useTheme } from "@/components/theme-provider"
 import { DarkPreview, LightPreview, SystemPreview } from "@/components/theme-preview"
@@ -19,6 +20,9 @@ function SettingsPage() {
   const { data: user, isPending: isUserPending } = useUser()
   const { theme, setTheme } = useTheme()
   const { hash } = useLocation()
+
+  // TODO: 실제 설정 저장/불러오기 기능은 추후 구현 예정
+  const [inboxView, setInboxView] = useState<"single" | "double">("double")
 
   useEffect(() => {
     if (!hash) return
@@ -66,10 +70,46 @@ function SettingsPage() {
           <p className="text-md px-1 font-semibold text-muted-foreground">빠른 설정</p>
           <Card>
             <CardHeader>
-              <CardTitle>받은 편지함</CardTitle>
-              <CardDescription>받은 편지함의 읽기창을 설정합니다.</CardDescription>
+              <CardTitle>받은편지함</CardTitle>
+              <CardDescription>메일 목록의 표시 방식을 선택합니다.</CardDescription>
             </CardHeader>
-            <CardContent className="py-4 text-center text-sm text-muted-foreground">준비 중입니다.</CardContent>
+            <CardContent className="pt-1 pb-5">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {(
+                  [
+                    { value: "single", label: "한 줄 보기", icon: List, preview: <InboxSingleLinePreview /> },
+                    { value: "double", label: "두 줄 보기", icon: LayoutList, preview: <InboxTwoLinePreview /> },
+                  ] as const
+                ).map(({ value, label, icon: Icon, preview }) => (
+                  <button
+                    key={value}
+                    type="button"
+                    // TODO: 실제 설정 저장 기능 구현 시 주석 해제
+                    onClick={() => setInboxView(value)}
+                    className={cn(
+                      "group flex flex-col gap-2 rounded-xl border-2 p-2.5 text-left transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+                      inboxView === value
+                        ? "border-primary bg-primary/5"
+                        : "border-border hover:border-border/80 hover:bg-muted/40"
+                    )}
+                  >
+                    {preview}
+                    <div className="flex items-center justify-between px-0.5">
+                      <span
+                        className={cn(
+                          "flex items-center gap-1.5 text-xs font-medium",
+                          inboxView === value ? "text-primary" : "text-muted-foreground"
+                        )}
+                      >
+                        <Icon className="size-3.5" />
+                        {label}
+                      </span>
+                      {inboxView === value && <Check className="size-3.5 text-primary" />}
+                    </div>
+                  </button>
+                ))}
+              </div>
+            </CardContent>
           </Card>
         </div>
 
