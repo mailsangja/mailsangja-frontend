@@ -9,7 +9,7 @@ import { trackEvent } from "@/lib/analytics"
 import { ICON_ENTRIES, type AccountIconName } from "@/lib/icon-entries"
 import { cn } from "@/lib/utils"
 
-const COLORS = ["#EF4444", "#F97316", "#EAB308", "#22C55E", "#3B82F6", "#8B5CF6", "#EC4899", "#6B7280"]
+const COLORS = ["#FA2A2A", "#FA882A", "#FAD42A", "#22C55E", "#36C0EB", "#3B82F6", "#8B5CF6", "#ED64A7"]
 
 export function AddAccountDialog({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false)

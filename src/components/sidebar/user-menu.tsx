@@ -62,13 +62,13 @@ export function SidebarUserMenu() {
             </DropdownMenuGroup>
             <DropdownMenuSeparator />
             <DropdownMenuGroup>
-              <DropdownMenuItem render={<Link to="/settings/account" />}>
-                <UserIcon />
-                <span>내 계정</span>
-              </DropdownMenuItem>
               <DropdownMenuItem render={<Link to="/settings" />}>
                 <Settings />
                 <span>설정</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem render={<Link to="/settings/account" />}>
+                <UserIcon />
+                <span>내 계정</span>
               </DropdownMenuItem>
               <DropdownMenuItem render={<Link to="/settings/label" />}>
                 <Tag />
