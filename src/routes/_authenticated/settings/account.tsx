@@ -47,7 +47,13 @@ function SettingsAccountPage() {
   const selectedDefaultAccount = defaultAccount ?? user?.defaultMailAccountId ?? null
 
   useEffect(() => {
-    if (!isAccountsPending && !isAccountsError && !user?.defaultMailAccountId) {
+    if (
+      !isAccountsPending &&
+      !isAccountsError &&
+      !user?.defaultMailAccountId &&
+      mailAccounts &&
+      mailAccounts.length > 0
+    ) {
       mutateDefaultAccount({ mailAccountId: mailAccounts[0].id })
     }
   }, [mailAccounts, user?.defaultMailAccountId, isAccountsPending, isAccountsError, mutateDefaultAccount])

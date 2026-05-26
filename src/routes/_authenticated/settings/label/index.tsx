@@ -176,7 +176,7 @@ function SettingsLabelPage() {
   const [createOpen, setCreateOpen] = useState(false)
   const [createGroupOpen, setCreateGroupOpen] = useState(false)
   const createLabel = useCreateLabel()
-  const { data: labelGroups = [] } = useLabelGroups()
+  const { data: labelGroups = [], isPending: isGroupsPending, isError: isGroupsError } = useLabelGroups()
 
   function handleCreate({ name, colorCode, notificationPolicy }: LabelFormData) {
     createLabel.mutate(
@@ -252,26 +252,28 @@ function SettingsLabelPage() {
             </CardContent>
           </Card>
 
-          <Card>
-            <CardHeader>
-              <CardTitle>라벨 추가하기</CardTitle>
-              <CardDescription>이름과 색상을 지정해 새 라벨을 만들 수 있습니다.</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <Button variant="outline" onClick={() => setCreateOpen(true)}>
-                <Plus data-icon="inline-start" />
-                라벨 추가
-              </Button>
-              <LabelFormDialog
-                open={createOpen}
-                onOpenChange={setCreateOpen}
-                title="새 라벨 만들기"
-                submitLabel="만들기"
-                isPending={createLabel.isPending}
-                onSubmit={handleCreate}
-              />
-            </CardContent>
-          </Card>
+          <div ref={createFilterRef}>
+            <Card>
+              <CardHeader>
+                <CardTitle>라벨 추가하기</CardTitle>
+                <CardDescription>이름과 색상을 지정해 새 라벨을 만들 수 있습니다.</CardDescription>
+              </CardHeader>
+              <CardContent>
+                <Button variant="outline" onClick={() => setCreateOpen(true)}>
+                  <Plus data-icon="inline-start" />
+                  라벨 추가
+                </Button>
+                <LabelFormDialog
+                  open={createOpen}
+                  onOpenChange={setCreateOpen}
+                  title="새 라벨 만들기"
+                  submitLabel="만들기"
+                  isPending={createLabel.isPending}
+                  onSubmit={handleCreate}
+                />
+              </CardContent>
+            </Card>
+          </div>
         </div>
 
         <div className="flex flex-col gap-3">
@@ -291,7 +293,21 @@ function SettingsLabelPage() {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {labelGroups.length === 0 && (
+                  {isGroupsPending && (
+                    <TableRow>
+                      <TableCell colSpan={3} className="text-center text-sm text-muted-foreground">
+                        라벨 그룹 목록을 불러오는 중입니다.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  {isGroupsError && (
+                    <TableRow>
+                      <TableCell colSpan={3} className="text-center text-sm text-destructive">
+                        라벨 그룹 목록을 불러오지 못했습니다.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                  {!isGroupsPending && !isGroupsError && labelGroups.length === 0 && (
                     <TableRow>
                       <TableCell colSpan={3} className="text-center text-sm text-muted-foreground">
                         등록된 라벨 그룹이 없습니다.

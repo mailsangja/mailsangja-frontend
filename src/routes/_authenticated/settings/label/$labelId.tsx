@@ -114,10 +114,10 @@ function LabelDetailContent({ labelId, label }: { labelId: string; label: LabelD
   const [notificationPolicy, setNotificationPolicy] = useState<NotificationPolicy>(label.notificationPolicy)
 
   const groups = label.rule?.groups ?? []
-  const [expandedGroups, setExpandedGroups] = useState<Set<number>>(() => new Set(groups.map((_, i) => i)))
+  const [collapsedGroups, setCollapsedGroups] = useState<Set<number>>(new Set())
 
   function toggleGroup(index: number) {
-    setExpandedGroups((prev) => {
+    setCollapsedGroups((prev) => {
       const next = new Set(prev)
       if (next.has(index)) next.delete(index)
       else next.add(index)
@@ -126,6 +126,14 @@ function LabelDetailContent({ labelId, label }: { labelId: string; label: LabelD
   }
 
   function handleDeleteGroup(groupIndex: number) {
+    setCollapsedGroups((prev) => {
+      const next = new Set<number>()
+      for (const i of prev) {
+        if (i < groupIndex) next.add(i)
+        else if (i > groupIndex) next.add(i - 1)
+      }
+      return next
+    })
     const newGroups = groups.filter((_, i) => i !== groupIndex)
     updateRule.mutate(
       { labelId, data: { groups: newGroups } },
@@ -196,7 +204,7 @@ function LabelDetailContent({ labelId, label }: { labelId: string; label: LabelD
             </CardHeader>
             <CardContent className="flex flex-col gap-2">
               {groups.map((group, groupIndex) => {
-                const isExpanded = expandedGroups.has(groupIndex)
+                const isExpanded = !collapsedGroups.has(groupIndex)
                 return (
                   <div key={groupIndex} className="overflow-hidden rounded-xl border bg-card">
                     <div className="flex items-center gap-1 p-2.5">

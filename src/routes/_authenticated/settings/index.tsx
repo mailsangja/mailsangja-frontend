@@ -87,6 +87,7 @@ function SettingsPage() {
                     type="button"
                     // TODO: 실제 설정 저장 기능 구현 시 주석 해제
                     onClick={() => setInboxView(value)}
+                    aria-pressed={inboxView === value}
                     className={cn(
                       "group flex flex-col gap-2 rounded-xl border-2 p-2.5 text-left transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
                       inboxView === value
@@ -133,6 +134,7 @@ function SettingsPage() {
                     key={value}
                     type="button"
                     onClick={() => setTheme(value)}
+                    aria-pressed={theme === value}
                     className={cn(
                       "group flex flex-col gap-2 rounded-xl border-2 p-2.5 text-left transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
                       theme === value
@@ -178,6 +180,7 @@ function SettingsPage() {
                     key={value}
                     type="button"
                     onClick={() => setHoverAction(value)}
+                    aria-pressed={hoverAction === value}
                     className={cn(
                       "flex items-center justify-between rounded-xl border-2 px-3 py-2 text-left transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
                       hoverAction === value
