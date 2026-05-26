@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react"
-import { Link, createFileRoute, useLocation } from "@tanstack/react-router"
+import { useState } from "react"
+import { Link, createFileRoute } from "@tanstack/react-router"
 import { Check, LayoutList, List, Monitor, Moon, MousePointer, MousePointerClick, Sparkles, Sun } from "lucide-react"
 
 import { InboxSingleLinePreview, InboxTwoLinePreview } from "@/components/inbox-preview"
@@ -8,7 +8,6 @@ import { useTheme } from "@/components/theme-provider"
 import { DarkPreview, LightPreview, SystemPreview } from "@/components/theme-preview"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Button } from "@/components/ui/button"
 import { cn } from "@/lib/utils"
 import { useUser } from "@/queries/user"
 
@@ -19,23 +18,16 @@ export const Route = createFileRoute("/_authenticated/settings/")({
 function SettingsPage() {
   const { data: user, isPending: isUserPending } = useUser()
   const { theme, setTheme } = useTheme()
-  const { hash } = useLocation()
-
   // TODO: 실제 설정 저장/불러오기 기능은 추후 구현 예정
   const [inboxView, setInboxView] = useState<"single" | "double">("double")
   const [hoverAction, setHoverAction] = useState<"enabled" | "disabled">("enabled")
-
-  useEffect(() => {
-    if (!hash) return
-    document.getElementById(hash)?.scrollIntoView({ behavior: "smooth" })
-  }, [hash])
 
   return (
     <ScrollArea className="h-full">
       <div className="flex flex-col gap-4 pb-4">
         <Card>
           <CardHeader>
-            <CardTitle>계정 정보</CardTitle>
+            <CardTitle>사용자 정보</CardTitle>
             <CardDescription>현재 로그인한 사용자와 구독 플랜 정보를 확인합니다.</CardDescription>
           </CardHeader>
           <CardContent className="pt-4">
@@ -67,6 +59,11 @@ function SettingsPage() {
           </CardContent>
         </Card>
 
+        <div id="notification-settings" className="flex flex-col gap-3">
+          <p className="text-md px-1 font-semibold text-muted-foreground">알림</p>
+          <NotificationSettingsCard />
+        </div>
+
         <div className="flex flex-col gap-3">
           <p className="text-md px-1 font-semibold text-muted-foreground">빠른 설정</p>
           <Card>
@@ -96,7 +93,7 @@ function SettingsPage() {
                     )}
                   >
                     {preview}
-                    <div className="flex items-center justify-between px-0.5">
+                    <div className="mt-auto flex items-center justify-between px-0.5">
                       <span
                         className={cn(
                           "flex items-center gap-1.5 text-xs font-medium",
@@ -205,20 +202,13 @@ function SettingsPage() {
           </Card>
         </div>
 
-        <div id="notification-settings" className="flex flex-col gap-3">
-          <p className="text-md px-1 font-semibold text-muted-foreground">알림</p>
-          <NotificationSettingsCard />
-        </div>
-
-        <div className="flex justify-end">
-          <Button
-            variant="ghost"
-            size="sm"
+        <div className="flex justify-end pr-4">
+          <a
+            href="mailto:mailsangja2026@gmail.com?subject=회원 탈퇴 요청"
             className="cursor-pointer text-xs text-muted-foreground hover:text-destructive"
-            disabled
           >
             회원 탈퇴
-          </Button>
+          </a>
         </div>
       </div>
     </ScrollArea>

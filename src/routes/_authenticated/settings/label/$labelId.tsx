@@ -99,7 +99,7 @@ function LabelDetailPage() {
     )
   }
 
-  return <LabelDetailContent labelId={labelId} label={label} />
+  return <LabelDetailContent key={labelId} labelId={labelId} label={label} />
 }
 
 function LabelDetailContent({ labelId, label }: { labelId: string; label: LabelDetail }) {
@@ -257,7 +257,7 @@ function LabelDetailContent({ labelId, label }: { labelId: string; label: LabelD
             <CardHeader>
               <CardTitle>알림 설정</CardTitle>
               <CardDescription>
-                알림 설정은 <strong>기본 ＜ 알림 안함 ＜ 항상 알림</strong> 순으로 우선순위를 가집니다.
+                알림 설정은 <strong>항상 알림 ＞ 알림 안함 ＞ 기본</strong> 순으로 우선순위를 가집니다.
               </CardDescription>
             </CardHeader>
             <CardContent>

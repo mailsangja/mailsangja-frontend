@@ -69,7 +69,7 @@ function SettingsLayout() {
                 <>
                   <BreadcrumbSeparator />
                   <BreadcrumbItem>
-                    <BreadcrumbPage className="font-semibold">계정</BreadcrumbPage>
+                    <BreadcrumbPage className="font-semibold">메일 계정</BreadcrumbPage>
                   </BreadcrumbItem>
                 </>
               )}
@@ -104,7 +104,7 @@ function SettingsLayout() {
             </TabsTrigger>
             <TabsTrigger value="account" className="min-w-24 rounded-none px-4">
               <User data-icon="inline-start" />
-              계정
+              메일 계정
             </TabsTrigger>
             <TabsTrigger value="label" className="min-w-24 rounded-none px-4">
               <Tag data-icon="inline-start" />

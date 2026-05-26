@@ -20,7 +20,7 @@ export const Route = createFileRoute("/_authenticated/settings/account")({
 })
 
 function SettingsAccountPage() {
-  const { data: user } = useUser()
+  const { data: user, isPending: isUserPending } = useUser()
   const { data: mailAccounts, isPending: isAccountsPending, isError: isAccountsError } = useMailAccounts()
   const [toggledIds, setToggledIds] = useState<Set<string>>(new Set())
   const [defaultAccount, setDefaultAccount] = useState<string | null>(null)
@@ -48,15 +48,17 @@ function SettingsAccountPage() {
 
   useEffect(() => {
     if (
+      !isUserPending &&
+      user &&
       !isAccountsPending &&
       !isAccountsError &&
-      !user?.defaultMailAccountId &&
+      !user.defaultMailAccountId &&
       mailAccounts &&
       mailAccounts.length > 0
     ) {
       mutateDefaultAccount({ mailAccountId: mailAccounts[0].id })
     }
-  }, [mailAccounts, user?.defaultMailAccountId, isAccountsPending, isAccountsError, mutateDefaultAccount])
+  }, [mailAccounts, user, isUserPending, isAccountsPending, isAccountsError, mutateDefaultAccount])
 
   const handleSaveDefaultAccount = () => {
     if (!selectedDefaultAccount) return
@@ -119,7 +121,7 @@ function SettingsAccountPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>계정 관리</CardTitle>
+            <CardTitle>메일 계정 관리</CardTitle>
             <CardDescription>연결된 메일 계정의 활성화 상태와 별칭을 확인합니다.</CardDescription>
           </CardHeader>
           <CardContent className="px-0">
@@ -198,7 +200,7 @@ function SettingsAccountPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>계정 추가하기</CardTitle>
+            <CardTitle>메일 계정 추가하기</CardTitle>
             <CardDescription>
               계정의 별칭, 아이콘, 색상을 선택한 뒤 로그인 절차를 거쳐 메일 계정을 연결할 수 있습니다.
             </CardDescription>
