@@ -41,9 +41,9 @@ function SettingsLayout() {
   const isLabelDetail = !!labelId
 
   return (
-    <div className="flex min-h-0 flex-1 flex-col p-6">
-      <div className="mx-auto flex min-h-0 w-full max-w-5xl flex-1 flex-col gap-6">
-        <div className="flex flex-col gap-1">
+    <div className="flex min-h-0 flex-1 flex-col p-0">
+      <div className="mx-auto flex min-h-0 w-full max-w-5xl flex-1 flex-col gap-0">
+        <div className="flex flex-col gap-1 px-6 py-4 sm:pt-5">
           <Breadcrumb>
             <BreadcrumbList className="text-2xl font-semibold [&>li[role=presentation]>svg]:size-5">
               <BreadcrumbItem>
@@ -111,7 +111,7 @@ function SettingsLayout() {
               라벨
             </TabsTrigger>
           </TabsList>
-          <TabsContent value={activeTab} className="flex min-h-0 flex-col">
+          <TabsContent value={activeTab} className="flex min-h-0 flex-col px-3 sm:px-5">
             <Outlet />
           </TabsContent>
         </Tabs>

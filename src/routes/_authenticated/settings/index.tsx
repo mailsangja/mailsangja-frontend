@@ -32,7 +32,7 @@ function SettingsPage() {
 
   return (
     <ScrollArea className="h-full">
-      <div className="flex flex-col gap-4 px-3 pt-1 pb-4">
+      <div className="flex flex-col gap-4 pb-4">
         <Card>
           <CardHeader>
             <CardTitle>계정 정보</CardTitle>
