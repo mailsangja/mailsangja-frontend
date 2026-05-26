@@ -20,7 +20,7 @@ export const Route = createFileRoute("/_authenticated/settings/account")({
 })
 
 function SettingsAccountPage() {
-  const { data: user, isPending: isUserPending } = useUser()
+  const { data: user } = useUser()
   const { data: mailAccounts, isPending: isAccountsPending, isError: isAccountsError } = useMailAccounts()
   const [toggledIds, setToggledIds] = useState<Set<string>>(new Set())
   const [defaultAccount, setDefaultAccount] = useState<string | null>(null)
@@ -65,23 +65,6 @@ function SettingsAccountPage() {
   return (
     <ScrollArea className="min-h-0 flex-1">
       <div className="flex flex-col gap-6 px-3 pt-1 pb-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>계정 정보</CardTitle>
-            <CardDescription>현재 로그인한 사용자와 구독 플랜 정보를 확인합니다.</CardDescription>
-          </CardHeader>
-          <CardContent className="flex items-center justify-between gap-4">
-            <div className="flex flex-col gap-1">
-              <p className="font-medium">{isUserPending ? "불러오는 중..." : (user?.name ?? "-")}</p>
-              <p className="text-sm text-muted-foreground">아이디: {user?.username ?? "-"}</p>
-              <p className="text-sm text-muted-foreground">플랜: {user?.plan ?? "-"}</p>
-            </div>
-            <Button variant="outline" disabled>
-              회원 탈퇴
-            </Button>
-          </CardContent>
-        </Card>
-
         <Card>
           <CardHeader>
             <CardTitle>기본 메일 계정</CardTitle>
