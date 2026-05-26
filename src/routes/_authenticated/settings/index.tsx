@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react"
 import { Link, createFileRoute, useLocation } from "@tanstack/react-router"
-import { Check, LayoutList, List, Monitor, Moon, Sparkles, Sun } from "lucide-react"
+import { Check, LayoutList, List, Monitor, Moon, MousePointer, MousePointerClick, Sparkles, Sun } from "lucide-react"
 
 import { InboxSingleLinePreview, InboxTwoLinePreview } from "@/components/inbox-preview"
 import { NotificationSettingsCard } from "@/components/notification-settings-card"
@@ -23,6 +23,7 @@ function SettingsPage() {
 
   // TODO: 실제 설정 저장/불러오기 기능은 추후 구현 예정
   const [inboxView, setInboxView] = useState<"single" | "double">("double")
+  const [hoverAction, setHoverAction] = useState<"enabled" | "disabled">("enabled")
 
   useEffect(() => {
     if (!hash) return
@@ -152,6 +153,48 @@ function SettingsPage() {
                       </span>
                       {theme === value && <Check className="size-3.5 text-primary" />}
                     </div>
+                  </button>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+
+        <div className="flex flex-col gap-3">
+          <Card>
+            <CardHeader>
+              <CardTitle>마우스 오버 작업 사용</CardTitle>
+              <CardDescription>마우스 오버 동작으로 메일 내용 미리보기 등의 기능을 사용할 수 있습니다.</CardDescription>
+            </CardHeader>
+            <CardContent className="pt-1 pb-5">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+                {(
+                  [
+                    { value: "enabled", label: "사용", icon: MousePointerClick },
+                    { value: "disabled", label: "미사용", icon: MousePointer },
+                  ] as const
+                ).map(({ value, label, icon: Icon }) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => setHoverAction(value)}
+                    className={cn(
+                      "flex items-center justify-between rounded-xl border-2 px-3 py-2 text-left transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+                      hoverAction === value
+                        ? "border-primary bg-primary/5"
+                        : "border-border hover:border-border/80 hover:bg-muted/40"
+                    )}
+                  >
+                    <span
+                      className={cn(
+                        "flex items-center gap-2 text-sm font-medium",
+                        hoverAction === value ? "text-primary" : "text-muted-foreground"
+                      )}
+                    >
+                      <Icon className="size-4" />
+                      {label}
+                    </span>
+                    {hoverAction === value && <Check className="size-4 text-primary" />}
                   </button>
                 ))}
               </div>
