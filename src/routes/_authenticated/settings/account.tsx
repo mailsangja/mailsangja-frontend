@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react"
+import { useEffect, useMemo, useState } from "react"
 import { createFileRoute } from "@tanstack/react-router"
 import { Plus, Trash2 } from "lucide-react"
 
@@ -25,6 +25,7 @@ function SettingsAccountPage() {
   const [toggledIds, setToggledIds] = useState<Set<string>>(new Set())
   const [defaultAccount, setDefaultAccount] = useState<string | null>(null)
   const updateDefaultAccountMutation = useUpdateDefaultAccount()
+  const { mutate: mutateDefaultAccount } = updateDefaultAccountMutation
 
   // 추후 API 구현 후, 연동 예정
   const accounts = useMemo(() => {
@@ -44,6 +45,12 @@ function SettingsAccountPage() {
   )
 
   const selectedDefaultAccount = defaultAccount ?? user?.defaultMailAccountId ?? null
+
+  useEffect(() => {
+    if (!isAccountsPending && !isAccountsError && !user?.defaultMailAccountId) {
+      mutateDefaultAccount({ mailAccountId: mailAccounts[0].id })
+    }
+  }, [mailAccounts, user?.defaultMailAccountId, isAccountsPending, isAccountsError, mutateDefaultAccount])
 
   const handleSaveDefaultAccount = () => {
     if (!selectedDefaultAccount) return
