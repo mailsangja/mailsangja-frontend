@@ -55,7 +55,12 @@ function NotificationSettingsLink() {
   const label = isEnabled ? "푸시 알림 설정, 활성화됨" : "푸시 알림 설정, 비활성화됨"
 
   return (
-    <Link to="/settings" className={buttonVariants({ variant: "ghost", size: "icon" })} aria-label={label}>
+    <Link
+      to="/settings"
+      hash="notification-settings"
+      className={buttonVariants({ variant: "ghost", size: "icon" })}
+      aria-label={label}
+    >
       <Icon className={cn("size-5", !isEnabled && "text-muted-foreground")} />
     </Link>
   )

@@ -1,4 +1,5 @@
-import { Link, createFileRoute } from "@tanstack/react-router"
+import { useEffect } from "react"
+import { Link, createFileRoute, useLocation } from "@tanstack/react-router"
 import { Check, Monitor, Moon, Sparkles, Sun } from "lucide-react"
 
 import { NotificationSettingsCard } from "@/components/notification-settings-card"
@@ -17,6 +18,12 @@ export const Route = createFileRoute("/_authenticated/settings/")({
 function SettingsPage() {
   const { data: user, isPending: isUserPending } = useUser()
   const { theme, setTheme } = useTheme()
+  const { hash } = useLocation()
+
+  useEffect(() => {
+    if (!hash) return
+    document.getElementById(hash)?.scrollIntoView({ behavior: "smooth" })
+  }, [hash])
 
   return (
     <ScrollArea className="h-full">
@@ -27,28 +34,29 @@ function SettingsPage() {
             <CardDescription>현재 로그인한 사용자와 구독 플랜 정보를 확인합니다.</CardDescription>
           </CardHeader>
           <CardContent className="pt-4">
-            <div className="grid grid-cols-3 divide-x">
-              <div className="flex flex-col gap-1 pr-4">
+            <div className="grid grid-cols-1 divide-y sm:grid-cols-3 sm:divide-x sm:divide-y-0">
+              <div className="flex flex-col gap-1 pb-4 sm:pr-4 sm:pb-0">
                 <p className="text-xs text-muted-foreground">이름</p>
                 <p className="text-sm font-medium">{isUserPending ? "..." : (user?.name ?? "-")}</p>
               </div>
-              <div className="flex flex-col gap-1 px-4">
+              <div className="flex flex-col gap-1 py-4 sm:px-4 sm:py-0">
                 <p className="text-xs text-muted-foreground">아이디</p>
                 <p className="text-sm font-medium">{user?.username ?? "-"}</p>
               </div>
-              <div className="relative flex flex-col gap-1 pl-4">
+              <div className="relative flex flex-col gap-1 pt-4 sm:pt-0 sm:pl-4">
+                <p className="text-xs text-muted-foreground">플랜</p>
+                <p className="text-sm font-medium">{user?.plan ?? "-"}</p>
                 {user?.plan === "FREE" && (
                   <Link
+                    // 추후에 요금제 페이지가 생기면 해당 페이지로 링크 변경 필요
                     to="/"
-                    className="absolute -top-8 left-2 z-10 inline-flex animate-bounce items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium whitespace-nowrap text-primary transition-colors hover:bg-primary/20"
+                    className="relative mt-1 inline-flex w-fit animate-bounce items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium whitespace-nowrap text-primary transition-colors hover:bg-primary/20 sm:absolute sm:-top-8 sm:left-2 sm:z-10 sm:mt-0"
                   >
                     <Sparkles className="size-3" />
                     요금제 업그레이드
-                    <span className="absolute -bottom-1.75 left-3 size-0 border-x-[6px] border-t-[7px] border-x-transparent border-t-primary/10" />
+                    <span className="absolute -bottom-1.75 left-3 hidden size-0 border-x-[6px] border-t-[7px] border-x-transparent border-t-primary/10 sm:block" />
                   </Link>
                 )}
-                <p className="text-xs text-muted-foreground">플랜</p>
-                <p className="text-sm font-medium">{user?.plan ?? "-"}</p>
               </div>
             </div>
           </CardContent>
@@ -72,7 +80,7 @@ function SettingsPage() {
               <CardDescription>서비스의 테마를 선택합니다.</CardDescription>
             </CardHeader>
             <CardContent className="pt-1 pb-5">
-              <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                 {(
                   [
                     { value: "light", label: "라이트", icon: Sun, preview: <LightPreview /> },
@@ -111,13 +119,18 @@ function SettingsPage() {
           </Card>
         </div>
 
-        <div className="flex flex-col gap-3">
+        <div id="notification-settings" className="flex flex-col gap-3">
           <p className="text-md px-1 font-semibold text-muted-foreground">알림</p>
           <NotificationSettingsCard />
         </div>
 
-        <div className="flex justify-end pt-4">
-          <Button variant="ghost" size="sm" className="text-xs text-muted-foreground hover:text-destructive" disabled>
+        <div className="flex justify-end">
+          <Button
+            variant="ghost"
+            size="sm"
+            className="cursor-pointer text-xs text-muted-foreground hover:text-destructive"
+            disabled
+          >
             회원 탈퇴
           </Button>
         </div>
