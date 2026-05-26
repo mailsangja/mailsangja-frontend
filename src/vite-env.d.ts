@@ -11,6 +11,9 @@ interface ImportMetaEnv {
   readonly VITE_FIREBASE_APP_ID: string
   readonly VITE_FIREBASE_VAPID_KEY: string
   readonly VITE_GA_MEASUREMENT_ID?: string
+  readonly VITE_AMPLITUDE_API_KEY?: string
+  readonly VITE_AMPLITUDE_SERVER_ZONE?: "US" | "EU"
+  readonly VITE_ANALYTICS_ENABLED?: string
 }
 
 interface ImportMeta {
