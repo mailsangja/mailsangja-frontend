@@ -1,72 +1,84 @@
-import { useState } from "react"
-import { Link, createFileRoute } from "@tanstack/react-router"
-import { ArrowLeft, Plus, X } from "lucide-react"
+import { useState, type ElementType } from "react"
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router"
+import { BellRing, Bell, BellOff, Plus, X, ChevronLeft, ChevronDown } from "lucide-react"
 import { toast } from "sonner"
 
-import { Button, buttonVariants } from "@/components/ui/button"
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card"
+import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Skeleton } from "@/components/ui/skeleton"
 import { LabelConditionList } from "@/components/label/label-condition-list"
+import { LabelDeleteDialog } from "@/components/label/label-delete-dialog"
 import { LabelRuleDialog } from "@/components/label/label-rule-dialog"
 import { getErrorMessage } from "@/lib/http-error"
-import { useUpdateLabelRule } from "@/mutations/labels"
+import { LABEL_COLORS } from "@/lib/label-colors"
+import { cn } from "@/lib/utils"
+import { useUpdateLabel, useUpdateLabelRule } from "@/mutations/labels"
 import { useLabelDetail } from "@/queries/labels"
+import { NOTIFICATION_POLICY_LABELS, type LabelDetail, type NotificationPolicy } from "@/types/label"
 
 export const Route = createFileRoute("/_authenticated/settings/label/$labelId")({
   component: LabelDetailPage,
 })
 
+const NOTIFICATION_OPTIONS: { value: NotificationPolicy; icon: ElementType }[] = [
+  { value: "URGENT", icon: BellRing },
+  { value: "INHERIT", icon: Bell },
+  { value: "SILENT", icon: BellOff },
+]
+
 function LabelDetailPage() {
   const { labelId } = Route.useParams()
   const { data: label, isPending, isError } = useLabelDetail(labelId)
-  const updateRule = useUpdateLabelRule()
-  const [ruleDialogOpen, setRuleDialogOpen] = useState(false)
-
-  const groups = label?.rule?.groups ?? []
-
-  function handleDeleteGroup(groupIndex: number) {
-    const newGroups = groups.filter((_, i) => i !== groupIndex)
-    updateRule.mutate(
-      { labelId, data: { groups: newGroups } },
-      {
-        onSuccess: () => toast.success("규칙이 삭제되었습니다."),
-        onError: (e) => toast.error(getErrorMessage(e, "규칙 삭제에 실패했습니다.")),
-      }
-    )
-  }
 
   if (isPending) {
     return (
       <ScrollArea className="min-h-0 flex-1">
         <div className="flex flex-col gap-6 px-3 pt-1 pb-4">
-          <div>
-            <Skeleton className="h-8 w-40 rounded-md" />
+          <div className="flex items-center gap-2">
+            <Skeleton className="size-3.5 shrink-0 rounded-sm" />
+            <Skeleton className="h-6 w-24" />
           </div>
-          <div className="flex flex-col gap-4">
-            <div>
-              <div className="flex items-center gap-2">
-                <Skeleton className="size-3.5 shrink-0 rounded-sm" />
-                <Skeleton className="h-6 w-24" />
-              </div>
-              <Skeleton className="mt-2 h-4 w-80 max-w-full" />
-            </div>
-            {[0, 1].map((i) => (
-              <Card key={i} className="gap-0 overflow-hidden">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 border-b px-4 py-2.5">
-                  <Skeleton className="h-4 w-12" />
-                  <Skeleton className="size-7 rounded-md" />
-                </CardHeader>
-                <CardContent className="flex flex-col gap-2 px-4 py-3">
-                  <div className="flex items-center gap-2">
-                    <Skeleton className="h-5 w-20 rounded-full" />
-                    <Skeleton className="h-3.5 w-8" />
-                    <Skeleton className="h-5 w-36 rounded-sm" />
+          <Card>
+            <CardHeader>
+              <Skeleton className="h-5 w-28" />
+              <Skeleton className="h-3.5 w-64" />
+            </CardHeader>
+            <CardContent className="flex flex-col gap-2">
+              {[0, 1].map((i) => (
+                <div key={i} className="overflow-hidden rounded-lg border">
+                  <div className="flex items-center justify-between bg-muted/50 px-3 py-1.5">
+                    <Skeleton className="h-3.5 w-10" />
+                    <Skeleton className="size-7 rounded-md" />
                   </div>
-                </CardContent>
-              </Card>
-            ))}
-            <Skeleton className="h-9 w-full rounded-md" />
+                  <div className="px-3 py-2.5">
+                    <div className="flex items-center gap-2">
+                      <Skeleton className="h-5 w-20 rounded-full" />
+                      <Skeleton className="h-3.5 w-8" />
+                      <Skeleton className="h-5 w-36 rounded-sm" />
+                    </div>
+                  </div>
+                </div>
+              ))}
+              <Skeleton className="h-9 w-full rounded-md" />
+            </CardContent>
+          </Card>
+          <div className="flex flex-col gap-3">
+            <Skeleton className="h-4 w-20" />
+            <Skeleton className="h-11 w-full rounded-xl" />
+          </div>
+          <div className="flex flex-col gap-3">
+            <Skeleton className="h-4 w-20" />
+            <Skeleton className="h-11 w-full rounded-xl" />
+          </div>
+          <div className="flex flex-col gap-3">
+            <Skeleton className="h-4 w-20" />
+            <Skeleton className="h-24 w-full rounded-xl" />
+          </div>
+          <div className="flex flex-col gap-3">
+            <Skeleton className="h-4 w-20" />
+            <Skeleton className="h-14 w-full rounded-xl" />
           </div>
         </div>
       </ScrollArea>
@@ -87,65 +99,264 @@ function LabelDetailPage() {
     )
   }
 
+  return <LabelDetailContent labelId={labelId} label={label} />
+}
+
+function LabelDetailContent({ labelId, label }: { labelId: string; label: LabelDetail }) {
+  const navigate = useNavigate()
+  const updateLabel = useUpdateLabel()
+  const updateRule = useUpdateLabelRule()
+
+  const [ruleDialogOpen, setRuleDialogOpen] = useState(false)
+  const [deleteDialogOpen, setDeleteDialogOpen] = useState(false)
+  const [name, setName] = useState(label.name)
+  const [selectedColor, setSelectedColor] = useState(label.colorCode)
+  const [notificationPolicy, setNotificationPolicy] = useState<NotificationPolicy>(label.notificationPolicy)
+
+  const groups = label.rule?.groups ?? []
+  const [expandedGroups, setExpandedGroups] = useState<Set<number>>(() => new Set(groups.map((_, i) => i)))
+
+  function toggleGroup(index: number) {
+    setExpandedGroups((prev) => {
+      const next = new Set(prev)
+      if (next.has(index)) next.delete(index)
+      else next.add(index)
+      return next
+    })
+  }
+
+  function handleDeleteGroup(groupIndex: number) {
+    const newGroups = groups.filter((_, i) => i !== groupIndex)
+    updateRule.mutate(
+      { labelId, data: { groups: newGroups } },
+      {
+        onSuccess: () => toast.success("규칙이 삭제되었습니다."),
+        onError: (e) => toast.error(getErrorMessage(e, "규칙 삭제에 실패했습니다.")),
+      }
+    )
+  }
+
+  function handleSaveNotification(policy: NotificationPolicy) {
+    setNotificationPolicy(policy)
+    updateLabel.mutate(
+      { labelId, data: { notificationPolicy: policy } },
+      {
+        onSuccess: () => toast.success("알림 설정이 변경되었습니다."),
+        onError: (e) => {
+          setNotificationPolicy(label.notificationPolicy)
+          toast.error(getErrorMessage(e, "알림 설정 변경에 실패했습니다."))
+        },
+      }
+    )
+  }
+
+  function handleSaveName() {
+    const trimmed = name.trim()
+    if (!trimmed || trimmed === label.name) return
+    updateLabel.mutate(
+      { labelId, data: { name: trimmed } },
+      {
+        onSuccess: () => toast.success("라벨 이름이 변경되었습니다."),
+        onError: (e) => {
+          setName(label.name)
+          toast.error(getErrorMessage(e, "라벨 이름 변경에 실패했습니다."))
+        },
+      }
+    )
+  }
+
+  function handleSaveColor() {
+    if (selectedColor === label.colorCode) return
+    updateLabel.mutate(
+      { labelId, data: { colorCode: selectedColor } },
+      {
+        onSuccess: () => toast.success("라벨 색상이 변경되었습니다."),
+        onError: (e) => {
+          setSelectedColor(label.colorCode)
+          toast.error(getErrorMessage(e, "라벨 색상 변경에 실패했습니다."))
+        },
+      }
+    )
+  }
+
   return (
     <ScrollArea className="min-h-0 flex-1">
       <div className="flex flex-col gap-6 px-3 pt-1 pb-4">
-        <div>
-          <Link to="/settings/label" className={buttonVariants({ variant: "ghost", size: "sm" })}>
-            <ArrowLeft className="size-5" />
-            라벨 목록으로 돌아가기
-          </Link>
-        </div>
+        <Link to="/settings/label" className="inline-flex items-center gap-2 text-sm text-muted-foreground">
+          <ChevronLeft className="size-4" />
+          뒤로
+        </Link>
+        <section className="flex flex-col gap-3">
+          <Card>
+            <CardHeader>
+              <CardTitle>라벨 규칙 관리</CardTitle>
+              <CardDescription>
+                이 라벨에 자동으로 분류될 메일의 규칙을 설정합니다. 규칙이 여러 개이면 하나라도 만족하면 분류됩니다.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-2">
+              {groups.map((group, groupIndex) => {
+                const isExpanded = expandedGroups.has(groupIndex)
+                return (
+                  <div key={groupIndex} className="overflow-hidden rounded-xl border bg-card">
+                    <div className="flex items-center gap-1 p-2.5">
+                      <button
+                        type="button"
+                        className="flex min-w-0 flex-1 items-center gap-2 text-left"
+                        onClick={() => toggleGroup(groupIndex)}
+                      >
+                        <ChevronDown
+                          className={cn(
+                            "size-4 shrink-0 text-muted-foreground transition-transform",
+                            isExpanded ? "rotate-0" : "-rotate-90"
+                          )}
+                        />
+                        <span className="text-sm font-medium">규칙 {groupIndex + 1}</span>
+                      </button>
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={() => handleDeleteGroup(groupIndex)}
+                        disabled={updateRule.isPending}
+                        aria-label="규칙 삭제"
+                      >
+                        <X className="size-4 text-muted-foreground" />
+                      </Button>
+                    </div>
+                    {isExpanded && (
+                      <div className="border-t px-4 py-3">
+                        <LabelConditionList conditions={group.conditions} />
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+              <Button
+                variant="outline"
+                className="w-full"
+                onClick={() => setRuleDialogOpen(true)}
+                disabled={updateRule.isPending}
+              >
+                <Plus className="size-4" />
+                규칙 추가
+              </Button>
+            </CardContent>
+          </Card>
+        </section>
 
-        <div className="flex flex-col gap-4">
-          <div>
-            <div className="flex items-center gap-2">
-              <span
-                className="inline-block size-3.5 shrink-0 rounded-sm"
-                style={{ backgroundColor: label.colorCode }}
-              />
-              <h2 className="text-lg font-semibold">{label.name}</h2>
-            </div>
-            <p className="mt-1 text-sm text-muted-foreground">
-              이 라벨에 자동으로 분류될 메일의 규칙을 설정합니다. 규칙이 여러 개이면 하나라도 만족하면 분류됩니다.
-            </p>
-          </div>
-
-          {groups.map((group, groupIndex) => (
-            <div key={groupIndex} className="flex flex-col gap-2">
-              <Card className="gap-0">
-                <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-3">
-                  <CardTitle className="text-sm font-medium text-muted-foreground">규칙 {groupIndex + 1}</CardTitle>
-                  <Button
-                    variant="ghost"
-                    size="icon-sm"
-                    onClick={() => handleDeleteGroup(groupIndex)}
-                    disabled={updateRule.isPending}
-                    aria-label="규칙 삭제"
+        <section className="flex flex-col gap-3">
+          <Card>
+            <CardHeader>
+              <CardTitle>알림 설정</CardTitle>
+              <CardDescription>
+                알림 설정은 <strong>기본 ＜ 알림 안함 ＜ 항상 알림</strong> 순으로 우선순위를 가집니다.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="flex gap-2">
+                {NOTIFICATION_OPTIONS.map(({ value, icon: Icon }) => (
+                  <button
+                    key={value}
+                    type="button"
+                    onClick={() => handleSaveNotification(value)}
+                    disabled={updateLabel.isPending}
+                    className={cn(
+                      "flex flex-1 items-center justify-center gap-1.5 rounded-md border px-3 py-1.5 text-xs transition-colors",
+                      notificationPolicy === value
+                        ? "border-primary bg-primary/10 text-primary"
+                        : "border-border text-muted-foreground hover:bg-muted"
+                    )}
                   >
-                    <X className="size-4" />
-                  </Button>
-                </CardHeader>
-                <CardContent>
-                  <LabelConditionList conditions={group.conditions} />
-                </CardContent>
-              </Card>
-            </div>
-          ))}
+                    <Icon className="size-3.5" />
+                    {NOTIFICATION_POLICY_LABELS[value]}
+                  </button>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+        </section>
 
-          <Button
-            variant="outline"
-            className="w-full"
-            onClick={() => setRuleDialogOpen(true)}
-            disabled={updateRule.isPending}
-          >
-            <Plus className="size-4" />
-            규칙 추가
-          </Button>
-        </div>
+        <section className="flex flex-col gap-3">
+          <Card>
+            <CardHeader>
+              <CardTitle>이름 변경</CardTitle>
+              <CardDescription>라벨의 이름을 변경합니다.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex gap-2">
+              <Input
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                onKeyDown={(e) => e.key === "Enter" && handleSaveName()}
+                placeholder="라벨 이름"
+                className="w-2/5"
+              />
+              <Button
+                onClick={handleSaveName}
+                disabled={!name.trim() || name.trim() === label.name || updateLabel.isPending}
+              >
+                저장
+              </Button>
+            </CardContent>
+          </Card>
+        </section>
+
+        <section className="flex flex-col gap-3">
+          <Card>
+            <CardHeader>
+              <CardTitle>색상 변경</CardTitle>
+              <CardDescription>라벨의 색상을 변경합니다.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex flex-col gap-6">
+              <div className="grid grid-cols-10 place-items-center gap-1.5">
+                {LABEL_COLORS.map((color) => (
+                  <button
+                    key={color}
+                    type="button"
+                    className="size-6 rounded-full ring-offset-2 transition-transform hover:scale-110 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                    style={{
+                      backgroundColor: color,
+                      boxShadow: selectedColor === color ? `0 0 0 2px white, 0 0 0 4px ${color}` : undefined,
+                    }}
+                    onClick={() => setSelectedColor(color)}
+                    aria-label={color}
+                    aria-pressed={selectedColor === color}
+                  />
+                ))}
+              </div>
+              <Button
+                onClick={handleSaveColor}
+                disabled={selectedColor === label.colorCode || updateLabel.isPending}
+                className="w-full"
+              >
+                저장
+              </Button>
+            </CardContent>
+          </Card>
+        </section>
+
+        <section className="flex flex-col gap-3">
+          <Card>
+            <CardHeader>
+              <CardTitle className="text-destructive">라벨 삭제</CardTitle>
+              <CardDescription>라벨을 삭제하면 해당 라벨이 적용된 메일에서 라벨이 제거됩니다.</CardDescription>
+            </CardHeader>
+            <CardContent className="flex items-center justify-between">
+              <Button variant="destructive" size="sm" onClick={() => setDeleteDialogOpen(true)}>
+                삭제
+              </Button>
+            </CardContent>
+          </Card>
+        </section>
       </div>
 
       <LabelRuleDialog open={ruleDialogOpen} onOpenChange={setRuleDialogOpen} labelId={labelId} />
+
+      <LabelDeleteDialog
+        open={deleteDialogOpen}
+        onOpenChange={setDeleteDialogOpen}
+        label={label}
+        onSuccess={() => void navigate({ to: "/settings/label" })}
+      />
     </ScrollArea>
   )
 }
