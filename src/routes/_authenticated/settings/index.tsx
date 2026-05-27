@@ -47,7 +47,7 @@ function SettingsPage() {
 
   return (
     <ScrollArea className="h-full">
-      <div className="flex flex-col gap-4 px-6 pb-4">
+      <div className="flex flex-col gap-4 px-6 pt-1 pb-4">
         <div className="flex flex-col gap-4 sm:flex-row">
           <Card className="flex-1">
             <CardHeader>
@@ -155,7 +155,7 @@ function SettingsPage() {
               <CardTitle>{m.settings_language_title()}</CardTitle>
               <CardDescription>{m.settings_language_description()}</CardDescription>
             </CardHeader>
-            <CardContent className="pt-1 pb-5">
+            <CardContent className="pt-1">
               <LanguageSelect />
             </CardContent>
           </Card>
@@ -173,7 +173,7 @@ function SettingsPage() {
               <CardTitle>{m.settings_inbox_title()}</CardTitle>
               <CardDescription>{m.settings_inbox_description()}</CardDescription>
             </CardHeader>
-            <CardContent className="pt-1 pb-5">
+            <CardContent className="pt-1">
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 {(
                   [
@@ -230,7 +230,7 @@ function SettingsPage() {
               <CardTitle>{m.settings_theme_title()}</CardTitle>
               <CardDescription>{m.settings_theme_description()}</CardDescription>
             </CardHeader>
-            <CardContent className="pt-1 pb-5">
+            <CardContent className="pt-1">
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                 {(
                   [
@@ -277,7 +277,7 @@ function SettingsPage() {
               <CardTitle>{m.settings_mail_preview_title()}</CardTitle>
               <CardDescription>{m.settings_mail_preview_description()}</CardDescription>
             </CardHeader>
-            <CardContent className="pt-1 pb-5">
+            <CardContent className="pt-1">
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 {(
                   [

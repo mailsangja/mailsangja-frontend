@@ -80,7 +80,7 @@ function SettingsAccountPage() {
 
   return (
     <ScrollArea className="min-h-0 flex-1">
-      <div className="flex flex-col gap-4 px-6 pb-4">
+      <div className="flex flex-col gap-4 px-6 pt-1 pb-4">
         <Card>
           <CardHeader>
             <CardTitle>{m.settings_default_mail_account_title()}</CardTitle>
