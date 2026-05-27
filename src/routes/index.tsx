@@ -239,10 +239,11 @@ const pricingPlans = [
   },
   {
     name: "PRO Plan",
-    originalPrice: "₩12,900",
-    price: "₩5,900",
+    originalPrice: "₩19,900",
+    price: "₩9,900",
     period: "/월",
     cta: "PRO로 시작하기",
+    // 요금제 결제 페이지가 구현되면 해당 페이지로 링크 변경 필요
     ctaTo: "/signup" as const,
     featured: true,
     comingSoon: true,
@@ -333,11 +334,17 @@ function RouteComponent() {
         <div className="mx-auto flex max-w-5xl items-center justify-between px-6 py-4">
           <div className="flex items-center gap-2">
             <Mail className="size-5 text-primary" />
-            <span className="font-semibold">메일상자</span>
+            <Link to="/" className="font-semibold">
+              메일상자
+            </Link>
           </div>
           <nav className="flex items-center gap-6">
-            {/* TODO: 노션 링크 추가 후 href 교체 */}
-            <a href="#" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
+            <a
+              href="https://lumbar-node-b36.notion.site/369a76ffc9a180968462c679978467b1"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+            >
               팀소개
             </a>
             <Link to="/signup" className="text-sm text-muted-foreground transition-colors hover:text-foreground">

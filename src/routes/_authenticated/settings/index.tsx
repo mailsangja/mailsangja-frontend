@@ -68,8 +68,7 @@ function SettingsPage() {
                     <p className="text-sm font-medium">{user?.plan ?? "-"}</p>
                     {user?.plan === "FREE" && (
                       <Link
-                        // 추후에 요금제 페이지가 생기면 해당 페이지로 링크 변경 필요
-                        to="/"
+                        to="/upgrade"
                         className="inline-flex animate-bounce items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium whitespace-nowrap text-primary transition-colors hover:bg-primary/20"
                       >
                         <Sparkles className="size-3" />
