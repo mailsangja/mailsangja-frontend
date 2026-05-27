@@ -1,6 +1,17 @@
 import { useState } from "react"
 import { Link, createFileRoute } from "@tanstack/react-router"
-import { Check, LayoutList, List, Monitor, Moon, MousePointer, MousePointerClick, Sparkles, Sun } from "lucide-react"
+import {
+  Check,
+  LayoutList,
+  List,
+  Monitor,
+  Moon,
+  MousePointer,
+  MousePointerClick,
+  RefreshCw,
+  Sparkles,
+  Sun,
+} from "lucide-react"
 
 import { InboxSingleLinePreview, InboxTwoLinePreview } from "@/components/inbox-preview"
 import { NotificationSettingsCard } from "@/components/notification-settings-card"
@@ -20,7 +31,12 @@ export const Route = createFileRoute("/_authenticated/settings/")({
 
 function SettingsPage() {
   const { data: user, isPending: isUserPending } = useUser()
-  const { data: aiUsages, isPending: isAiUsagesPending } = useAiUsages()
+  const {
+    data: aiUsages,
+    isPending: isAiUsagesPending,
+    isRefetching: isAiUsagesRefetching,
+    refetch: refetchAiUsages,
+  } = useAiUsages()
   const { theme, setTheme } = useTheme()
   // TODO: 실제 설정 저장/불러오기 기능은 추후 구현 예정
   const [inboxView, setInboxView] = useState<"single" | "double">("double")
@@ -29,88 +45,102 @@ function SettingsPage() {
   return (
     <ScrollArea className="h-full">
       <div className="flex flex-col gap-4 px-6 pb-4">
-        <Card>
-          <CardHeader>
-            <CardTitle>사용자 정보</CardTitle>
-            <CardDescription>현재 로그인한 사용자와 구독 플랜 정보를 확인합니다.</CardDescription>
-          </CardHeader>
-          <CardContent className="pt-4">
-            <div className="grid grid-cols-1 divide-y sm:grid-cols-3 sm:divide-x sm:divide-y-0">
-              <div className="flex flex-col gap-1 pb-4 sm:pr-4 sm:pb-0">
-                <p className="text-xs text-muted-foreground">이름</p>
-                <p className="text-sm font-medium">{isUserPending ? "..." : (user?.name ?? "-")}</p>
+        <div className="flex flex-col gap-4 sm:flex-row">
+          <Card className="flex-1">
+            <CardHeader>
+              <CardTitle>사용자 정보</CardTitle>
+              <CardDescription>현재 로그인한 사용자와 구독 플랜 정보를 확인합니다.</CardDescription>
+            </CardHeader>
+            <CardContent className="pt-4">
+              <div className="flex flex-col gap-3">
+                <div className="flex flex-col gap-1">
+                  <p className="text-xs text-muted-foreground">이름</p>
+                  <p className="text-sm font-medium">{isUserPending ? "..." : (user?.name ?? "-")}</p>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <p className="text-xs text-muted-foreground">아이디</p>
+                  <p className="text-sm font-medium">{user?.username ?? "-"}</p>
+                </div>
+                <div className="flex flex-col gap-1">
+                  <p className="text-xs text-muted-foreground">플랜</p>
+                  <div className="flex items-center gap-2">
+                    <p className="text-sm font-medium">{user?.plan ?? "-"}</p>
+                    {user?.plan === "FREE" && (
+                      <Link
+                        // 추후에 요금제 페이지가 생기면 해당 페이지로 링크 변경 필요
+                        to="/"
+                        className="inline-flex animate-bounce items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium whitespace-nowrap text-primary transition-colors hover:bg-primary/20"
+                      >
+                        <Sparkles className="size-3" />
+                        요금제 업그레이드
+                      </Link>
+                    )}
+                  </div>
+                </div>
               </div>
-              <div className="flex flex-col gap-1 py-4 sm:px-4 sm:py-0">
-                <p className="text-xs text-muted-foreground">아이디</p>
-                <p className="text-sm font-medium">{user?.username ?? "-"}</p>
-              </div>
-              <div className="relative flex flex-col gap-1 pt-4 sm:pt-0 sm:pl-4">
-                <p className="text-xs text-muted-foreground">플랜</p>
-                <p className="text-sm font-medium">{user?.plan ?? "-"}</p>
-                {user?.plan === "FREE" && (
-                  <Link
-                    // 추후에 요금제 페이지가 생기면 해당 페이지로 링크 변경 필요
-                    to="/"
-                    className="relative mt-1 inline-flex w-fit animate-bounce items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium whitespace-nowrap text-primary transition-colors hover:bg-primary/20 sm:absolute sm:-top-8 sm:left-2 sm:z-10 sm:mt-0"
-                  >
-                    <Sparkles className="size-3" />
-                    요금제 업그레이드
-                    <span className="absolute -bottom-1.75 left-3 hidden size-0 border-x-[6px] border-t-[7px] border-x-transparent border-t-primary/10 sm:block" />
-                  </Link>
-                )}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+            </CardContent>
+          </Card>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>AI 기능 사용량</CardTitle>
-            <CardDescription>이번 주 AI 기능별 사용 현황입니다.</CardDescription>
-          </CardHeader>
-          <CardContent className="pt-4">
-            <div className="flex flex-col gap-3">
-              {isAiUsagesPending
-                ? Array.from({ length: 3 }).map((_, i) => (
-                    <div key={i} className="flex flex-col gap-1.5">
-                      <div className="flex justify-between">
-                        <Skeleton className="h-4 w-24" />
-                        <Skeleton className="h-4 w-12" />
-                      </div>
-                      <Skeleton className="h-2 w-full rounded-full" />
-                    </div>
-                  ))
-                : aiUsages?.usages.map((item) => {
-                    const ratio = item.limit > 0 ? item.used / item.limit : 0
-                    const isExhausted = item.used >= item.limit
-                    return (
-                      <div key={item.type} className="flex flex-col gap-1.5">
-                        <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium">{AI_USAGE_TYPE_LABELS[item.type]}</span>
-                          <span
-                            className={cn(
-                              "text-xs tabular-nums",
-                              isExhausted ? "text-destructive" : "text-muted-foreground"
-                            )}
-                          >
-                            {item.used} / {item.limit}
-                          </span>
+          <Card className="flex-1">
+            <CardHeader className="flex items-start justify-between">
+              <div>
+                <CardTitle>AI 기능 사용량</CardTitle>
+                <CardDescription>이번 주 AI 기능별 사용 현황입니다.</CardDescription>
+              </div>
+              <button
+                type="button"
+                onClick={() => refetchAiUsages()}
+                disabled={isAiUsagesPending || isAiUsagesRefetching}
+                className="rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50"
+                aria-label="사용량 새로고침"
+              >
+                <RefreshCw className={cn("size-4", isAiUsagesRefetching && "animate-spin")} />
+              </button>
+            </CardHeader>
+            <CardContent className="pt-4">
+              <div className="flex flex-col gap-3">
+                {isAiUsagesPending
+                  ? Array.from({ length: 3 }).map((_, i) => (
+                      <div key={i} className="flex flex-col gap-1.5">
+                        <div className="flex justify-between">
+                          <Skeleton className="h-4 w-24" />
+                          <Skeleton className="h-4 w-12" />
                         </div>
-                        <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-                          <div
-                            className={cn(
-                              "h-full rounded-full transition-all",
-                              isExhausted ? "bg-destructive" : "bg-primary"
-                            )}
-                            style={{ width: `${Math.min(ratio * 100, 100)}%` }}
-                          />
-                        </div>
+                        <Skeleton className="h-2 w-full rounded-full" />
                       </div>
-                    )
-                  })}
-            </div>
-          </CardContent>
-        </Card>
+                    ))
+                  : aiUsages?.usages.map((item) => {
+                      const ratio = item.limit > 0 ? item.used / item.limit : 0
+                      const isExhausted = item.used >= item.limit
+                      return (
+                        <div key={item.type} className="flex flex-col gap-1.5">
+                          <div className="flex items-center justify-between">
+                            <span className="text-sm font-medium">{AI_USAGE_TYPE_LABELS[item.type]}</span>
+                            <span
+                              className={cn(
+                                "text-xs tabular-nums",
+                                isExhausted ? "text-destructive" : "text-muted-foreground"
+                              )}
+                            >
+                              {Math.min(item.used, item.limit)} / {item.limit}
+                            </span>
+                          </div>
+                          <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                            <div
+                              className={cn(
+                                "h-full rounded-full transition-all",
+                                isExhausted ? "bg-destructive" : "bg-primary"
+                              )}
+                              style={{ width: `${Math.min(ratio * 100, 100)}%` }}
+                            />
+                          </div>
+                        </div>
+                      )
+                    })}
+              </div>
+            </CardContent>
+          </Card>
+        </div>
 
         <div id="notification-settings" className="flex flex-col gap-3">
           <p className="text-md px-1 font-semibold text-muted-foreground">알림</p>
