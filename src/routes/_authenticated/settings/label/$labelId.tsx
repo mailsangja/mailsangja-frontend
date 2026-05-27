@@ -201,52 +201,68 @@ function LabelDetailContent({ labelId, label }: { labelId: string; label: LabelD
               <CardTitle>{m.label_rule_management_title()}</CardTitle>
               <CardDescription>{m.label_rule_management_description()}</CardDescription>
             </CardHeader>
-            <CardContent className="flex flex-col gap-2">
+            <CardContent className="flex flex-col gap-1">
               {groups.map((group, groupIndex) => {
                 const isExpanded = !collapsedGroups.has(groupIndex)
                 return (
-                  <div key={groupIndex} className="overflow-hidden rounded-xl border bg-card">
-                    <div className="flex items-center gap-1 p-2.5">
-                      <button
-                        type="button"
-                        className="flex min-w-0 flex-1 items-center gap-2 text-left"
-                        onClick={() => toggleGroup(groupIndex)}
-                      >
-                        <ChevronDown
-                          className={cn(
-                            "size-4 shrink-0 text-muted-foreground transition-transform",
-                            isExpanded ? "rotate-0" : "-rotate-90"
-                          )}
-                        />
-                        <span className="text-sm font-medium">{m.label_rule_title({ index: groupIndex + 1 })}</span>
-                      </button>
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        onClick={() => handleDeleteGroup(groupIndex)}
-                        disabled={updateRule.isPending}
-                        aria-label={m.label_rule_delete()}
-                      >
-                        <X className="size-4 text-muted-foreground" />
-                      </Button>
-                    </div>
-                    {isExpanded && (
-                      <div className="border-t px-4 py-3">
-                        <LabelConditionList conditions={group.conditions} />
+                  <div key={groupIndex}>
+                    {groupIndex > 0 && (
+                      <div className="flex items-center gap-3 py-2">
+                        <div className="h-px flex-1 bg-border" />
+                        <span className="rounded-full border border-orange-200 bg-orange-50 px-3 py-0.5 text-xs font-bold tracking-wide text-orange-500 dark:border-orange-800 dark:bg-orange-900/20 dark:text-orange-400">
+                          OR
+                        </span>
+                        <div className="h-px flex-1 bg-border" />
                       </div>
                     )}
+                    <div className="overflow-hidden rounded-xl border bg-background shadow-sm">
+                      <div className="flex items-center gap-1 bg-muted/40 px-3 py-2">
+                        <button
+                          type="button"
+                          className="flex min-w-0 flex-1 items-center gap-2 text-left"
+                          onClick={() => toggleGroup(groupIndex)}
+                        >
+                          <ChevronDown
+                            className={cn(
+                              "size-4 shrink-0 text-muted-foreground transition-transform",
+                              isExpanded ? "rotate-0" : "-rotate-90"
+                            )}
+                          />
+                          <span className="text-sm font-semibold">{m.label_rule_title({ index: groupIndex + 1 })}</span>
+                          {!isExpanded && (
+                            <span className="text-xs text-muted-foreground">({group.conditions.length}개 조건)</span>
+                          )}
+                        </button>
+                        <Button
+                          variant="ghost"
+                          size="icon-sm"
+                          onClick={() => handleDeleteGroup(groupIndex)}
+                          disabled={updateRule.isPending}
+                          aria-label={m.label_rule_delete()}
+                        >
+                          <X className="size-4 text-muted-foreground" />
+                        </Button>
+                      </div>
+                      {isExpanded && (
+                        <div className="border-t px-5 py-1">
+                          <LabelConditionList conditions={group.conditions} />
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )
               })}
-              <Button
-                variant="outline"
-                className="w-full"
-                onClick={() => setRuleDialogOpen(true)}
-                disabled={updateRule.isPending}
-              >
-                <Plus className="size-4" />
-                {m.label_rule_add()}
-              </Button>
+              <div className="pt-2">
+                <Button
+                  variant="outline"
+                  className="w-full"
+                  onClick={() => setRuleDialogOpen(true)}
+                  disabled={updateRule.isPending}
+                >
+                  <Plus className="size-4" />
+                  {m.label_rule_add()}
+                </Button>
+              </div>
             </CardContent>
           </Card>
         </section>
