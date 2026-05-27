@@ -13,18 +13,19 @@ const pricingPlans = [
     price: "₩0",
     period: "/월",
     cta: "FREE Plan 사용하기",
-    ctaTo: "/signup" as const,
+    ctaTo: "/mail/inbox",
     featured: false,
     comingSoon: false,
     items: ["이메일 계정 2개 연동", "AI 기반 자동 라벨 분류", "AI 이메일 초안 작성", "AI 답장 작성"],
   },
   {
     name: "PRO Plan",
-    originalPrice: "₩12,900",
-    price: "₩5,900",
+    originalPrice: "₩19,900",
+    price: "₩9,900",
     period: "/월",
     cta: "PRO Plan 구독하기",
-    ctaTo: "/signup" as const,
+    // 요금제 결제 페이지가 구현되면 해당 페이지로 링크 변경 필요
+    ctaTo: "/mail/inbox",
     featured: true,
     comingSoon: true,
     items: [
@@ -42,7 +43,7 @@ function RouteComponent() {
   const router = useRouter()
 
   return (
-    <div className="min-h-svh bg-background">
+    <div className="min-h-svh animate-in overflow-x-hidden bg-background duration-200 fade-in slide-in-from-right-2">
       <button
         className={buttonVariants({ variant: "ghost", size: "icon", className: "absolute top-4 left-4" })}
         onClick={() => router.history.back()}

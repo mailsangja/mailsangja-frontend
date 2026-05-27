@@ -239,10 +239,11 @@ const pricingPlans = [
   },
   {
     name: "PRO Plan",
-    originalPrice: "₩12,900",
-    price: "₩5,900",
+    originalPrice: "₩19,900",
+    price: "₩9,900",
     period: "/월",
     cta: "PRO로 시작하기",
+    // 요금제 결제 페이지가 구현되면 해당 페이지로 링크 변경 필요
     ctaTo: "/signup" as const,
     featured: true,
     comingSoon: true,
