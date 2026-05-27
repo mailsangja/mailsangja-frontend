@@ -35,7 +35,7 @@ function LabelDetailPage() {
   if (isPending) {
     return (
       <ScrollArea className="min-h-0 flex-1">
-        <div className="flex flex-col gap-6 px-3 pt-1 pb-4">
+        <div className="flex flex-col gap-6 px-6 pt-1 pb-4">
           <div className="flex items-center gap-2">
             <Skeleton className="size-3.5 shrink-0 rounded-sm" />
             <Skeleton className="h-6 w-24" />
@@ -88,7 +88,7 @@ function LabelDetailPage() {
   if (isError || !label) {
     return (
       <ScrollArea className="min-h-0 flex-1">
-        <div className="flex flex-col gap-6 px-3 pt-1 pb-4">
+        <div className="flex flex-col gap-6 px-6 pt-1 pb-4">
           <Card>
             <CardHeader>
               <CardTitle className="text-destructive">라벨을 불러오지 못했습니다</CardTitle>
@@ -189,7 +189,7 @@ function LabelDetailContent({ labelId, label }: { labelId: string; label: LabelD
 
   return (
     <ScrollArea className="min-h-0 flex-1">
-      <div className="flex flex-col gap-4 pb-4">
+      <div className="flex flex-col gap-4 px-6 pb-4">
         <Link to="/settings/label" className="inline-flex items-center gap-2 text-sm text-muted-foreground">
           <ChevronLeft className="size-4" />
           뒤로

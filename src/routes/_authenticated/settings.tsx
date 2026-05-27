@@ -111,7 +111,7 @@ function SettingsLayout() {
               라벨
             </TabsTrigger>
           </TabsList>
-          <TabsContent value={activeTab} className="flex min-h-0 flex-col px-3 sm:px-5">
+          <TabsContent value={activeTab} className="flex min-h-0 flex-col">
             <Outlet />
           </TabsContent>
         </Tabs>

@@ -79,7 +79,7 @@ function SettingsAccountPage() {
 
   return (
     <ScrollArea className="min-h-0 flex-1">
-      <div className="flex flex-col gap-4 pb-4">
+      <div className="flex flex-col gap-4 px-6 pb-4">
         <Card>
           <CardHeader>
             <CardTitle>기본 메일 계정</CardTitle>
