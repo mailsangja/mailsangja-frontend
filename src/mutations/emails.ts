@@ -13,6 +13,7 @@ import {
   sendMail,
 } from "@/api/emails"
 import { queryClient } from "@/lib/query-client"
+import { m } from "@/paraglide/messages"
 import { emailKeys } from "@/queries/emails"
 import { labelKeys } from "@/queries/labels"
 
@@ -36,7 +37,7 @@ export function useMarkThreadAsRead() {
     mutationFn: (threadId: string) => markThreadAsRead(threadId),
     onSuccess: invalidateEmailAndLabelQueries,
     onError: () => {
-      toast.error("읽음 처리에 실패했습니다")
+      toast.error(m.mail_mark_read_error())
     },
   })
 }
@@ -46,7 +47,7 @@ export function useMarkThreadAsUnread() {
     mutationFn: (threadId: string) => markThreadAsUnread(threadId),
     onSuccess: invalidateEmailAndLabelQueries,
     onError: () => {
-      toast.error("안읽음 처리에 실패했습니다")
+      toast.error(m.mail_mark_unread_error())
     },
   })
 }
@@ -56,7 +57,7 @@ export function useMarkMessageAsRead() {
     mutationFn: (messageId: string) => markMessageAsRead(messageId),
     onSuccess: invalidateEmailAndLabelQueries,
     onError: () => {
-      toast.error("읽음 처리에 실패했습니다")
+      toast.error(m.mail_mark_read_error())
     },
   })
 }
@@ -66,7 +67,7 @@ export function useMarkMessageAsUnread() {
     mutationFn: (messageId: string) => markMessageAsUnread(messageId),
     onSuccess: invalidateEmailAndLabelQueries,
     onError: () => {
-      toast.error("안읽음 처리에 실패했습니다")
+      toast.error(m.mail_mark_unread_error())
     },
   })
 }

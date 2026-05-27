@@ -39,6 +39,7 @@ import {
 } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { cn } from "@/lib/utils"
+import { m } from "@/paraglide/messages"
 
 export type ComposeEditor = NonNullable<EmailEditorRef["editor"]>
 
@@ -259,17 +260,17 @@ export function ComposeEditorToolbar({ editor, disabled }: ComposeEditorToolbarP
     const href = normalizeLinkHref(linkHrefInput)
 
     if (text.length === 0) {
-      toast.error("링크로 표시할 텍스트를 입력해주세요")
+      toast.error(m.compose_editor_error_link_text_required())
       return
     }
 
     if (href === "") {
-      toast.error("링크 URL을 입력해주세요")
+      toast.error(m.compose_editor_error_link_url_required())
       return
     }
 
     if (href === null) {
-      toast.error("올바른 링크 URL을 입력해주세요")
+      toast.error(m.compose_editor_error_link_url_invalid())
       return
     }
 
@@ -281,28 +282,28 @@ export function ComposeEditorToolbar({ editor, disabled }: ComposeEditorToolbarP
     <>
       <div className="flex min-h-10 shrink-0 flex-wrap items-center gap-0.5 border-b bg-background/70 px-3 py-1">
         <ToolbarIconButton
-          label="문단"
+          label={m.compose_editor_paragraph()}
           icon={Pilcrow}
           active={toolbarState?.isParagraph ?? false}
           disabled={isDisabled}
           onClick={() => runCommand((editor) => editor.chain().focus().setParagraph().run())}
         />
         <ToolbarIconButton
-          label="제목 1"
+          label={m.compose_editor_heading_1()}
           icon={Heading1}
           active={toolbarState?.isHeading1 ?? false}
           disabled={isDisabled}
           onClick={() => runCommand((editor) => editor.chain().focus().clearNodes().toggleHeading({ level: 1 }).run())}
         />
         <ToolbarIconButton
-          label="제목 2"
+          label={m.compose_editor_heading_2()}
           icon={Heading2}
           active={toolbarState?.isHeading2 ?? false}
           disabled={isDisabled}
           onClick={() => runCommand((editor) => editor.chain().focus().clearNodes().toggleHeading({ level: 2 }).run())}
         />
         <ToolbarIconButton
-          label="제목 3"
+          label={m.compose_editor_heading_3()}
           icon={Heading3}
           active={toolbarState?.isHeading3 ?? false}
           disabled={isDisabled}
@@ -312,49 +313,49 @@ export function ComposeEditorToolbar({ editor, disabled }: ComposeEditorToolbarP
         <ToolbarSeparator />
 
         <ToolbarIconButton
-          label="굵게"
+          label={m.compose_editor_bold()}
           icon={Bold}
           active={toolbarState?.isBold ?? false}
           disabled={isDisabled}
           onClick={() => runCommand((editor) => editor.chain().focus().toggleBold().run())}
         />
         <ToolbarIconButton
-          label="기울임"
+          label={m.compose_editor_italic()}
           icon={Italic}
           active={toolbarState?.isItalic ?? false}
           disabled={isDisabled}
           onClick={() => runCommand((editor) => editor.chain().focus().toggleItalic().run())}
         />
         <ToolbarIconButton
-          label="밑줄"
+          label={m.compose_editor_underline()}
           icon={Underline}
           active={toolbarState?.isUnderline ?? false}
           disabled={isDisabled}
           onClick={() => runCommand((editor) => editor.chain().focus().toggleUnderline().run())}
         />
         <ToolbarIconButton
-          label="취소선"
+          label={m.compose_editor_strikethrough()}
           icon={Strikethrough}
           active={toolbarState?.isStrike ?? false}
           disabled={isDisabled}
           onClick={() => runCommand((editor) => editor.chain().focus().toggleStrike().run())}
         />
         <ToolbarIconButton
-          label="인라인 코드"
+          label={m.compose_editor_inline_code()}
           icon={Code2}
           active={toolbarState?.isCode ?? false}
           disabled={isDisabled}
           onClick={() => runCommand((editor) => editor.chain().focus().toggleCode().run())}
         />
         <ToolbarIconButton
-          label="링크 삽입"
+          label={m.compose_editor_insert_link()}
           icon={LinkIcon}
           active={toolbarState?.isLink ?? false}
           disabled={isDisabled}
           onClick={() => runCommand(openLinkEditor)}
         />
         <ToolbarIconButton
-          label="이미지 삽입"
+          label={m.compose_editor_insert_image()}
           icon={ImageIcon}
           disabled={isDisabled}
           onClick={() => runCommand((editor) => editor.chain().focus().uploadImage().run())}
@@ -363,21 +364,21 @@ export function ComposeEditorToolbar({ editor, disabled }: ComposeEditorToolbarP
         <ToolbarSeparator />
 
         <ToolbarIconButton
-          label="글머리 목록"
+          label={m.compose_editor_bullet_list()}
           icon={List}
           active={toolbarState?.isBulletList ?? false}
           disabled={isDisabled}
           onClick={() => runCommand((editor) => editor.chain().focus().clearNodes().toggleBulletList().run())}
         />
         <ToolbarIconButton
-          label="번호 목록"
+          label={m.compose_editor_numbered_list()}
           icon={ListOrdered}
           active={toolbarState?.isOrderedList ?? false}
           disabled={isDisabled}
           onClick={() => runCommand((editor) => editor.chain().focus().clearNodes().toggleOrderedList().run())}
         />
         <ToolbarIconButton
-          label="인용"
+          label={m.compose_editor_quote()}
           icon={Quote}
           active={toolbarState?.isBlockquote ?? false}
           disabled={isDisabled}
@@ -391,21 +392,21 @@ export function ComposeEditorToolbar({ editor, disabled }: ComposeEditorToolbarP
         <ToolbarSeparator />
 
         <ToolbarIconButton
-          label="왼쪽 정렬"
+          label={m.compose_editor_align_left()}
           icon={AlignLeft}
           active={toolbarState?.activeAlignment === "left"}
           disabled={isDisabled}
           onClick={() => runCommand((editor) => setEditorAlignment(editor, "left"))}
         />
         <ToolbarIconButton
-          label="가운데 정렬"
+          label={m.compose_editor_align_center()}
           icon={AlignCenter}
           active={toolbarState?.activeAlignment === "center"}
           disabled={isDisabled}
           onClick={() => runCommand((editor) => setEditorAlignment(editor, "center"))}
         />
         <ToolbarIconButton
-          label="오른쪽 정렬"
+          label={m.compose_editor_align_right()}
           icon={AlignRight}
           active={toolbarState?.activeAlignment === "right"}
           disabled={isDisabled}
@@ -415,7 +416,7 @@ export function ComposeEditorToolbar({ editor, disabled }: ComposeEditorToolbarP
         <ToolbarSeparator />
 
         <ToolbarIconButton
-          label="구분선"
+          label={m.compose_editor_divider()}
           icon={Minus}
           disabled={isDisabled}
           onClick={() => runCommand((editor) => editor.chain().focus().setHorizontalRule().run())}
@@ -437,25 +438,25 @@ export function ComposeEditorToolbar({ editor, disabled }: ComposeEditorToolbarP
             }}
           >
             <DialogHeader>
-              <DialogTitle>링크 삽입</DialogTitle>
-              <DialogDescription>메일 본문에 표시할 텍스트와 연결할 URL을 입력하세요.</DialogDescription>
+              <DialogTitle>{m.compose_link_dialog_title()}</DialogTitle>
+              <DialogDescription>{m.compose_link_dialog_description()}</DialogDescription>
             </DialogHeader>
             <div className="grid gap-3">
               <div className="grid gap-1.5">
                 <label htmlFor="compose-link-text" className="text-sm font-medium">
-                  표시 텍스트
+                  {m.compose_link_text_label()}
                 </label>
                 <Input
                   id="compose-link-text"
                   ref={linkTextInputRef}
                   value={linkTextInput}
                   onChange={(event) => setLinkTextInput(event.target.value)}
-                  placeholder="메일에 표시할 텍스트"
+                  placeholder={m.compose_link_text_placeholder()}
                 />
               </div>
               <div className="grid gap-1.5">
                 <label htmlFor="compose-link-href" className="text-sm font-medium">
-                  링크 URL
+                  {m.compose_link_url_label()}
                 </label>
                 <Input
                   id="compose-link-href"
@@ -467,9 +468,9 @@ export function ComposeEditorToolbar({ editor, disabled }: ComposeEditorToolbarP
             </div>
             <DialogFooter>
               <Button type="button" variant="outline" onClick={closeLinkEditor}>
-                취소
+                {m.common_cancel()}
               </Button>
-              <Button type="submit">삽입</Button>
+              <Button type="submit">{m.compose_insert()}</Button>
             </DialogFooter>
           </form>
         </DialogContent>

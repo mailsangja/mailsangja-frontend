@@ -14,6 +14,7 @@ import {
 } from "lucide-react"
 
 import { InboxSingleLinePreview, InboxTwoLinePreview } from "@/components/inbox-preview"
+import { LanguageSelect } from "@/components/language-select"
 import { NotificationSettingsCard } from "@/components/notification-settings-card"
 import { useTheme } from "@/components/theme-provider"
 import { DarkPreview, LightPreview, SystemPreview } from "@/components/theme-preview"
@@ -21,9 +22,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
+import { m } from "@/paraglide/messages"
 import { useAiUsages } from "@/queries/ai"
 import { useUser } from "@/queries/user"
-import { AI_USAGE_TYPE_LABELS } from "@/types/ai"
+import { getAiUsageTypeLabel } from "@/types/ai"
 
 export const Route = createFileRoute("/_authenticated/settings/")({
   component: SettingsPage,
@@ -45,25 +47,25 @@ function SettingsPage() {
 
   return (
     <ScrollArea className="h-full">
-      <div className="flex flex-col gap-4 px-6 pb-4">
+      <div className="flex flex-col gap-4 px-6 pt-1 pb-4">
         <div className="flex flex-col gap-4 sm:flex-row">
           <Card className="flex-1">
             <CardHeader>
-              <CardTitle>사용자 정보</CardTitle>
-              <CardDescription>현재 로그인한 사용자와 구독 플랜 정보를 확인합니다.</CardDescription>
+              <CardTitle>{m.settings_user_info_title()}</CardTitle>
+              <CardDescription>{m.settings_user_info_description()}</CardDescription>
             </CardHeader>
             <CardContent className="pt-4">
               <div className="flex flex-col gap-3">
                 <div className="flex flex-col gap-1">
-                  <p className="text-xs text-muted-foreground">이름</p>
+                  <p className="text-xs text-muted-foreground">{m.settings_user_name_label()}</p>
                   <p className="text-sm font-medium">{isUserPending ? "..." : (user?.name ?? "-")}</p>
                 </div>
                 <div className="flex flex-col gap-1">
-                  <p className="text-xs text-muted-foreground">아이디</p>
+                  <p className="text-xs text-muted-foreground">{m.settings_user_id_label()}</p>
                   <p className="text-sm font-medium">{user?.username ?? "-"}</p>
                 </div>
                 <div className="flex flex-col gap-1">
-                  <p className="text-xs text-muted-foreground">플랜</p>
+                  <p className="text-xs text-muted-foreground">{m.settings_user_plan_label()}</p>
                   <div className="flex items-center gap-2">
                     <p className="text-sm font-medium">{user?.plan ?? "-"}</p>
                     {user?.plan === "FREE" && (
@@ -72,7 +74,7 @@ function SettingsPage() {
                         className="inline-flex animate-bounce items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium whitespace-nowrap text-primary transition-colors hover:bg-primary/20"
                       >
                         <Sparkles className="size-3" />
-                        요금제 업그레이드
+                        {m.settings_upgrade_plan_link()}
                       </Link>
                     )}
                   </div>
@@ -84,15 +86,15 @@ function SettingsPage() {
           <Card className="flex-1">
             <CardHeader className="flex items-start justify-between">
               <div>
-                <CardTitle>AI 기능 사용량</CardTitle>
-                <CardDescription>이번 주 AI 기능별 사용 현황입니다.</CardDescription>
+                <CardTitle>{m.settings_ai_usage_title()}</CardTitle>
+                <CardDescription>{m.settings_ai_usage_description()}</CardDescription>
               </div>
               <button
                 type="button"
                 onClick={() => refetchAiUsages()}
                 disabled={isAiUsagesPending || isAiUsagesRefetching}
                 className="rounded-md text-muted-foreground transition-colors hover:bg-muted hover:text-foreground disabled:opacity-50"
-                aria-label="사용량 새로고침"
+                aria-label={m.settings_ai_usage_refresh_aria()}
               >
                 <RefreshCw className={cn("size-4", isAiUsagesRefetching && "animate-spin")} />
               </button>
@@ -110,9 +112,7 @@ function SettingsPage() {
                     </div>
                   ))
                 ) : isAiUsagesError ? (
-                  <p className="text-sm text-muted-foreground">
-                    사용량을 불러오지 못했습니다. 새로고침을 눌러 다시 시도해 주세요.
-                  </p>
+                  <p className="text-sm text-muted-foreground">{m.settings_ai_usage_error()}</p>
                 ) : (
                   aiUsages?.usages.map((item) => {
                     const ratio = item.limit > 0 ? item.used / item.limit : 0
@@ -120,7 +120,7 @@ function SettingsPage() {
                     return (
                       <div key={item.type} className="flex flex-col gap-1.5">
                         <div className="flex items-center justify-between">
-                          <span className="text-sm font-medium">{AI_USAGE_TYPE_LABELS[item.type]}</span>
+                          <span className="text-sm font-medium">{getAiUsageTypeLabel(item.type)}</span>
                           <span
                             className={cn(
                               "text-xs tabular-nums",
@@ -148,30 +148,53 @@ function SettingsPage() {
           </Card>
         </div>
 
+        <div className="flex flex-col gap-3">
+          <p className="text-md px-1 font-semibold text-muted-foreground">{m.settings_language_section()}</p>
+          <Card>
+            <CardHeader>
+              <CardTitle>{m.settings_language_title()}</CardTitle>
+              <CardDescription>{m.settings_language_description()}</CardDescription>
+            </CardHeader>
+            <CardContent className="pt-1">
+              <LanguageSelect />
+            </CardContent>
+          </Card>
+        </div>
+
         <div id="notification-settings" className="flex flex-col gap-3">
-          <p className="text-md px-1 font-semibold text-muted-foreground">알림</p>
+          <p className="text-md px-1 font-semibold text-muted-foreground">{m.settings_notification_section()}</p>
           <NotificationSettingsCard />
         </div>
 
         <div className="flex flex-col gap-3">
-          <p className="text-md px-1 font-semibold text-muted-foreground">빠른 설정</p>
+          <p className="text-md px-1 font-semibold text-muted-foreground">{m.settings_quick_settings_section()}</p>
           <Card>
             <CardHeader>
-              <CardTitle>받은편지함</CardTitle>
-              <CardDescription>메일 목록의 표시 방식을 선택합니다.</CardDescription>
+              <CardTitle>{m.settings_inbox_title()}</CardTitle>
+              <CardDescription>{m.settings_inbox_description()}</CardDescription>
             </CardHeader>
-            <CardContent className="pt-1 pb-5">
+            <CardContent className="pt-1">
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 {(
                   [
-                    { value: "single", label: "한 줄 보기", icon: List, preview: <InboxSingleLinePreview /> },
-                    { value: "double", label: "두 줄 보기", icon: LayoutList, preview: <InboxTwoLinePreview /> },
+                    {
+                      value: "single",
+                      label: m.settings_inbox_single_line(),
+                      icon: List,
+                      preview: <InboxSingleLinePreview />,
+                    },
+                    {
+                      value: "double",
+                      label: m.settings_inbox_two_line(),
+                      icon: LayoutList,
+                      preview: <InboxTwoLinePreview />,
+                    },
                   ] as const
                 ).map(({ value, label, icon: Icon, preview }) => (
                   <button
                     key={value}
                     type="button"
-                    // TODO: 실제 설정 저장 기능 구현 시 주석 해제
+                    // TODO: Persist this preference when the settings API is ready.
                     onClick={() => setInboxView(value)}
                     aria-pressed={inboxView === value}
                     className={cn(
@@ -204,16 +227,16 @@ function SettingsPage() {
         <div className="flex flex-col gap-3">
           <Card>
             <CardHeader>
-              <CardTitle>다크모드</CardTitle>
-              <CardDescription>서비스의 테마를 선택합니다.</CardDescription>
+              <CardTitle>{m.settings_theme_title()}</CardTitle>
+              <CardDescription>{m.settings_theme_description()}</CardDescription>
             </CardHeader>
-            <CardContent className="pt-1 pb-5">
+            <CardContent className="pt-1">
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
                 {(
                   [
-                    { value: "light", label: "라이트", icon: Sun, preview: <LightPreview /> },
-                    { value: "system", label: "시스템", icon: Monitor, preview: <SystemPreview /> },
-                    { value: "dark", label: "다크", icon: Moon, preview: <DarkPreview /> },
+                    { value: "light", label: m.settings_theme_light(), icon: Sun, preview: <LightPreview /> },
+                    { value: "system", label: m.settings_theme_system(), icon: Monitor, preview: <SystemPreview /> },
+                    { value: "dark", label: m.settings_theme_dark(), icon: Moon, preview: <DarkPreview /> },
                   ] as const
                 ).map(({ value, label, icon: Icon, preview }) => (
                   <button
@@ -251,15 +274,15 @@ function SettingsPage() {
         <div className="flex flex-col gap-3">
           <Card>
             <CardHeader>
-              <CardTitle>메일 미리보기 활성화</CardTitle>
-              <CardDescription>메일 위에 마우스를 올리면 내용을 미리 확인할 수 있습니다.</CardDescription>
+              <CardTitle>{m.settings_mail_preview_title()}</CardTitle>
+              <CardDescription>{m.settings_mail_preview_description()}</CardDescription>
             </CardHeader>
-            <CardContent className="pt-1 pb-5">
+            <CardContent className="pt-1">
               <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
                 {(
                   [
-                    { value: "enabled", label: "사용", icon: MousePointerClick },
-                    { value: "disabled", label: "미사용", icon: MousePointer },
+                    { value: "enabled", label: m.settings_option_enabled(), icon: MousePointerClick },
+                    { value: "disabled", label: m.settings_option_disabled(), icon: MousePointer },
                   ] as const
                 ).map(({ value, label, icon: Icon }) => (
                   <button
@@ -293,10 +316,12 @@ function SettingsPage() {
 
         <div className="flex justify-end pr-4">
           <a
-            href="mailto:mailsangja2026@gmail.com?subject=회원 탈퇴 요청"
+            href={`mailto:mailsangja2026@gmail.com?subject=${encodeURIComponent(
+              m.settings_account_deletion_email_subject()
+            )}`}
             className="cursor-pointer text-xs text-muted-foreground hover:text-destructive"
           >
-            회원 탈퇴
+            {m.settings_account_deletion_link()}
           </a>
         </div>
       </div>

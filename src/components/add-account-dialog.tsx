@@ -8,8 +8,30 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from 
 import { trackEvent } from "@/lib/analytics"
 import { ICON_ENTRIES, type AccountIconName } from "@/lib/icon-entries"
 import { cn } from "@/lib/utils"
+import { m } from "@/paraglide/messages"
 
 const COLORS = ["#FA2A2A", "#FA882A", "#FAD42A", "#22C55E", "#36C0EB", "#3B82F6", "#8B5CF6", "#ED64A7"]
+
+function getAccountIconLabel(name: AccountIconName) {
+  switch (name) {
+    case "mail":
+      return m.account_icon_mail()
+    case "briefcase":
+      return m.account_icon_briefcase()
+    case "graduation-cap":
+      return m.account_icon_graduation_cap()
+    case "code":
+      return m.account_icon_code()
+    case "gamepad-2":
+      return m.account_icon_gamepad_2()
+    case "home":
+      return m.account_icon_home()
+    case "shopping-cart":
+      return m.account_icon_shopping_cart()
+    case "bell":
+      return m.account_icon_bell()
+  }
+}
 
 export function AddAccountDialog({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false)
@@ -56,7 +78,7 @@ export function AddAccountDialog({ children }: { children: React.ReactNode }) {
         {step === "logo" ? (
           <>
             <DialogHeader>
-              <DialogTitle>아이콘 생성</DialogTitle>
+              <DialogTitle>{m.add_account_icon_title()}</DialogTitle>
             </DialogHeader>
 
             <div className="flex flex-col items-center gap-6 py-4">
@@ -64,20 +86,20 @@ export function AddAccountDialog({ children }: { children: React.ReactNode }) {
 
               <input
                 type="text"
-                placeholder="예: 회사 메일"
+                placeholder={m.add_account_alias_placeholder()}
                 value={alias}
                 onChange={(e) => setAlias(e.target.value)}
                 className="h-9 w-full max-w-xs rounded-md border border-border bg-background px-3 text-sm outline-none placeholder:text-muted-foreground focus:ring-1 focus:ring-ring"
               />
 
               <div className="space-y-2">
-                <p className="text-sm font-medium">아이콘</p>
+                <p className="text-sm font-medium">{m.add_account_icon_section()}</p>
                 <div className="flex flex-wrap gap-2">
-                  {ICON_ENTRIES.map(({ name, label, Icon }) => (
+                  {ICON_ENTRIES.map(({ name, Icon }) => (
                     <button
                       key={name}
                       type="button"
-                      title={label}
+                      title={getAccountIconLabel(name)}
                       onClick={() => setSelectedIcon(name)}
                       className={cn(
                         "flex size-10 items-center justify-center rounded-lg border transition-colors",
@@ -91,7 +113,7 @@ export function AddAccountDialog({ children }: { children: React.ReactNode }) {
               </div>
 
               <div className="space-y-2">
-                <p className="text-sm font-medium">색상</p>
+                <p className="text-sm font-medium">{m.add_account_color_section()}</p>
                 <div className="flex flex-wrap gap-2">
                   {COLORS.map((color) => (
                     <button
@@ -110,30 +132,30 @@ export function AddAccountDialog({ children }: { children: React.ReactNode }) {
 
             <div className="flex justify-end">
               <Button onClick={() => setStep("login")} className="cursor-pointer hover:bg-primary/80">
-                다음
+                {m.add_account_next()}
               </Button>
             </div>
           </>
         ) : (
           <>
             <DialogHeader>
-              <DialogTitle>계정 연결</DialogTitle>
+              <DialogTitle>{m.add_account_connect_title()}</DialogTitle>
             </DialogHeader>
 
             <div className="flex flex-col items-center gap-6 py-4">
-              {/* 아이콘 미리보기 */}
+              {/* Icon preview */}
               <MailAccountIcon icon={selectedIcon} color={selectedColor} size="lg" />
 
-              <p className="text-sm text-muted-foreground">아래 버튼을 눌러 Google 계정을 연결하세요.</p>
+              <p className="text-sm text-muted-foreground">{m.add_account_google_connect_description()}</p>
 
               <Button className="w-full" onClick={handleGoogleLogin} disabled={isLoading}>
-                {isLoading ? "연결 중..." : "Google 계정으로 로그인"}
+                {isLoading ? m.add_account_connecting() : m.add_account_google_login()}
               </Button>
             </div>
 
             <div className="flex justify-start">
               <Button variant="ghost" onClick={() => setStep("logo")}>
-                이전
+                {m.add_account_previous()}
               </Button>
             </div>
           </>

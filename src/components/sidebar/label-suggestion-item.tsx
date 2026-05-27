@@ -9,6 +9,7 @@ import { trackEvent } from "@/lib/analytics"
 import { getErrorMessage, getHttpStatus } from "@/lib/http-error"
 import { useApproveLabelSuggestion, useDeleteLabelSuggestion } from "@/mutations/labels"
 import { useLabelSuggestionDetail } from "@/queries/labels"
+import { m } from "@/paraglide/messages"
 import type { LabelSuggestion } from "@/types/label"
 
 interface LabelSuggestionItemProps {
@@ -28,7 +29,7 @@ export function LabelSuggestionItem({ suggestion }: LabelSuggestionItemProps) {
       onSuccess: () => {
         trackEvent("ai_label_suggestion_reject")
       },
-      onError: (e) => toast.error(getErrorMessage(e, "라벨 제안 거부에 실패했습니다.")),
+      onError: (e) => toast.error(getErrorMessage(e, m.label_suggestion_reject_error())),
     })
   }
 
@@ -43,14 +44,14 @@ export function LabelSuggestionItem({ suggestion }: LabelSuggestionItemProps) {
             notification_policy: notificationPolicy,
           })
           setApproveOpen(false)
-          toast.success(`${name} 라벨이 추가되었습니다`)
+          toast.success(m.label_suggestion_approve_success({ name }))
           void navigate({ to: "/settings/label/$labelId", params: { labelId: label.id } })
         },
         onError: (e) => {
           if (getHttpStatus(e) === 409) {
-            toast.error("이미 존재하는 라벨입니다.")
+            toast.error(m.sidebar_label_duplicate_error())
           } else {
-            toast.error(getErrorMessage(e, "라벨 추가에 실패했습니다."))
+            toast.error(getErrorMessage(e, m.label_add_error()))
           }
         },
       }
@@ -68,7 +69,7 @@ export function LabelSuggestionItem({ suggestion }: LabelSuggestionItemProps) {
         <button
           type="button"
           className="flex size-5 items-center justify-center rounded text-muted-foreground hover:text-green-600"
-          aria-label="승인"
+          aria-label={m.label_suggestion_approve()}
           onClick={(e) => {
             e.stopPropagation()
             setApproveOpen(true)
@@ -79,7 +80,7 @@ export function LabelSuggestionItem({ suggestion }: LabelSuggestionItemProps) {
         <button
           type="button"
           className="flex size-5 items-center justify-center rounded text-muted-foreground hover:text-destructive"
-          aria-label="거부"
+          aria-label={m.label_suggestion_reject()}
           onClick={(e) => {
             e.stopPropagation()
             handleReject()
@@ -93,13 +94,13 @@ export function LabelSuggestionItem({ suggestion }: LabelSuggestionItemProps) {
       <LabelFormDialog
         open={approveOpen}
         onOpenChange={setApproveOpen}
-        title="AI 추천 라벨 추가"
+        title={m.label_suggestion_add_title()}
         defaultName={suggestion.name}
         defaultColor={suggestion.colorCode}
         groups={groups}
         onSubmit={handleApprove}
         isPending={approveLabelSuggestion.isPending}
-        submitLabel="추가하기"
+        submitLabel={m.label_add_submit()}
         submitDisabled={!detail}
       />
     </SidebarMenuItem>

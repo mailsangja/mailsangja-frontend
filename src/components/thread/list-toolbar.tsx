@@ -2,12 +2,14 @@ import { RefreshCw, Tag, Trash2, SquareMinus } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Toggle } from "@/components/ui/toggle"
+import { formatNumber } from "@/lib/date"
 import { cn } from "@/lib/utils"
+import { m } from "@/paraglide/messages"
 import type { EmailFilter } from "@/types/email"
 
 const filterOptions: Array<{ value: EmailFilter; label: string }> = [
-  { value: "all", label: "전체" },
-  { value: "unread", label: "안읽음" },
+  { value: "all", label: m.mail_filter_all() },
+  { value: "unread", label: m.mail_filter_unread() },
 ]
 
 interface ThreadListToolbarProps {
@@ -39,15 +41,15 @@ export function ThreadListToolbar({
   if (selectedCount > 0) {
     return (
       <div className="flex h-11 shrink-0 items-center gap-2 border-b bg-accent/40 px-3">
-        <Button variant="ghost" size="icon-sm" onClick={onClearSelection} aria-label="선택 해제">
+        <Button variant="ghost" size="icon-sm" onClick={onClearSelection} aria-label={m.mail_clear_selection()}>
           <SquareMinus />
         </Button>
-        <span className="text-sm font-medium">{selectedCount.toLocaleString()}개 선택됨</span>
+        <span className="text-sm font-medium">{m.mail_selected_count({ count: formatNumber(selectedCount) })}</span>
         <div className="ml-auto flex shrink-0 items-center gap-2">
-          <Button variant="ghost" size="icon-sm" onClick={onDeleteSelected} aria-label="선택 삭제">
+          <Button variant="ghost" size="icon-sm" onClick={onDeleteSelected} aria-label={m.mail_delete_selected()}>
             <Trash2 data-icon="inline-start" />
           </Button>
-          <Button variant="ghost" size="icon-sm" onClick={onLabelSelected} aria-label="라벨 지정">
+          <Button variant="ghost" size="icon-sm" onClick={onLabelSelected} aria-label={m.mail_assign_label()}>
             <Tag data-icon="inline-start" />
           </Button>
         </div>
@@ -59,7 +61,7 @@ export function ThreadListToolbar({
     <div className="flex h-11 shrink-0 items-center gap-3 border-b px-4">
       <h2 className="min-w-0 truncate text-sm font-medium">{mailboxName}</h2>
       <span className="hidden rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground sm:inline-flex">
-        {totalCount.toLocaleString()}개
+        {m.mail_total_count({ count: formatNumber(totalCount) })}
       </span>
       <div className="ml-auto flex shrink-0 items-center gap-1">
         {onRefresh ? (
@@ -68,8 +70,8 @@ export function ThreadListToolbar({
             size="icon-sm"
             onClick={onRefresh}
             disabled={isRefreshing}
-            aria-label="메일 목록 새로고침"
-            title="새로고침"
+            aria-label={m.mail_refresh_list()}
+            title={m.mail_refresh()}
           >
             <RefreshCw className={cn("size-4", isRefreshing && "animate-spin")} />
           </Button>

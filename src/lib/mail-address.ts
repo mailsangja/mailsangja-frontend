@@ -1,5 +1,7 @@
 import type { MailAddress } from "@/types/email"
 
+import { m } from "@/paraglide/messages"
+
 function normalize(value?: string) {
   return value?.trim() ?? ""
 }
@@ -8,7 +10,7 @@ export function getMailAddressLabel(address?: MailAddress | null) {
   const name = normalize(address?.name)
   const email = normalize(address?.email)
 
-  return name || email || "알 수 없음"
+  return name || email || m.mail_address_unknown()
 }
 
 export function getMailAddressFullLabel(address?: MailAddress | null) {
@@ -19,14 +21,14 @@ export function getMailAddressFullLabel(address?: MailAddress | null) {
     return `${name} <${email}>`
   }
 
-  return name || email || "알 수 없음"
+  return name || email || m.mail_address_unknown()
 }
 
 export function getMailAddressDisplayName(address?: MailAddress | null) {
   const name = normalize(address?.name)
   const email = normalize(address?.email)
 
-  return name || email || "알 수 없음"
+  return name || email || m.mail_address_unknown()
 }
 
 export function getMailAddressSearchText(address?: MailAddress | null) {

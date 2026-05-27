@@ -37,7 +37,8 @@ import { getErrorMessage, getHttpStatus } from "@/lib/http-error"
 import { cn } from "@/lib/utils"
 import { useUpdateLabel } from "@/mutations/labels"
 import { labelQueries } from "@/queries/labels"
-import { NOTIFICATION_POLICY_LABELS, type LabelListItem, type NotificationPolicy } from "@/types/label"
+import { m } from "@/paraglide/messages"
+import { getNotificationPolicyLabel, type LabelListItem, type NotificationPolicy } from "@/types/label"
 
 const NOTIFICATION_POLICIES: NotificationPolicy[] = ["URGENT", "INHERIT", "SILENT"]
 const notificationPolicyIcons = {
@@ -87,9 +88,9 @@ export function LabelItem({ label, isActive, onLabelToggle }: LabelItemProps) {
         onSuccess: () => setRenameOpen(false),
         onError: (e) => {
           if (getHttpStatus(e) === 409) {
-            toast.error("이미 존재하는 라벨입니다.")
+            toast.error(m.sidebar_label_duplicate_error())
           } else {
-            toast.error(getErrorMessage(e, "라벨 이름 수정에 실패했습니다."))
+            toast.error(getErrorMessage(e, m.label_name_edit_error()))
           }
         },
       }
@@ -106,7 +107,7 @@ export function LabelItem({ label, isActive, onLabelToggle }: LabelItemProps) {
       <button
         type="button"
         className="absolute top-1/2 -left-3.5 z-10 -translate-y-1/2 cursor-grab touch-none rounded p-0.5 opacity-0 group-hover/menu-item:opacity-30 hover:opacity-60 active:cursor-grabbing"
-        aria-label="드래그하여 순서 변경"
+        aria-label={m.label_reorder()}
         {...attributes}
         {...listeners}
       >
@@ -126,7 +127,9 @@ export function LabelItem({ label, isActive, onLabelToggle }: LabelItemProps) {
 
       <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
         <DropdownMenuTrigger
-          render={<SidebarMenuAction aria-label="라벨 메뉴" className="size-5 hover:bg-sidebar-accent-foreground/15" />}
+          render={
+            <SidebarMenuAction aria-label={m.label_menu()} className="size-5 hover:bg-sidebar-accent-foreground/15" />
+          }
         >
           {isHovered || dropdownOpen ? (
             <MoreVertical />
@@ -140,7 +143,7 @@ export function LabelItem({ label, isActive, onLabelToggle }: LabelItemProps) {
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>
               <Palette />
-              색상 변경
+              {m.label_color_change_title()}
             </DropdownMenuSubTrigger>
             <DropdownMenuSubContent className="w-auto min-w-0" sideOffset={6}>
               <div className="grid grid-cols-5 gap-1 p-0.5">
@@ -167,7 +170,7 @@ export function LabelItem({ label, isActive, onLabelToggle }: LabelItemProps) {
           <DropdownMenuSub>
             <DropdownMenuSubTrigger>
               <Bell />
-              알림
+              {m.label_notification_menu()}
             </DropdownMenuSubTrigger>
             <DropdownMenuSubContent sideOffset={6} className="min-w-36">
               {NOTIFICATION_POLICIES.map((policy) => {
@@ -176,7 +179,7 @@ export function LabelItem({ label, isActive, onLabelToggle }: LabelItemProps) {
                 return (
                   <DropdownMenuItem key={policy} onClick={() => handleNotificationChange(policy)}>
                     <Icon />
-                    {NOTIFICATION_POLICY_LABELS[policy]}
+                    {getNotificationPolicyLabel(policy)}
                     <Check
                       className={cn(
                         "ml-auto size-3.5 shrink-0",
@@ -199,11 +202,11 @@ export function LabelItem({ label, isActive, onLabelToggle }: LabelItemProps) {
             }}
           >
             <Pencil />
-            이름 수정
+            {m.label_name_edit_menu()}
           </DropdownMenuItem>
           <DropdownMenuItem render={<Link to="/settings/label/$labelId" params={{ labelId: String(label.id) }} />}>
             <SlidersHorizontal />
-            라벨 규칙 수정
+            {m.label_rule_edit_menu()}
           </DropdownMenuItem>
 
           <DropdownMenuSeparator className="my-0.5" />
@@ -216,7 +219,7 @@ export function LabelItem({ label, isActive, onLabelToggle }: LabelItemProps) {
             }}
           >
             <Trash2 />
-            삭제
+            {m.common_delete()}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>
@@ -224,7 +227,7 @@ export function LabelItem({ label, isActive, onLabelToggle }: LabelItemProps) {
       <Dialog open={renameOpen} onOpenChange={setRenameOpen}>
         <DialogContent>
           <DialogHeader>
-            <DialogTitle>라벨 이름 수정</DialogTitle>
+            <DialogTitle>{m.label_name_edit_title()}</DialogTitle>
           </DialogHeader>
           <Input
             value={renameName}
@@ -234,10 +237,10 @@ export function LabelItem({ label, isActive, onLabelToggle }: LabelItemProps) {
           />
           <DialogFooter>
             <Button variant="outline" onClick={() => setRenameOpen(false)}>
-              취소
+              {m.common_cancel()}
             </Button>
             <Button onClick={handleRename} disabled={!renameName.trim() || updateLabel.isPending}>
-              수정
+              {m.common_edit()}
             </Button>
           </DialogFooter>
         </DialogContent>

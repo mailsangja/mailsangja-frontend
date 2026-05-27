@@ -4,6 +4,7 @@ import { getAttachmentDownloadUrl } from "@/api/emails"
 import { buttonVariants } from "@/components/ui/button"
 import { formatFileSize } from "@/lib/file-size"
 import { cn } from "@/lib/utils"
+import { m } from "@/paraglide/messages"
 import type { Attachment } from "@/types/email"
 
 interface AttachmentDownloadChipProps {
@@ -20,7 +21,7 @@ export function AttachmentDownloadChip({ attachment }: AttachmentDownloadChipPro
       rel="noopener noreferrer"
       download={attachment.filename}
       className={className}
-      title={`${attachment.filename} 다운로드`}
+      title={m.attachment_download_title({ filename: attachment.filename })}
     >
       <FileText className="size-3.5 shrink-0 text-muted-foreground" />
       <span className="min-w-0 truncate font-medium">{attachment.filename}</span>

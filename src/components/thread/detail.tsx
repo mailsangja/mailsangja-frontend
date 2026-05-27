@@ -20,6 +20,7 @@ import {
   useMarkThreadAsUnread,
 } from "@/mutations/emails"
 import { useDeleteMessage, useDeleteThread, useRestoreTrashMessage, useRestoreTrashThread } from "@/mutations/trash"
+import { m } from "@/paraglide/messages"
 import { useThread } from "@/queries/emails"
 import { useMailAccounts } from "@/queries/mail-accounts"
 import type { InboxMessage } from "@/types/email"
@@ -28,23 +29,23 @@ function getThreadDetailErrorCopy(error: unknown) {
   switch (getHttpStatus(error)) {
     case 401:
       return {
-        title: "로그인이 필요합니다",
-        description: "세션이 만료되었거나 인증 정보가 없습니다. 다시 로그인한 뒤 스레드를 열어주세요.",
+        title: m.thread_error_login_title(),
+        description: m.thread_error_login_description(),
       }
     case 403:
       return {
-        title: "이 스레드에 접근할 수 없습니다",
-        description: "현재 로그인한 사용자에게 이 스레드를 볼 권한이 없습니다.",
+        title: m.thread_error_forbidden_title(),
+        description: m.thread_error_forbidden_description(),
       }
     case 404:
       return {
-        title: "스레드를 찾을 수 없습니다",
-        description: "삭제되었거나 더 이상 접근할 수 없는 메일 스레드입니다.",
+        title: m.thread_error_not_found_title(),
+        description: m.thread_error_not_found_description(),
       }
     default:
       return {
-        title: "스레드 내용을 불러오지 못했습니다",
-        description: getErrorMessage(error, "네트워크 상태를 확인한 뒤 다시 시도해주세요."),
+        title: m.thread_error_generic_title(),
+        description: getErrorMessage(error, m.thread_error_generic_description()),
       }
   }
 }
@@ -56,8 +57,8 @@ function EmptyState() {
         <MailOpen className="size-8 text-muted-foreground" />
       </div>
       <div className="text-center">
-        <p className="font-medium text-muted-foreground">스레드를 선택해주세요</p>
-        <p className="mt-1 text-sm text-muted-foreground/70">목록에서 대화를 클릭하면 여기에 내용이 표시됩니다</p>
+        <p className="font-medium text-muted-foreground">{m.thread_select_title()}</p>
+        <p className="mt-1 text-sm text-muted-foreground/70">{m.thread_select_description()}</p>
       </div>
     </div>
   )
@@ -124,14 +125,14 @@ function ThreadToolbar({
   return (
     <div className="flex h-11 shrink-0 items-center justify-between gap-2 px-4">
       {onClose ? (
-        <Button variant="ghost" size="icon-sm" onClick={onClose} aria-label="스레드 목록으로 돌아가기">
+        <Button variant="ghost" size="icon-sm" onClick={onClose} aria-label={m.thread_back_to_list()}>
           <ArrowLeft />
         </Button>
       ) : (
         <span />
       )}
       <div className="ml-auto flex items-center gap-1">
-        <Button variant="ghost" size="icon-sm" onClick={onReply} aria-label="답장" title="답장">
+        <Button variant="ghost" size="icon-sm" onClick={onReply} aria-label={m.thread_reply()} title={m.thread_reply()}>
           <Reply />
         </Button>
         <Button
@@ -139,15 +140,15 @@ function ThreadToolbar({
           size="icon-sm"
           onClick={onToggleRead}
           disabled={isTogglingRead}
-          aria-label={isRead ? "스레드를 안읽음으로 표시" : "스레드를 읽음으로 표시"}
-          title={isRead ? "안읽음으로 표시" : "읽음으로 표시"}
+          aria-label={isRead ? m.thread_mark_unread_aria() : m.thread_mark_read_aria()}
+          title={isRead ? m.thread_mark_unread() : m.thread_mark_read()}
         >
           <Mail />
         </Button>
-        <Button variant="ghost" size="icon-sm" disabled title="전달 기능은 아직 지원되지 않습니다.">
+        <Button variant="ghost" size="icon-sm" disabled title={m.thread_forward_disabled()}>
           <Forward />
         </Button>
-        <Button variant="ghost" size="icon-sm" disabled title="보관 기능은 아직 지원되지 않습니다.">
+        <Button variant="ghost" size="icon-sm" disabled title={m.thread_archive_disabled()}>
           <Archive />
         </Button>
         <Button
@@ -155,8 +156,8 @@ function ThreadToolbar({
           size="icon-sm"
           onClick={onDelete}
           disabled={isDeleting}
-          title="삭제"
-          aria-label="메일 삭제"
+          title={m.common_delete()}
+          aria-label={m.thread_delete_mail()}
         >
           <Trash2 />
         </Button>
@@ -179,7 +180,7 @@ function ThreadFooter({
       <div className="flex min-w-0 items-center gap-2 overflow-x-auto">
         <Button variant="outline" size="sm" onClick={onReply}>
           <Reply />
-          답장
+          {m.thread_reply()}
         </Button>
         {replyDraftMessage ? <ReplyDraftSuggestionAction threadId={threadId} message={replyDraftMessage} /> : null}
       </div>
@@ -215,17 +216,17 @@ export function ThreadDetail({ threadId, messageId = null, onClose }: ThreadDeta
     deleteMessage(message.id, {
       onSuccess: () => {
         if (isLast) onClose?.()
-        toast("메시지를 휴지통으로 옮겼습니다", {
+        toast(m.thread_message_moved_to_trash(), {
           action: {
-            label: "실행 취소",
+            label: m.common_undo(),
             onClick: () => {
               restoreMessage(message.id, {
                 onSuccess: () => {
-                  toast.success("삭제가 취소되었습니다")
+                  toast.success(m.mail_delete_undone())
                 },
                 onError: (err) => {
-                  toast.error("삭제 취소에 실패했습니다", {
-                    description: getErrorMessage(err, "잠시 후 다시 시도해주세요."),
+                  toast.error(m.thread_delete_undo_error(), {
+                    description: getErrorMessage(err, m.common_try_again_later()),
                   })
                 },
               })
@@ -234,8 +235,8 @@ export function ThreadDetail({ threadId, messageId = null, onClose }: ThreadDeta
         })
       },
       onError: (err) => {
-        toast.error("메시지 삭제에 실패했습니다", {
-          description: getErrorMessage(err, "잠시 후 다시 시도해주세요."),
+        toast.error(m.thread_message_delete_error(), {
+          description: getErrorMessage(err, m.common_try_again_later()),
         })
       },
     })
@@ -274,17 +275,17 @@ export function ThreadDetail({ threadId, messageId = null, onClose }: ThreadDeta
     deleteThread(threadId, {
       onSuccess: () => {
         onClose?.()
-        toast("메일을 휴지통으로 옮겼습니다", {
+        toast(m.thread_mail_moved_to_trash(), {
           action: {
-            label: "실행 취소",
+            label: m.common_undo(),
             onClick: () => {
               restoreThread(threadId, {
                 onSuccess: () => {
-                  toast.success("삭제가 취소되었습니다")
+                  toast.success(m.mail_delete_undone())
                 },
                 onError: (err) => {
-                  toast.error("삭제 취소에 실패했습니다", {
-                    description: getErrorMessage(err, "잠시 후 다시 시도해주세요."),
+                  toast.error(m.thread_delete_undo_error(), {
+                    description: getErrorMessage(err, m.common_try_again_later()),
                   })
                 },
               })
@@ -293,8 +294,8 @@ export function ThreadDetail({ threadId, messageId = null, onClose }: ThreadDeta
         })
       },
       onError: (err) => {
-        toast.error("메일 삭제에 실패했습니다", {
-          description: getErrorMessage(err, "잠시 후 다시 시도해주세요."),
+        toast.error(m.thread_mail_delete_error(), {
+          description: getErrorMessage(err, m.common_try_again_later()),
         })
       },
     })
@@ -333,25 +334,25 @@ export function ThreadDetail({ threadId, messageId = null, onClose }: ThreadDeta
           <>
             <DropdownMenuItem onClick={() => handleReply(message)}>
               <Reply />
-              답장
+              {m.thread_reply()}
             </DropdownMenuItem>
-            <DropdownMenuItem disabled title="전달 기능은 아직 지원되지 않습니다.">
+            <DropdownMenuItem disabled title={m.thread_forward_disabled()}>
               <Forward />
-              전달
+              {m.thread_forward()}
             </DropdownMenuItem>
             <DropdownMenuItem onClick={() => handleToggleMessageRead(message)}>
               <Mail />
-              {message.isRead ? "안읽음으로 표시" : "읽음으로 표시"}
+              {message.isRead ? m.thread_mark_unread() : m.thread_mark_read()}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => copyTextToClipboard(message.from.email, "발신자 주소를 복사했습니다")}>
+            <DropdownMenuItem onClick={() => copyTextToClipboard(message.from.email, m.thread_sender_copied())}>
               <Copy />
-              발신자 주소 복사
+              {m.thread_copy_sender()}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
             <DropdownMenuItem variant="destructive" onClick={() => handleDeleteMessage(message, messages.length === 1)}>
               <Trash2 />
-              삭제
+              {m.common_delete()}
             </DropdownMenuItem>
           </>
         )}

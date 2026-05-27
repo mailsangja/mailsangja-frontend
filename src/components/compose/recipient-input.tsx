@@ -23,6 +23,7 @@ import {
 } from "@/lib/mail-address"
 import { useDebounce } from "@/hooks/use-debounce"
 import { useContacts } from "@/queries/contacts"
+import { m } from "@/paraglide/messages"
 import type { Contact } from "@/types/contact"
 import type { MailAddress } from "@/types/email"
 
@@ -60,7 +61,7 @@ export function RecipientInput({
   id,
   recipients,
   onRecipientsChange,
-  placeholder = "이름 또는 이메일 입력",
+  placeholder = m.compose_recipient_placeholder(),
   disabled = false,
 }: RecipientInputProps) {
   const anchorRef = useComboboxAnchor()
@@ -222,14 +223,14 @@ export function RecipientInput({
         {emptyState === "loading" ? (
           <div className="flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground">
             <Loader2 className="size-4 animate-spin" />
-            연락처를 불러오는 중
+            {m.compose_contacts_loading()}
           </div>
         ) : emptyState === "error" ? (
-          <div className="px-3 py-2 text-sm text-muted-foreground">연락처를 불러오지 못했습니다</div>
+          <div className="px-3 py-2 text-sm text-muted-foreground">{m.compose_contacts_load_error()}</div>
         ) : emptyState === "invalid" ? (
-          <div className="px-3 py-2 text-sm text-muted-foreground">올바른 이메일 형식이 아닙니다</div>
+          <div className="px-3 py-2 text-sm text-muted-foreground">{m.compose_recipient_invalid_email()}</div>
         ) : (
-          <ComboboxEmpty>일치하는 연락처가 없습니다</ComboboxEmpty>
+          <ComboboxEmpty>{m.compose_contacts_empty()}</ComboboxEmpty>
         )}
         <ComboboxList>
           {(recipient: RecipientOption) => (
@@ -240,7 +241,9 @@ export function RecipientInput({
               <span className="min-w-0 flex-1">
                 <span className="block truncate font-medium">{getMailAddressDisplayName(recipient)}</span>
                 <span className="block truncate text-xs text-muted-foreground">
-                  {recipient.source === "manual" ? `${recipient.email} 직접 추가` : recipient.email}
+                  {recipient.source === "manual"
+                    ? m.compose_recipient_add_manual({ email: recipient.email })
+                    : recipient.email}
                 </span>
               </span>
             </ComboboxItem>

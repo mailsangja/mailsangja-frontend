@@ -1,3 +1,5 @@
+import { m } from "@/paraglide/messages"
+
 import type { ThreadLabel } from "./label"
 
 export const PRIMARY_MAILBOX_IDS = ["inbox", "sent", "spam", "trash"] as const
@@ -7,11 +9,17 @@ export type PrimaryMailboxId = (typeof PRIMARY_MAILBOX_IDS)[number]
 export type SupportedMailboxId = (typeof SUPPORTED_MAILBOX_IDS)[number]
 export type EmailFilter = "all" | "unread"
 
-export const MAILBOX_LABELS: Record<PrimaryMailboxId, string> = {
-  inbox: "받은편지함",
-  sent: "보낸편지함",
-  spam: "스팸함",
-  trash: "휴지통",
+export function getMailboxLabel(mailboxId: PrimaryMailboxId): string {
+  switch (mailboxId) {
+    case "inbox":
+      return m.mailbox_inbox()
+    case "sent":
+      return m.mailbox_sent()
+    case "spam":
+      return m.mailbox_spam()
+    case "trash":
+      return m.mailbox_trash()
+  }
 }
 
 export function isSupportedMailboxId(mailboxId: PrimaryMailboxId): mailboxId is SupportedMailboxId {
@@ -172,19 +180,32 @@ export type MailReviewIssueType =
   | "ATTACHMENT_MISSING"
 export type MailReviewIssueSeverity = "LOW" | "MEDIUM" | "HIGH"
 
-export const MAIL_REVIEW_ISSUE_TYPE_LABELS: Record<MailReviewIssueType, string> = {
-  SPELLING: "맞춤법",
-  SPACING: "띄어쓰기",
-  GRAMMAR: "문법",
-  CONTEXT: "문맥",
-  TONE: "어조",
-  CLARITY: "명확성",
-  ATTACHMENT_MISSING: "첨부파일 누락",
+export function getMailReviewIssueTypeLabel(type: MailReviewIssueType): string {
+  switch (type) {
+    case "SPELLING":
+      return m.mail_review_type_spelling()
+    case "SPACING":
+      return m.mail_review_type_spacing()
+    case "GRAMMAR":
+      return m.mail_review_type_grammar()
+    case "CONTEXT":
+      return m.mail_review_type_context()
+    case "TONE":
+      return m.mail_review_type_tone()
+    case "CLARITY":
+      return m.mail_review_type_clarity()
+    case "ATTACHMENT_MISSING":
+      return m.mail_review_type_attachment_missing()
+  }
 }
 
-export const MAIL_REVIEW_ISSUE_FIELD_LABELS: Record<MailReviewIssueField, string> = {
-  SUBJECT: "제목",
-  BODY: "본문",
+export function getMailReviewIssueFieldLabel(field: MailReviewIssueField): string {
+  switch (field) {
+    case "SUBJECT":
+      return m.mail_review_field_subject()
+    case "BODY":
+      return m.mail_review_field_body()
+  }
 }
 
 export interface MailReviewIssue {

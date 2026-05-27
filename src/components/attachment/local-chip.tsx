@@ -2,6 +2,7 @@ import { FileText, X } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { formatFileSize } from "@/lib/file-size"
+import { m } from "@/paraglide/messages"
 
 interface LocalAttachmentChipProps {
   file: File
@@ -16,7 +17,7 @@ function RemoveAttachmentButton({ filename, onRemove }: { filename: string; onRe
       size="icon-xs"
       className="-mr-1 size-5"
       onClick={onRemove}
-      aria-label={`${filename} 첨부파일 제거`}
+      aria-label={m.attachment_remove_aria({ filename })}
     >
       <X className="size-3" />
     </Button>

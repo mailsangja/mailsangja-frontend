@@ -1,6 +1,7 @@
 import path from "path"
 import tailwindcss from "@tailwindcss/vite"
 import react from "@vitejs/plugin-react"
+import { paraglideVitePlugin } from "@inlang/paraglide-js"
 import { defineConfig } from "vite"
 import { tanstackRouter } from "@tanstack/router-plugin/vite"
 import { VitePWA } from "vite-plugin-pwa"
@@ -36,6 +37,11 @@ export default defineConfig({
       autoCodeSplitting: true,
     }),
     react(),
+    paraglideVitePlugin({
+      project: "./project.inlang",
+      outdir: "./src/paraglide",
+      strategy: ["localStorage", "preferredLanguage", "baseLocale"],
+    }),
     tailwindcss(),
     VitePWA({
       strategies: "injectManifest",

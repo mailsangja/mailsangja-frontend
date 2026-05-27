@@ -11,9 +11,10 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { m } from "@/paraglide/messages"
+import { useUpdateDefaultAccount } from "@/mutations/user"
 import { useMailAccounts } from "@/queries/mail-accounts"
 import { useUser } from "@/queries/user"
-import { useUpdateDefaultAccount } from "@/mutations/user"
 
 export const Route = createFileRoute("/_authenticated/settings/account")({
   component: SettingsAccountPage,
@@ -27,7 +28,7 @@ function SettingsAccountPage() {
   const updateDefaultAccountMutation = useUpdateDefaultAccount()
   const { mutate: mutateDefaultAccount } = updateDefaultAccountMutation
 
-  // 추후 API 구현 후, 연동 예정
+  // TODO: Replace the local toggle overlay once the API supports active-state updates.
   const accounts = useMemo(() => {
     if (!mailAccounts) return []
     return mailAccounts.map((mailAccount) =>
@@ -79,11 +80,11 @@ function SettingsAccountPage() {
 
   return (
     <ScrollArea className="min-h-0 flex-1">
-      <div className="flex flex-col gap-4 px-6 pb-4">
+      <div className="flex flex-col gap-4 px-6 pt-1 pb-4">
         <Card>
           <CardHeader>
-            <CardTitle>기본 메일 계정</CardTitle>
-            <CardDescription>계정 중 하나를 기본 발신 계정으로 선택할 수 있습니다.</CardDescription>
+            <CardTitle>{m.settings_default_mail_account_title()}</CardTitle>
+            <CardDescription>{m.settings_default_mail_account_description()}</CardDescription>
           </CardHeader>
           <CardContent className="flex flex-wrap items-center gap-3">
             <Select
@@ -92,9 +93,13 @@ function SettingsAccountPage() {
               items={defaultAccountItems}
               disabled={isAccountsPending || accounts.length === 0}
             >
-              <SelectTrigger className="w-72" aria-label="기본 발신 계정 선택">
+              <SelectTrigger className="w-72" aria-label={m.settings_default_mail_account_select_aria()}>
                 <SelectValue
-                  placeholder={isAccountsPending ? "계정 목록을 불러오는 중..." : "기본 메일 계정을 선택하세요"}
+                  placeholder={
+                    isAccountsPending
+                      ? m.settings_mail_accounts_loading_short()
+                      : m.settings_default_mail_account_placeholder()
+                  }
                 />
               </SelectTrigger>
               <SelectContent align="start" alignItemWithTrigger={false}>
@@ -114,45 +119,45 @@ function SettingsAccountPage() {
                 updateDefaultAccountMutation.isPending
               }
             >
-              {updateDefaultAccountMutation.isPending ? "저장 중" : "저장"}
+              {updateDefaultAccountMutation.isPending ? m.settings_default_mail_account_saving() : m.common_save()}
             </Button>
           </CardContent>
         </Card>
 
         <Card>
           <CardHeader>
-            <CardTitle>메일 계정 관리</CardTitle>
-            <CardDescription>연결된 메일 계정의 활성화 상태와 별칭을 확인합니다.</CardDescription>
+            <CardTitle>{m.settings_mail_accounts_title()}</CardTitle>
+            <CardDescription>{m.settings_mail_accounts_description()}</CardDescription>
           </CardHeader>
           <CardContent className="px-0">
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead className="w-12 text-center">아이콘</TableHead>
-                  <TableHead className="w-full">메일주소</TableHead>
-                  <TableHead className="text-center">활성화</TableHead>
-                  <TableHead className="text-center">삭제</TableHead>
+                  <TableHead className="w-12 text-center">{m.settings_mail_accounts_icon_column()}</TableHead>
+                  <TableHead className="w-full">{m.settings_mail_accounts_email_column()}</TableHead>
+                  <TableHead className="text-center">{m.settings_mail_accounts_active_column()}</TableHead>
+                  <TableHead className="text-center">{m.common_delete()}</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {isAccountsPending && (
                   <TableRow>
                     <TableCell colSpan={4} className="text-center text-sm text-muted-foreground">
-                      계정 목록을 불러오는 중입니다.
+                      {m.settings_mail_accounts_loading()}
                     </TableCell>
                   </TableRow>
                 )}
                 {isAccountsError && (
                   <TableRow>
                     <TableCell colSpan={4} className="text-center text-sm text-destructive">
-                      계정 목록을 불러오지 못했습니다.
+                      {m.settings_mail_accounts_error()}
                     </TableCell>
                   </TableRow>
                 )}
                 {!isAccountsPending && !isAccountsError && accounts.length === 0 && (
                   <TableRow>
                     <TableCell colSpan={4} className="text-center text-sm text-muted-foreground">
-                      등록된 계정이 없습니다.
+                      {m.settings_mail_accounts_empty()}
                     </TableCell>
                   </TableRow>
                 )}
@@ -200,16 +205,14 @@ function SettingsAccountPage() {
 
         <Card>
           <CardHeader>
-            <CardTitle>메일 계정 추가하기</CardTitle>
-            <CardDescription>
-              계정의 별칭, 아이콘, 색상을 선택한 뒤 로그인 절차를 거쳐 메일 계정을 연결할 수 있습니다.
-            </CardDescription>
+            <CardTitle>{m.settings_add_mail_account_title()}</CardTitle>
+            <CardDescription>{m.settings_add_mail_account_description()}</CardDescription>
           </CardHeader>
           <CardContent>
             <AddAccountDialog>
               <Button variant="outline">
                 <Plus data-icon="inline-start" />
-                계정 추가
+                {m.settings_add_mail_account_button()}
               </Button>
             </AddAccountDialog>
           </CardContent>

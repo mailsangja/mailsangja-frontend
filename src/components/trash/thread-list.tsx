@@ -7,7 +7,9 @@ import { ThreadListItem } from "@/components/thread/list-item"
 import { ThreadListSkeletonRows } from "@/components/thread/list-skeleton-rows"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { formatNumber } from "@/lib/date"
 import { getErrorMessage } from "@/lib/http-error"
+import { m } from "@/paraglide/messages"
 import { useRestoreTrashThread } from "@/mutations/trash"
 import { useLabels } from "@/queries/labels"
 import type { InboxThreadSummary } from "@/types/email"
@@ -62,7 +64,7 @@ export function TrashThreadList({
   onSelectThread,
   onLoadMore,
   getAccount,
-  emptyTitle = "휴지통이 비어있습니다",
+  emptyTitle = m.trash_empty_title(),
   emptyDescription,
   errorTitle,
   errorDescription,
@@ -133,10 +135,17 @@ export function TrashThreadList({
   const header =
     visibleSelectedIds.size > 0 ? (
       <div className="flex h-11 shrink-0 items-center gap-2 border-b bg-accent/40 px-3">
-        <Button variant="ghost" size="icon-sm" onClick={() => setSelectedIds(new Set())} aria-label="선택 해제">
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          onClick={() => setSelectedIds(new Set())}
+          aria-label={m.mail_clear_selection()}
+        >
           <SquareMinus />
         </Button>
-        <span className="text-sm font-medium">{visibleSelectedIds.size.toLocaleString()}개 선택됨</span>
+        <span className="text-sm font-medium">
+          {m.mail_selected_count({ count: formatNumber(visibleSelectedIds.size) })}
+        </span>
         <div className="ml-auto flex shrink-0 items-center gap-2">
           <Button
             variant="ghost"
@@ -155,7 +164,7 @@ export function TrashThreadList({
               const succeededCount = ids.length - failed.length
 
               if (failed.length === 0) {
-                toast.success(`${ids.length}개 스레드를 복구했습니다`)
+                toast.success(m.trash_restore_threads_success({ count: ids.length }))
                 return
               }
 
@@ -168,17 +177,17 @@ export function TrashThreadList({
               })
 
               if (succeededCount === 0) {
-                toast.error("복구에 실패했습니다", {
-                  description: getErrorMessage(failed[0].result.reason, "잠시 후 다시 시도해주세요."),
+                toast.error(m.trash_restore_error(), {
+                  description: getErrorMessage(failed[0].result.reason, m.common_try_again_later()),
                 })
                 return
               }
 
-              toast.warning(`${succeededCount}개 복구, ${failed.length}개 실패`, {
-                description: getErrorMessage(failed[0].result.reason, "실패한 항목은 선택 상태로 두었습니다."),
+              toast.warning(m.trash_restore_partial({ restoredCount: succeededCount, failedCount: failed.length }), {
+                description: getErrorMessage(failed[0].result.reason, m.trash_restore_partial_description()),
               })
             }}
-            aria-label="선택 복구"
+            aria-label={m.trash_restore_selected()}
           >
             <Undo2 data-icon="inline-start" />
           </Button>
@@ -188,7 +197,7 @@ export function TrashThreadList({
       <div className="flex h-11 shrink-0 items-center gap-3 border-b px-4">
         <h2 className="min-w-0 truncate text-sm font-medium">{mailboxName}</h2>
         <span className="hidden rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground sm:inline-flex">
-          {totalCount.toLocaleString()}개
+          {m.mail_total_count({ count: formatNumber(totalCount) })}
         </span>
       </div>
     )
@@ -199,14 +208,14 @@ export function TrashThreadList({
 
       <ScrollArea className="min-h-0 flex-1">
         {isLoading ? (
-          <div role="list" aria-label={`${mailboxName} 메일 목록`} className="min-w-0">
+          <div role="list" aria-label={m.mail_list_label({ mailbox: mailboxName })} className="min-w-0">
             <ThreadListSkeletonRows />
           </div>
         ) : errorTitle && errorDescription ? (
           <MailErrorState title={errorTitle} description={errorDescription} onRetry={onRetry} />
         ) : threads && threads.length > 0 ? (
           <>
-            <div role="list" aria-label={`${mailboxName} 메일 목록`} className="min-w-0">
+            <div role="list" aria-label={m.mail_list_label({ mailbox: mailboxName })} className="min-w-0">
               {threads.map((thread) => (
                 <ThreadListItem
                   key={thread.threadId}
@@ -227,7 +236,7 @@ export function TrashThreadList({
                 <MailErrorState
                   title={loadMoreErrorTitle}
                   description={loadMoreErrorDescription}
-                  retryLabel="추가 메일 다시 불러오기"
+                  retryLabel={m.mail_load_more_retry()}
                   onRetry={onRetryLoadMore}
                 />
               </div>

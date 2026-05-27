@@ -1,6 +1,7 @@
 import { AlertTriangle } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import { m } from "@/paraglide/messages"
 
 interface MailErrorStateProps {
   title: string
@@ -9,7 +10,7 @@ interface MailErrorStateProps {
   onRetry?: () => void
 }
 
-export function MailErrorState({ title, description, retryLabel = "다시 시도", onRetry }: MailErrorStateProps) {
+export function MailErrorState({ title, description, retryLabel = m.common_retry(), onRetry }: MailErrorStateProps) {
   return (
     <div className="flex min-h-full w-full flex-col items-center justify-center gap-3 px-6 py-16 text-center">
       <div className="flex size-14 items-center justify-center rounded-full bg-destructive/10">

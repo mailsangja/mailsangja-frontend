@@ -16,7 +16,8 @@ import { LABEL_COLORS } from "@/lib/label-colors"
 import { cn } from "@/lib/utils"
 import { useUpdateLabel, useUpdateLabelRule } from "@/mutations/labels"
 import { useLabelDetail } from "@/queries/labels"
-import { NOTIFICATION_POLICY_LABELS, type LabelDetail, type NotificationPolicy } from "@/types/label"
+import { m } from "@/paraglide/messages"
+import { getNotificationPolicyLabel, type LabelDetail, type NotificationPolicy } from "@/types/label"
 
 export const Route = createFileRoute("/_authenticated/settings/label/$labelId")({
   component: LabelDetailPage,
@@ -91,7 +92,7 @@ function LabelDetailPage() {
         <div className="flex flex-col gap-6 px-6 pt-1 pb-4">
           <Card>
             <CardHeader>
-              <CardTitle className="text-destructive">라벨을 불러오지 못했습니다</CardTitle>
+              <CardTitle className="text-destructive">{m.label_load_error_title()}</CardTitle>
             </CardHeader>
           </Card>
         </div>
@@ -138,8 +139,8 @@ function LabelDetailContent({ labelId, label }: { labelId: string; label: LabelD
     updateRule.mutate(
       { labelId, data: { groups: newGroups } },
       {
-        onSuccess: () => toast.success("규칙이 삭제되었습니다."),
-        onError: (e) => toast.error(getErrorMessage(e, "규칙 삭제에 실패했습니다.")),
+        onSuccess: () => toast.success(m.label_rule_delete_success()),
+        onError: (e) => toast.error(getErrorMessage(e, m.label_rule_delete_error())),
       }
     )
   }
@@ -149,10 +150,10 @@ function LabelDetailContent({ labelId, label }: { labelId: string; label: LabelD
     updateLabel.mutate(
       { labelId, data: { notificationPolicy: policy } },
       {
-        onSuccess: () => toast.success("알림 설정이 변경되었습니다."),
+        onSuccess: () => toast.success(m.label_notification_update_success()),
         onError: (e) => {
           setNotificationPolicy(label.notificationPolicy)
-          toast.error(getErrorMessage(e, "알림 설정 변경에 실패했습니다."))
+          toast.error(getErrorMessage(e, m.label_notification_update_error()))
         },
       }
     )
@@ -164,10 +165,10 @@ function LabelDetailContent({ labelId, label }: { labelId: string; label: LabelD
     updateLabel.mutate(
       { labelId, data: { name: trimmed } },
       {
-        onSuccess: () => toast.success("라벨 이름이 변경되었습니다."),
+        onSuccess: () => toast.success(m.label_name_update_success()),
         onError: (e) => {
           setName(label.name)
-          toast.error(getErrorMessage(e, "라벨 이름 변경에 실패했습니다."))
+          toast.error(getErrorMessage(e, m.label_name_update_error()))
         },
       }
     )
@@ -178,10 +179,10 @@ function LabelDetailContent({ labelId, label }: { labelId: string; label: LabelD
     updateLabel.mutate(
       { labelId, data: { colorCode: selectedColor } },
       {
-        onSuccess: () => toast.success("라벨 색상이 변경되었습니다."),
+        onSuccess: () => toast.success(m.label_color_update_success()),
         onError: (e) => {
           setSelectedColor(label.colorCode)
-          toast.error(getErrorMessage(e, "라벨 색상 변경에 실패했습니다."))
+          toast.error(getErrorMessage(e, m.label_color_update_error()))
         },
       }
     )
@@ -192,15 +193,13 @@ function LabelDetailContent({ labelId, label }: { labelId: string; label: LabelD
       <div className="flex flex-col gap-4 px-6 pb-4">
         <Link to="/settings/label" className="inline-flex items-center gap-2 text-sm text-muted-foreground">
           <ChevronLeft className="size-4" />
-          뒤로
+          {m.label_back()}
         </Link>
         <section className="flex flex-col gap-3">
           <Card>
             <CardHeader>
-              <CardTitle>라벨 규칙 관리</CardTitle>
-              <CardDescription>
-                이 라벨에 자동으로 분류될 메일의 규칙을 설정합니다. 규칙이 여러 개이면 하나라도 만족하면 분류됩니다.
-              </CardDescription>
+              <CardTitle>{m.label_rule_management_title()}</CardTitle>
+              <CardDescription>{m.label_rule_management_description()}</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-2">
               {groups.map((group, groupIndex) => {
@@ -219,14 +218,14 @@ function LabelDetailContent({ labelId, label }: { labelId: string; label: LabelD
                             isExpanded ? "rotate-0" : "-rotate-90"
                           )}
                         />
-                        <span className="text-sm font-medium">규칙 {groupIndex + 1}</span>
+                        <span className="text-sm font-medium">{m.label_rule_title({ index: groupIndex + 1 })}</span>
                       </button>
                       <Button
                         variant="ghost"
                         size="icon-sm"
                         onClick={() => handleDeleteGroup(groupIndex)}
                         disabled={updateRule.isPending}
-                        aria-label="규칙 삭제"
+                        aria-label={m.label_rule_delete()}
                       >
                         <X className="size-4 text-muted-foreground" />
                       </Button>
@@ -246,7 +245,7 @@ function LabelDetailContent({ labelId, label }: { labelId: string; label: LabelD
                 disabled={updateRule.isPending}
               >
                 <Plus className="size-4" />
-                규칙 추가
+                {m.label_rule_add()}
               </Button>
             </CardContent>
           </Card>
@@ -255,9 +254,11 @@ function LabelDetailContent({ labelId, label }: { labelId: string; label: LabelD
         <section className="flex flex-col gap-3">
           <Card>
             <CardHeader>
-              <CardTitle>알림 설정</CardTitle>
+              <CardTitle>{m.label_notification_settings_title()}</CardTitle>
               <CardDescription>
-                알림 설정은 <strong>항상 알림 ＞ 알림 안함 ＞ 기본</strong> 순으로 우선순위를 가집니다.
+                {m.label_notification_settings_description_prefix()}{" "}
+                <strong>{m.label_notification_priority_order()}</strong>{" "}
+                {m.label_notification_settings_description_suffix()}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -276,7 +277,7 @@ function LabelDetailContent({ labelId, label }: { labelId: string; label: LabelD
                     )}
                   >
                     <Icon className="size-3.5" />
-                    {NOTIFICATION_POLICY_LABELS[value]}
+                    {getNotificationPolicyLabel(value)}
                   </button>
                 ))}
               </div>
@@ -287,22 +288,22 @@ function LabelDetailContent({ labelId, label }: { labelId: string; label: LabelD
         <section className="flex flex-col gap-3">
           <Card>
             <CardHeader>
-              <CardTitle>이름 변경</CardTitle>
-              <CardDescription>라벨의 이름을 변경합니다.</CardDescription>
+              <CardTitle>{m.label_name_change_title()}</CardTitle>
+              <CardDescription>{m.label_name_change_description()}</CardDescription>
             </CardHeader>
             <CardContent className="flex gap-2">
               <Input
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && handleSaveName()}
-                placeholder="라벨 이름"
+                placeholder={m.label_name_placeholder()}
                 className="w-2/5"
               />
               <Button
                 onClick={handleSaveName}
                 disabled={!name.trim() || name.trim() === label.name || updateLabel.isPending}
               >
-                저장
+                {m.common_save()}
               </Button>
             </CardContent>
           </Card>
@@ -311,8 +312,8 @@ function LabelDetailContent({ labelId, label }: { labelId: string; label: LabelD
         <section className="flex flex-col gap-3">
           <Card>
             <CardHeader>
-              <CardTitle>색상 변경</CardTitle>
-              <CardDescription>라벨의 색상을 변경합니다.</CardDescription>
+              <CardTitle>{m.label_color_change_title()}</CardTitle>
+              <CardDescription>{m.label_color_change_description()}</CardDescription>
             </CardHeader>
             <CardContent className="flex flex-col gap-6">
               <div className="grid grid-cols-10 place-items-center gap-1.5">
@@ -336,7 +337,7 @@ function LabelDetailContent({ labelId, label }: { labelId: string; label: LabelD
                 disabled={selectedColor === label.colorCode || updateLabel.isPending}
                 className="w-full"
               >
-                저장
+                {m.common_save()}
               </Button>
             </CardContent>
           </Card>
@@ -345,12 +346,12 @@ function LabelDetailContent({ labelId, label }: { labelId: string; label: LabelD
         <section className="flex flex-col gap-3">
           <Card>
             <CardHeader>
-              <CardTitle className="text-destructive">라벨 삭제</CardTitle>
-              <CardDescription>라벨을 삭제하면 해당 라벨이 적용된 메일에서 라벨이 제거됩니다.</CardDescription>
+              <CardTitle className="text-destructive">{m.label_delete_title()}</CardTitle>
+              <CardDescription>{m.label_delete_description()}</CardDescription>
             </CardHeader>
             <CardContent className="flex items-center justify-between">
               <Button variant="destructive" size="sm" onClick={() => setDeleteDialogOpen(true)}>
-                삭제
+                {m.common_delete()}
               </Button>
             </CardContent>
           </Card>

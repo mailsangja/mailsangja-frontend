@@ -8,6 +8,7 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { MailAccountLabel } from "@/components/mail-account-label"
 import { cn } from "@/lib/utils"
+import { m } from "@/paraglide/messages"
 import { useMailAccounts } from "@/queries/mail-accounts"
 
 interface SidebarAccountsSectionProps {
@@ -23,7 +24,7 @@ export function SidebarAccountsSection({ activeAccountId, onAccountToggle, class
 
   return (
     <SidebarGroup className={cn("group-data-[collapsible=icon]:hidden", className)}>
-      <SidebarGroupLabel>계정</SidebarGroupLabel>
+      <SidebarGroupLabel>{m.sidebar_accounts()}</SidebarGroupLabel>
       <SidebarMenu>
         {accounts.map((account) => (
           <SidebarMenuItem key={account.id}>

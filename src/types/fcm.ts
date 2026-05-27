@@ -1,6 +1,6 @@
 import { decodeHtmlEntities } from "@/lib/html-entities"
 
-export const DEFAULT_NEW_MAIL_PUSH_TITLE = "새 메일이 도착했습니다"
+export const DEFAULT_NEW_MAIL_PUSH_TITLE = "New mail arrived"
 
 export interface NewMailPushData {
   title: string
@@ -13,9 +13,12 @@ export interface NewMailPushData {
   image?: string
 }
 
-export function toNewMailPushData(data: Record<string, string> | undefined): NewMailPushData {
+export function toNewMailPushData(
+  data: Record<string, string> | undefined,
+  fallbackTitle = DEFAULT_NEW_MAIL_PUSH_TITLE
+): NewMailPushData {
   return {
-    title: data?.title || DEFAULT_NEW_MAIL_PUSH_TITLE,
+    title: data?.title || fallbackTitle,
     body: decodeHtmlEntities(data?.body ?? ""),
     mailAccountId: data?.mailAccountId ?? "",
     alias: data?.alias ?? "",

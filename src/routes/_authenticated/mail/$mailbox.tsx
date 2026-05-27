@@ -12,11 +12,12 @@ import { getErrorMessage, getHttpStatus } from "@/lib/http-error"
 import { parseMailRouteSearch } from "@/lib/mail-routing"
 import { cn } from "@/lib/utils"
 import { useMarkThreadAsRead } from "@/mutations/emails"
+import { m } from "@/paraglide/messages"
 import { useMailAccounts, mailAccountQueries } from "@/queries/mail-accounts"
 import { emailKeys, useMailboxThreads } from "@/queries/emails"
 import { useLabels, labelQueries, useLabelGroups, labelGroupQueries } from "@/queries/labels"
 import { useTrashThreads } from "@/queries/trash"
-import { isSupportedMailboxId, MAILBOX_LABELS, parseMailboxId, type PrimaryMailboxId } from "@/types/email"
+import { getMailboxLabel, isSupportedMailboxId, parseMailboxId, type PrimaryMailboxId } from "@/types/email"
 
 export const Route = createFileRoute("/_authenticated/mail/$mailbox")({
   params: {
@@ -48,9 +49,9 @@ export const Route = createFileRoute("/_authenticated/mail/$mailbox")({
 
     if (!isLabelInvalid && !isAccountInvalid && !isGroupInvalid) return
 
-    if (isLabelInvalid) toast.error("유효하지 않은 라벨입니다")
-    if (isAccountInvalid) toast.error("유효하지 않은 계정입니다")
-    if (isGroupInvalid) toast.error("유효하지 않은 라벨 그룹입니다")
+    if (isLabelInvalid) toast.error(m.mail_invalid_label())
+    if (isAccountInvalid) toast.error(m.mail_invalid_account())
+    if (isGroupInvalid) toast.error(m.mail_invalid_label_group())
 
     throw redirect({
       to: "/mail/$mailbox",
@@ -71,18 +72,18 @@ function getMailboxThreadsErrorCopy(error: unknown) {
   switch (getHttpStatus(error)) {
     case 400:
       return {
-        title: "메일 목록 페이지 정보를 해석하지 못했습니다",
-        description: "다음 페이지 marker가 유효하지 않습니다. 목록을 처음부터 다시 불러와주세요.",
+        title: m.mail_error_bad_page_title(),
+        description: m.mail_error_bad_page_description(),
       }
     case 401:
       return {
-        title: "로그인이 필요합니다",
-        description: "세션이 만료되었거나 인증 정보가 없습니다. 다시 로그인한 뒤 메일함을 불러와주세요.",
+        title: m.thread_error_login_title(),
+        description: m.mail_error_login_description(),
       }
     default:
       return {
-        title: "메일 목록을 불러오지 못했습니다",
-        description: getErrorMessage(error, "네트워크 상태를 확인한 뒤 다시 시도해주세요."),
+        title: m.mail_error_generic_title(),
+        description: getErrorMessage(error, m.mail_error_generic_description()),
       }
   }
 }
@@ -165,31 +166,34 @@ function MailboxView({ mailbox }: { mailbox: PrimaryMailboxId }) {
     : null
   const hasSelection = visibleSelectedThreadId != null
 
-  let emptyTitle = "메일이 없습니다"
+  let emptyTitle = m.mail_empty_title()
   let emptyDescription: string | undefined
 
   if (!supportedMailbox) {
-    emptyTitle = "아직 지원되지 않는 메일함입니다"
-    emptyDescription = "현재 백엔드 API는 받은편지함과 보낸편지함만 지원합니다."
+    emptyTitle = m.mail_unsupported_title()
+    emptyDescription = m.mail_unsupported_description()
   } else if (hasSearchQuery) {
-    emptyTitle = "검색 결과가 없습니다"
-    emptyDescription = "검색 조건에 맞는 메일을 찾지 못했습니다."
+    emptyTitle = m.mail_search_empty_title()
+    emptyDescription = m.mail_search_empty_description()
   } else if (filter === "unread") {
-    emptyTitle = "안 읽은 메일이 없습니다"
+    emptyTitle = m.mail_unread_empty_title()
   } else if (selectedGroup?.id) {
-    emptyTitle = "선택한 그룹의 메일이 없습니다"
-    emptyDescription = `"${selectedGroup.name}" 그룹에 속한 라벨이 적용된 메일이 없습니다.`
+    emptyTitle = m.mail_group_empty_title()
+    emptyDescription = m.mail_group_empty_description({ group: selectedGroup.name })
   } else if (selectedLabel?.id) {
-    emptyTitle = "선택한 라벨의 메일이 없습니다"
-    emptyDescription = `"${selectedLabel.name}" 라벨이 적용된 메일이 없습니다.`
+    emptyTitle = m.mail_label_empty_title()
+    emptyDescription = m.mail_label_empty_description({ label: selectedLabel.name })
   } else if (selectedAccount?.id) {
-    emptyTitle = "선택한 계정의 메일이 없습니다"
-    emptyDescription = `${selectedAccount.alias} (${selectedAccount.emailAddress}) 계정에서 불러온 메일이 없습니다.`
+    emptyTitle = m.mail_account_empty_title()
+    emptyDescription = m.mail_account_empty_description({
+      account: selectedAccount.alias,
+      email: selectedAccount.emailAddress,
+    })
   }
 
   const emailList = (
     <ThreadList
-      mailboxName={MAILBOX_LABELS[mailbox]}
+      mailboxName={getMailboxLabel(mailbox)}
       threads={threads}
       totalCount={totalThreadCount}
       isLoading={supportedMailbox != null && isLoading}
@@ -337,20 +341,23 @@ function TrashMailboxView() {
     : null
   const hasSelection = visibleSelectedThreadId != null
 
-  let emptyTitle = "휴지통이 비어있습니다"
+  let emptyTitle = m.trash_empty_title()
   let emptyDescription: string | undefined
 
   if (hasSearchQuery) {
-    emptyTitle = "검색 결과가 없습니다"
-    emptyDescription = "검색 조건에 맞는 휴지통 항목을 찾지 못했습니다."
+    emptyTitle = m.mail_search_empty_title()
+    emptyDescription = m.trash_search_empty_description()
   } else if (selectedAccount?.id) {
-    emptyTitle = "선택한 계정의 휴지통 항목이 없습니다"
-    emptyDescription = `${selectedAccount.alias} (${selectedAccount.emailAddress}) 계정에서 삭제된 메일이 없습니다.`
+    emptyTitle = m.trash_account_empty_title()
+    emptyDescription = m.trash_account_empty_description({
+      account: selectedAccount.alias,
+      email: selectedAccount.emailAddress,
+    })
   }
 
   const trashList = (
     <TrashThreadList
-      mailboxName={MAILBOX_LABELS.trash}
+      mailboxName={getMailboxLabel("trash")}
       threads={threads}
       totalCount={totalThreadCount}
       isLoading={isLoading}

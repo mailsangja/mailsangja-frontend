@@ -1,5 +1,7 @@
 import { useState } from "react"
 
+import { m } from "@/paraglide/messages"
+
 export function MessageHtmlFrame({ html }: { html: string }) {
   const [height, setHeight] = useState(0)
 
@@ -7,7 +9,7 @@ export function MessageHtmlFrame({ html }: { html: string }) {
 
   return (
     <iframe
-      title="메일 본문"
+      title={m.message_body_title()}
       sandbox="allow-same-origin allow-popups"
       srcDoc={srcDoc}
       className="w-full border-0 bg-white"

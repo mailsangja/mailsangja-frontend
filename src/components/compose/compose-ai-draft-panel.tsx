@@ -4,7 +4,9 @@ import { ArrowUp, Loader2, Sparkles, Square, WandSparkles, X } from "lucide-reac
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { formatNumber } from "@/lib/date"
 import { cn } from "@/lib/utils"
+import { m } from "@/paraglide/messages"
 import type { MailDraftStreamPhase, MailDraftUsage } from "@/types/email"
 
 interface ComposeAiDraftPanelProps {
@@ -21,11 +23,11 @@ interface ComposeAiDraftPanelProps {
 const MODEL_OPTIONS = ["Auto"] as const
 
 function getPhaseLabel(phase: MailDraftStreamPhase) {
-  if (phase === "subject") return "제목 생성 중..."
-  if (phase === "body") return "본문 생성 중..."
-  if (phase === "done") return "초안 생성 완료"
-  if (phase === "aborted") return "초안 생성을 중지했습니다"
-  if (phase === "error") return "초안 생성 실패"
+  if (phase === "subject") return m.compose_ai_phase_subject()
+  if (phase === "body") return m.compose_ai_phase_body()
+  if (phase === "done") return m.compose_ai_phase_done()
+  if (phase === "aborted") return m.compose_ai_phase_aborted()
+  if (phase === "error") return m.compose_ai_phase_error()
 
   return ""
 }
@@ -33,7 +35,7 @@ function getPhaseLabel(phase: MailDraftStreamPhase) {
 function formatUsage(usage: MailDraftUsage | null) {
   if (!usage) return null
 
-  return `${usage.totalTokens.toLocaleString()} tokens`
+  return `${formatNumber(usage.totalTokens)} tokens`
 }
 
 export function ComposeAiDraftPanel({
@@ -76,12 +78,12 @@ export function ComposeAiDraftPanel({
   const isFloatingEntryVisible = isPanelVisible || isDraftContentEmpty
   const phaseLabel = getPhaseLabel(phase)
   const actionLabel = isStreaming
-    ? "AI 초안 생성 중지"
+    ? m.compose_ai_stop_generation()
     : !isPanelVisible
-      ? "AI 초안 생성 열기"
+      ? m.compose_ai_open()
       : promptText
-        ? "AI 초안 생성"
-        : "AI 초안 생성 닫기"
+        ? m.compose_ai_draft()
+        : m.compose_ai_close()
 
   const handleActionClick = () => {
     if (isStreaming) {
@@ -157,7 +159,7 @@ export function ComposeAiDraftPanel({
             ? "translate-x-0 translate-y-0 scale-100 opacity-100"
             : "pointer-events-none translate-x-3 translate-y-6 scale-75 opacity-0"
         )}
-        aria-label="AI 초안 생성"
+        aria-label={m.compose_ai_draft()}
         aria-hidden={!isPanelVisible}
         inert={!isPanelVisible}
       >
@@ -173,7 +175,7 @@ export function ComposeAiDraftPanel({
                 <SelectTrigger
                   size="sm"
                   className="-ml-2 h-8 gap-1.5 border-transparent bg-transparent text-muted-foreground hover:bg-foreground/5 hover:text-foreground focus-visible:ring-0 dark:bg-transparent"
-                  aria-label="AI 모델 선택"
+                  aria-label={m.compose_ai_model_select()}
                 >
                   <Sparkles className="size-4 text-primary" />
                   <SelectValue />
@@ -216,8 +218,8 @@ export function ComposeAiDraftPanel({
                 onGenerate()
               }
             }}
-            placeholder="어떤 메일을 작성할까요?"
-            aria-label="AI 초안 생성 프롬프트"
+            placeholder={m.compose_ai_prompt_placeholder()}
+            aria-label={m.compose_ai_prompt_label()}
             disabled={isStreaming}
             className="h-13 border-0 bg-popover px-4 text-base shadow-none focus-visible:ring-0"
           />

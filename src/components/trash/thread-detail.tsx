@@ -12,6 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { copyTextToClipboard } from "@/lib/clipboard"
 import { getErrorMessage, getHttpStatus } from "@/lib/http-error"
 import { useRestoreTrashMessage, useRestoreTrashThread } from "@/mutations/trash"
+import { m } from "@/paraglide/messages"
 import { useMailAccounts } from "@/queries/mail-accounts"
 import { useTrashThread } from "@/queries/trash"
 import type { InboxMessage } from "@/types/email"
@@ -20,23 +21,23 @@ function getThreadDetailErrorCopy(error: unknown) {
   switch (getHttpStatus(error)) {
     case 401:
       return {
-        title: "로그인이 필요합니다",
-        description: "세션이 만료되었거나 인증 정보가 없습니다. 다시 로그인한 뒤 스레드를 열어주세요.",
+        title: m.thread_error_login_title(),
+        description: m.thread_error_login_description(),
       }
     case 403:
       return {
-        title: "이 스레드에 접근할 수 없습니다",
-        description: "현재 로그인한 사용자에게 이 스레드를 볼 권한이 없습니다.",
+        title: m.thread_error_forbidden_title(),
+        description: m.thread_error_forbidden_description(),
       }
     case 404:
       return {
-        title: "스레드를 찾을 수 없습니다",
-        description: "영구 삭제되었거나 더 이상 접근할 수 없는 메일 스레드입니다.",
+        title: m.thread_error_not_found_title(),
+        description: m.trash_thread_error_not_found_description(),
       }
     default:
       return {
-        title: "스레드 내용을 불러오지 못했습니다",
-        description: getErrorMessage(error, "네트워크 상태를 확인한 뒤 다시 시도해주세요."),
+        title: m.thread_error_generic_title(),
+        description: getErrorMessage(error, m.thread_error_generic_description()),
       }
   }
 }
@@ -48,10 +49,8 @@ function EmptyState() {
         <MailOpen className="size-8 text-muted-foreground" />
       </div>
       <div className="text-center">
-        <p className="font-medium text-muted-foreground">스레드를 선택해주세요</p>
-        <p className="mt-1 text-sm text-muted-foreground/70">
-          휴지통 목록에서 항목을 클릭하면 여기에 내용이 표시됩니다
-        </p>
+        <p className="font-medium text-muted-foreground">{m.thread_select_title()}</p>
+        <p className="mt-1 text-sm text-muted-foreground/70">{m.trash_select_description()}</p>
       </div>
     </div>
   )
@@ -94,7 +93,7 @@ function TrashToolbar({ onClose, onRestore, isRestoring }: TrashToolbarProps) {
   return (
     <div className="flex h-11 shrink-0 items-center justify-between gap-2 px-4">
       {onClose ? (
-        <Button variant="ghost" size="icon-sm" onClick={onClose} aria-label="휴지통 목록으로 돌아가기">
+        <Button variant="ghost" size="icon-sm" onClick={onClose} aria-label={m.trash_back_to_list()}>
           <ArrowLeft className="size-4" />
         </Button>
       ) : (
@@ -106,8 +105,8 @@ function TrashToolbar({ onClose, onRestore, isRestoring }: TrashToolbarProps) {
           size="icon-sm"
           onClick={onRestore}
           disabled={isRestoring}
-          title="복구"
-          aria-label="메일 복구"
+          title={m.trash_restore()}
+          aria-label={m.trash_restore_mail()}
         >
           <Undo2 className="size-4" />
         </Button>
@@ -122,7 +121,7 @@ function TrashFooter({ onRestore, isRestoring }: { onRestore: () => void; isRest
       <div className="flex flex-wrap gap-2">
         <Button variant="outline" size="sm" onClick={onRestore} disabled={isRestoring}>
           <Undo2 className="size-4" />
-          복구
+          {m.trash_restore()}
         </Button>
       </div>
     </div>
@@ -165,11 +164,11 @@ export function TrashThreadDetail({ threadId, onClose }: TrashThreadDetailProps)
     restoreThread(threadId, {
       onSuccess: () => {
         onClose?.()
-        toast.success("스레드를 복구했습니다")
+        toast.success(m.trash_thread_restored())
       },
       onError: (err) => {
-        toast.error("복구에 실패했습니다", {
-          description: getErrorMessage(err, "잠시 후 다시 시도해주세요."),
+        toast.error(m.trash_restore_error(), {
+          description: getErrorMessage(err, m.common_try_again_later()),
         })
       },
     })
@@ -179,11 +178,11 @@ export function TrashThreadDetail({ threadId, onClose }: TrashThreadDetailProps)
     restoreMessage(message.id, {
       onSuccess: () => {
         if (isLast) onClose?.()
-        toast.success("메시지를 복구했습니다")
+        toast.success(m.trash_message_restored())
       },
       onError: (err) => {
-        toast.error("복구에 실패했습니다", {
-          description: getErrorMessage(err, "잠시 후 다시 시도해주세요."),
+        toast.error(m.trash_restore_error(), {
+          description: getErrorMessage(err, m.common_try_again_later()),
         })
       },
     })
@@ -213,12 +212,12 @@ export function TrashThreadDetail({ threadId, onClose }: TrashThreadDetailProps)
           <>
             <DropdownMenuItem onClick={() => handleRestoreMessage(message, messages.length === 1)}>
               <Undo2 />
-              복구
+              {m.trash_restore()}
             </DropdownMenuItem>
             <DropdownMenuSeparator />
-            <DropdownMenuItem onClick={() => copyTextToClipboard(message.from.email, "발신자 주소를 복사했습니다")}>
+            <DropdownMenuItem onClick={() => copyTextToClipboard(message.from.email, m.thread_sender_copied())}>
               <Copy />
-              발신자 주소 복사
+              {m.thread_copy_sender()}
             </DropdownMenuItem>
           </>
         )}

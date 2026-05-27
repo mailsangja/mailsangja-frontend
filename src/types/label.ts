@@ -1,9 +1,16 @@
+import { m } from "@/paraglide/messages"
+
 export type NotificationPolicy = "URGENT" | "INHERIT" | "SILENT"
 
-export const NOTIFICATION_POLICY_LABELS: Record<NotificationPolicy, string> = {
-  URGENT: "항상 알림",
-  INHERIT: "기본",
-  SILENT: "알림 안함",
+export function getNotificationPolicyLabel(policy: NotificationPolicy): string {
+  switch (policy) {
+    case "URGENT":
+      return m.notification_policy_urgent()
+    case "INHERIT":
+      return m.notification_policy_inherit()
+    case "SILENT":
+      return m.notification_policy_silent()
+  }
 }
 
 export type ConditionField =
@@ -44,22 +51,38 @@ export interface ThreadLabel {
   colorCode: string
 }
 
-export const LABEL_CONDITION_FIELD_LABELS: Record<ConditionField, string> = {
-  MAIL_ACCOUNT: "메일 계정",
-  FROM_ADDRESS: "보낸 주소",
-  FROM_DOMAIN: "보낸 도메인",
-  TO_ADDRESS: "받는 주소",
-  CC_ADDRESS: "참조",
-  SUBJECT: "제목",
-  BODY_TEXT: "본문",
-  HAS_ATTACHMENT: "첨부파일",
+export function getLabelConditionFieldLabel(field: ConditionField): string {
+  switch (field) {
+    case "MAIL_ACCOUNT":
+      return m.condition_field_mail_account()
+    case "FROM_ADDRESS":
+      return m.condition_field_from_address()
+    case "FROM_DOMAIN":
+      return m.condition_field_from_domain()
+    case "TO_ADDRESS":
+      return m.condition_field_to_address()
+    case "CC_ADDRESS":
+      return m.condition_field_cc_address()
+    case "SUBJECT":
+      return m.condition_field_subject()
+    case "BODY_TEXT":
+      return m.condition_field_body_text()
+    case "HAS_ATTACHMENT":
+      return m.condition_field_has_attachment()
+  }
 }
 
-export const LABEL_CONDITION_OPERATOR_LABELS: Record<ConditionOperator, string> = {
-  EQUALS: "같음",
-  CONTAINS: "포함",
-  NOT_CONTAINS: "미포함",
-  BOOLEAN: "해당함 여부",
+export function getLabelConditionOperatorLabel(operator: ConditionOperator): string {
+  switch (operator) {
+    case "EQUALS":
+      return m.condition_operator_equals()
+    case "CONTAINS":
+      return m.condition_operator_contains()
+    case "NOT_CONTAINS":
+      return m.condition_operator_not_contains()
+    case "BOOLEAN":
+      return m.condition_operator_boolean()
+  }
 }
 
 export const LABEL_CONDITION_FIELDS: ConditionField[] = [
@@ -84,14 +107,12 @@ export const LABEL_FIELD_OPERATORS: Record<ConditionField, ConditionOperator[]> 
   HAS_ATTACHMENT: ["BOOLEAN"],
 }
 
-export const LABEL_ATTACHMENT_OPTIONS = [
-  { value: "true", label: "포함" },
-  { value: "false", label: "포함안함" },
-]
+export const LABEL_ATTACHMENT_OPTIONS = ["true", "false"] as const
 
-export const LABEL_ATTACHMENT_VALUE_LABELS: Record<string, string> = {
-  true: "포함",
-  false: "포함안함",
+export function getLabelAttachmentValueLabel(value: string): string | undefined {
+  if (value === "true") return m.condition_attachment_true()
+  if (value === "false") return m.condition_attachment_false()
+  return undefined
 }
 
 export interface LabelListItem extends Label {
