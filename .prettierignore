@@ -9,3 +9,7 @@ package-lock.json
 yarn.lock
 
 **/src/routeTree.gen.ts
+**/src/paraglide/**
+
+project.inlang/*
+!project.inlang/settings.json
