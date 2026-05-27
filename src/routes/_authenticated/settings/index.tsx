@@ -8,8 +8,11 @@ import { useTheme } from "@/components/theme-provider"
 import { DarkPreview, LightPreview, SystemPreview } from "@/components/theme-preview"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
+import { useAiUsages } from "@/queries/ai"
 import { useUser } from "@/queries/user"
+import { AI_USAGE_TYPE_LABELS } from "@/types/ai"
 
 export const Route = createFileRoute("/_authenticated/settings/")({
   component: SettingsPage,
@@ -17,6 +20,7 @@ export const Route = createFileRoute("/_authenticated/settings/")({
 
 function SettingsPage() {
   const { data: user, isPending: isUserPending } = useUser()
+  const { data: aiUsages, isPending: isAiUsagesPending } = useAiUsages()
   const { theme, setTheme } = useTheme()
   // TODO: 실제 설정 저장/불러오기 기능은 추후 구현 예정
   const [inboxView, setInboxView] = useState<"single" | "double">("double")
@@ -55,6 +59,55 @@ function SettingsPage() {
                   </Link>
                 )}
               </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>AI 기능 사용량</CardTitle>
+            <CardDescription>이번 주 AI 기능별 사용 현황입니다.</CardDescription>
+          </CardHeader>
+          <CardContent className="pt-4">
+            <div className="flex flex-col gap-3">
+              {isAiUsagesPending
+                ? Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className="flex flex-col gap-1.5">
+                      <div className="flex justify-between">
+                        <Skeleton className="h-4 w-24" />
+                        <Skeleton className="h-4 w-12" />
+                      </div>
+                      <Skeleton className="h-2 w-full rounded-full" />
+                    </div>
+                  ))
+                : aiUsages?.usages.map((item) => {
+                    const ratio = item.limit > 0 ? item.used / item.limit : 0
+                    const isExhausted = item.used >= item.limit
+                    return (
+                      <div key={item.type} className="flex flex-col gap-1.5">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium">{AI_USAGE_TYPE_LABELS[item.type]}</span>
+                          <span
+                            className={cn(
+                              "text-xs tabular-nums",
+                              isExhausted ? "text-destructive" : "text-muted-foreground"
+                            )}
+                          >
+                            {item.used} / {item.limit}
+                          </span>
+                        </div>
+                        <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                          <div
+                            className={cn(
+                              "h-full rounded-full transition-all",
+                              isExhausted ? "bg-destructive" : "bg-primary"
+                            )}
+                            style={{ width: `${Math.min(ratio * 100, 100)}%` }}
+                          />
+                        </div>
+                      </div>
+                    )
+                  })}
             </div>
           </CardContent>
         </Card>
