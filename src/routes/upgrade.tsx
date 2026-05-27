@@ -47,6 +47,7 @@ function RouteComponent() {
       <button
         className={buttonVariants({ variant: "ghost", size: "icon", className: "absolute top-4 left-4" })}
         onClick={() => router.history.back()}
+        aria-label="뒤로 가기"
       >
         <ArrowLeft className="size-4" />
       </button>
