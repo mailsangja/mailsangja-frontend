@@ -5,7 +5,8 @@ import type { AiUsageType } from "@/types/ai"
 
 export const aiKeys = {
   all: () => ["ai"] as const,
-  usages: (types?: AiUsageType[]) => [...aiKeys.all(), "usages", types] as const,
+  usages: (types?: AiUsageType[]) =>
+    types ? ([...aiKeys.all(), "usages", types] as const) : ([...aiKeys.all(), "usages"] as const),
 }
 
 export const aiQueries = {

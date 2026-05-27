@@ -34,6 +34,7 @@ function SettingsPage() {
   const {
     data: aiUsages,
     isPending: isAiUsagesPending,
+    isError: isAiUsagesError,
     isRefetching: isAiUsagesRefetching,
     refetch: refetchAiUsages,
   } = useAiUsages()
@@ -99,44 +100,50 @@ function SettingsPage() {
             </CardHeader>
             <CardContent className="pt-4">
               <div className="flex flex-col gap-3">
-                {isAiUsagesPending
-                  ? Array.from({ length: 3 }).map((_, i) => (
-                      <div key={i} className="flex flex-col gap-1.5">
-                        <div className="flex justify-between">
-                          <Skeleton className="h-4 w-24" />
-                          <Skeleton className="h-4 w-12" />
-                        </div>
-                        <Skeleton className="h-2 w-full rounded-full" />
+                {isAiUsagesPending ? (
+                  Array.from({ length: 3 }).map((_, i) => (
+                    <div key={i} className="flex flex-col gap-1.5">
+                      <div className="flex justify-between">
+                        <Skeleton className="h-4 w-24" />
+                        <Skeleton className="h-4 w-12" />
                       </div>
-                    ))
-                  : aiUsages?.usages.map((item) => {
-                      const ratio = item.limit > 0 ? item.used / item.limit : 0
-                      const isExhausted = item.used >= item.limit
-                      return (
-                        <div key={item.type} className="flex flex-col gap-1.5">
-                          <div className="flex items-center justify-between">
-                            <span className="text-sm font-medium">{AI_USAGE_TYPE_LABELS[item.type]}</span>
-                            <span
-                              className={cn(
-                                "text-xs tabular-nums",
-                                isExhausted ? "text-destructive" : "text-muted-foreground"
-                              )}
-                            >
-                              {Math.min(item.used, item.limit)} / {item.limit}
-                            </span>
-                          </div>
-                          <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
-                            <div
-                              className={cn(
-                                "h-full rounded-full transition-all",
-                                isExhausted ? "bg-destructive" : "bg-primary"
-                              )}
-                              style={{ width: `${Math.min(ratio * 100, 100)}%` }}
-                            />
-                          </div>
+                      <Skeleton className="h-2 w-full rounded-full" />
+                    </div>
+                  ))
+                ) : isAiUsagesError ? (
+                  <p className="text-sm text-muted-foreground">
+                    사용량을 불러오지 못했습니다. 새로고침을 눌러 다시 시도해 주세요.
+                  </p>
+                ) : (
+                  aiUsages?.usages.map((item) => {
+                    const ratio = item.limit > 0 ? item.used / item.limit : 0
+                    const isExhausted = item.used >= item.limit
+                    return (
+                      <div key={item.type} className="flex flex-col gap-1.5">
+                        <div className="flex items-center justify-between">
+                          <span className="text-sm font-medium">{AI_USAGE_TYPE_LABELS[item.type]}</span>
+                          <span
+                            className={cn(
+                              "text-xs tabular-nums",
+                              isExhausted ? "text-destructive" : "text-muted-foreground"
+                            )}
+                          >
+                            {Math.min(item.used, item.limit)} / {item.limit}
+                          </span>
                         </div>
-                      )
-                    })}
+                        <div className="h-2 w-full overflow-hidden rounded-full bg-muted">
+                          <div
+                            className={cn(
+                              "h-full rounded-full transition-all",
+                              isExhausted ? "bg-destructive" : "bg-primary"
+                            )}
+                            style={{ width: `${Math.min(ratio * 100, 100)}%` }}
+                          />
+                        </div>
+                      </div>
+                    )
+                  })
+                )}
               </div>
             </CardContent>
           </Card>
