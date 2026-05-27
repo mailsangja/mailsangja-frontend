@@ -250,7 +250,7 @@
   --chart-3: var(--tds-yellow-300);
   --chart-4: var(--tds-red-400);
   --chart-5: var(--tds-purple-300);
-  --sidebar: color-mix(in oklch, var(--tds-grey-900) 88%, black);
+  --sidebar: oklch(0.208951 0.01718 258.355);
   --sidebar-foreground: var(--tds-grey-200);
   --sidebar-primary: var(--tds-blue-300);
   --sidebar-primary-foreground: var(--tds-grey-900);
