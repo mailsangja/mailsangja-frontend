@@ -19,6 +19,7 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
+import { m } from "@/paraglide/messages"
 import { useActiveMailAccounts } from "@/queries/mail-accounts"
 import { useUser } from "@/queries/user"
 import type { PrimaryMailboxId } from "@/types/email"
@@ -59,8 +60,8 @@ export function AppSidebar({
                 <Mail className="size-4" />
               </div>
               <div className="grid flex-1 text-left text-sm leading-tight">
-                <span className="truncate font-semibold">메일상자</span>
-                <span className="truncate text-xs">AI 메일 통합 인박스</span>
+                <span className="truncate font-semibold">{m.app_name()}</span>
+                <span className="truncate text-xs">{m.app_tagline()}</span>
               </div>
             </SidebarMenuButton>
           </SidebarMenuItem>
@@ -71,7 +72,7 @@ export function AppSidebar({
         <div className="mb-2 flex gap-px px-2">
           <Link to="/compose" className={buttonVariants({ size: "lg", className: "flex-1 rounded-r-none" })}>
             <Pencil className="mr-1" />
-            메일 작성
+            {m.mail_compose()}
           </Link>
           <DropdownMenu>
             <DropdownMenuTrigger
@@ -80,7 +81,7 @@ export function AppSidebar({
                 size: "lg",
                 className: "cursor-pointer rounded-l-none px-2",
               })}
-              aria-label="발신 계정 선택"
+              aria-label={m.mail_from_account_select()}
             >
               <ChevronDown className="size-4" />
             </DropdownMenuTrigger>
@@ -93,7 +94,12 @@ export function AppSidebar({
                   <span className="flex min-w-0 flex-1 items-center gap-2">
                     <MailAccountLabel account={mailAccount} />
                     {mailAccount.id === user?.defaultMailAccountId && (
-                      <Badge variant="secondary" className="px-1.5" aria-label="기본 발신 계정" title="기본 발신 계정">
+                      <Badge
+                        variant="secondary"
+                        className="px-1.5"
+                        aria-label={m.mail_default_from_account()}
+                        title={m.mail_default_from_account()}
+                      >
                         <Star stroke="var(--secondary-foreground)" fill="var(--secondary-foreground)" />
                       </Badge>
                     )}

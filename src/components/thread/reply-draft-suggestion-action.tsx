@@ -11,6 +11,7 @@ import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from "@/co
 import { useIsMobile } from "@/hooks/use-mobile"
 import { getErrorMessage } from "@/lib/http-error"
 import { useSelectReplyDraftSuggestion } from "@/mutations/emails"
+import { m } from "@/paraglide/messages"
 import { emailKeys, useReplyDraftSuggestions } from "@/queries/emails"
 import type { InboxMessage, ReplyDraftSuggestion, ReplyDraftSuggestionListResponse } from "@/types/email"
 
@@ -34,14 +35,15 @@ function SuggestionPreview({ suggestion, onSelect, isSelecting = false }: Sugges
         </p>
       </div>
       <Button onClick={() => onSelect(suggestion)} disabled={isSelecting}>
-        {isSelecting ? <Loader2 className="animate-spin" /> : <Reply />}이 내용으로 답장 작성
+        {isSelecting ? <Loader2 className="animate-spin" /> : <Reply />}
+        {m.reply_draft_suggestion_select()}
       </Button>
     </div>
   )
 }
 
 function getSuggestionAriaLabel(suggestion: ReplyDraftSuggestion) {
-  return `${suggestion.type} 추천 답장`
+  return m.reply_draft_suggestion_aria({ type: suggestion.type })
 }
 
 export function ReplyDraftSuggestionAction({ threadId, message }: ReplyDraftSuggestionActionProps) {
@@ -77,8 +79,8 @@ export function ReplyDraftSuggestionAction({ threadId, message }: ReplyDraftSugg
         }),
       })
     } catch (error) {
-      toast.error("추천 답장 선택에 실패했습니다", {
-        description: getErrorMessage(error, "잠시 후 다시 시도해주세요."),
+      toast.error(m.reply_draft_suggestion_select_error(), {
+        description: getErrorMessage(error, m.common_try_again_later()),
       })
     }
   }
@@ -90,7 +92,7 @@ export function ReplyDraftSuggestionAction({ threadId, message }: ReplyDraftSugg
           <span className="mx-1 h-5 w-px bg-border" aria-hidden />
           <div className="mr-1 flex shrink-0 items-center gap-1.5 text-xs font-medium text-muted-foreground">
             <Sparkles className="size-3.5" />
-            AI 답장
+            {m.reply_draft_ai_reply()}
           </div>
           {suggestions.map((suggestion) => (
             <SheetTrigger
@@ -113,7 +115,11 @@ export function ReplyDraftSuggestionAction({ threadId, message }: ReplyDraftSugg
           <SheetHeader>
             <SheetTitle className="flex flex-row items-center gap-2">
               <Sparkles className="size-4" />
-              <span>{mobileSuggestion ? `${mobileSuggestion.type} 답장 미리보기` : "추천 답장"}</span>
+              <span>
+                {mobileSuggestion
+                  ? m.reply_draft_preview_title({ type: mobileSuggestion.type })
+                  : m.reply_draft_suggestions_title()}
+              </span>
             </SheetTitle>
           </SheetHeader>
           <ScrollArea className="min-h-0 flex-1 px-4 pb-4">
@@ -135,7 +141,7 @@ export function ReplyDraftSuggestionAction({ threadId, message }: ReplyDraftSugg
       <span className="mx-1 h-5 w-px bg-border" aria-hidden />
       <div className="mr-1 flex shrink-0 items-center gap-1.5 text-xs font-medium text-muted-foreground">
         <Sparkles className="size-3.5" />
-        AI 답장
+        {m.reply_draft_ai_reply()}
       </div>
       {suggestions.map((suggestion) => (
         <Popover key={suggestion.id}>
@@ -153,7 +159,7 @@ export function ReplyDraftSuggestionAction({ threadId, message }: ReplyDraftSugg
           <PopoverContent side="top" sideOffset={8} className="w-88 max-w-[calc(100vw-2rem)] p-3">
             <PopoverTitle className="flex flex-row items-center gap-2">
               <Sparkles className="size-4" />
-              {suggestion.type} 답장 미리보기
+              {m.reply_draft_preview_title({ type: suggestion.type })}
             </PopoverTitle>
             <SuggestionPreview
               suggestion={suggestion}

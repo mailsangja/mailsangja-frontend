@@ -11,16 +11,17 @@ import { unregisterFcmToken } from "@/api/users"
 import { identifyAnalyticsUser, resetAnalyticsUser, trackEvent } from "@/lib/analytics"
 import { clearFcmToken, disableFcm } from "@/lib/fcm"
 import { getErrorMessage, getHttpStatus } from "@/lib/http-error"
+import { m } from "@/paraglide/messages"
 import { userKeys } from "@/queries/user"
 
 type NavigateFn = (options: NavigateOptions) => Promise<void>
 
 function getLogoutErrorDescription(error: unknown) {
   if (getHttpStatus(error) === 401) {
-    return "이미 세션이 만료되었거나 로그아웃 요청을 인증할 수 없습니다."
+    return m.auth_logout_session_expired()
   }
 
-  return getErrorMessage(error, "로그아웃에 실패했습니다. 다시 시도해주세요.")
+  return getErrorMessage(error, m.auth_logout_error_description())
 }
 
 export const authMutationOptions = {
@@ -65,7 +66,7 @@ export const authMutationOptions = {
       void navigate({ to: "/login" })
     },
     onError: (error: unknown) => {
-      toast.error("로그아웃에 실패했습니다", {
+      toast.error(m.auth_logout_error_title(), {
         description: getLogoutErrorDescription(error),
       })
     },

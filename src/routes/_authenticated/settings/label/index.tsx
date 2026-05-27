@@ -23,6 +23,7 @@ import { useLabelOrder } from "@/hooks/use-label-order"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { LabelFormDialog, type LabelFormData } from "@/components/label/label-form-dialog"
 import { CreateLabelGroupDialog, EditLabelGroupDialog } from "@/components/label/label-group-form-dialog"
+import { m } from "@/paraglide/messages"
 import type { LabelGroupItem, LabelListItem } from "@/types/label"
 
 export const Route = createFileRoute("/_authenticated/settings/label/")({
@@ -44,9 +45,9 @@ function LabelGroupDeleteDialog({
     deleteLabelGroup.mutate(group.id, {
       onSuccess: () => {
         onOpenChange(false)
-        toast.success(`${group.name} 그룹이 삭제되었습니다`)
+        toast.success(m.label_group_delete_success({ name: group.name }))
       },
-      onError: (e) => toast.error(getErrorMessage(e, "라벨 그룹 삭제에 실패했습니다.")),
+      onError: (e) => toast.error(getErrorMessage(e, m.label_group_delete_error())),
     })
   }
 
@@ -54,17 +55,15 @@ function LabelGroupDeleteDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>삭제</DialogTitle>
+          <DialogTitle>{m.common_delete()}</DialogTitle>
         </DialogHeader>
-        <p className="text-base text-muted-foreground">
-          {group.name} 그룹을 삭제하시겠습니까? 라벨 자체는 삭제되지 않습니다.
-        </p>
+        <p className="text-base text-muted-foreground">{m.label_group_delete_confirmation({ name: group.name })}</p>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            취소
+            {m.common_cancel()}
           </Button>
           <Button variant="destructive" onClick={handleDelete} disabled={deleteLabelGroup.isPending}>
-            삭제
+            {m.common_delete()}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -96,21 +95,23 @@ function LabelGroupTableRow({ group, allLabels }: { group: LabelGroupItem; allLa
           {group.name}
         </div>
       </TableCell>
-      <TableCell className="text-center text-sm text-muted-foreground">{group.labelIds.length}개</TableCell>
+      <TableCell className="text-center text-sm text-muted-foreground">
+        {m.label_group_label_count({ count: group.labelIds.length })}
+      </TableCell>
       <TableCell className="pr-6 text-right">
         <DropdownMenu>
-          <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" aria-label="그룹 메뉴" />}>
+          <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" aria-label={m.label_group_menu()} />}>
             <MoreVertical className="size-4" />
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="min-w-36">
             <DropdownMenuItem onClick={() => setEditOpen(true)}>
               <Pencil />
-              수정
+              {m.common_edit()}
             </DropdownMenuItem>
             <DropdownMenuSeparator className="my-0.5" />
             <DropdownMenuItem variant="destructive" onClick={() => setDeleteOpen(true)}>
               <Trash2 />
-              삭제
+              {m.common_delete()}
             </DropdownMenuItem>
           </DropdownMenuContent>
         </DropdownMenu>
@@ -143,7 +144,7 @@ function SortableLabelRow({ label }: { label: LabelListItem }) {
         <button
           type="button"
           className="flex cursor-grab touch-none items-center text-muted-foreground/30 hover:text-muted-foreground active:cursor-grabbing"
-          aria-label="드래그하여 순서 변경"
+          aria-label={m.label_reorder()}
           {...attributes}
           {...listeners}
         >
@@ -158,7 +159,7 @@ function SortableLabelRow({ label }: { label: LabelListItem }) {
         <Button
           variant="ghost"
           size="icon-sm"
-          aria-label="라벨 설정"
+          aria-label={m.label_settings()}
           render={<Link to="/settings/label/$labelId" params={{ labelId: String(label.id) }} />}
         >
           <ChevronRight className="size-4" />
@@ -183,7 +184,7 @@ function SettingsLabelPage() {
       { name, colorCode, notificationPolicy, order: 0 },
       {
         onSuccess: () => setCreateOpen(false),
-        onError: (e) => toast.error(getErrorMessage(e, "라벨 생성에 실패했습니다.")),
+        onError: (e) => toast.error(getErrorMessage(e, m.sidebar_label_create_error())),
       }
     )
   }
@@ -202,11 +203,11 @@ function SettingsLabelPage() {
     <ScrollArea className="min-h-0 flex-1">
       <div className="flex flex-col gap-4 px-6 pb-4">
         <div className="flex flex-col gap-3">
-          <p className="text-md px-1 font-semibold text-muted-foreground">라벨</p>
+          <p className="text-md px-1 font-semibold text-muted-foreground">{m.settings_label()}</p>
           <Card>
             <CardHeader>
-              <CardTitle>라벨 관리</CardTitle>
-              <CardDescription>라벨 규칙 등 전반적인 설정을 관리합니다.</CardDescription>
+              <CardTitle>{m.label_management_title()}</CardTitle>
+              <CardDescription>{m.label_management_description()}</CardDescription>
             </CardHeader>
             <CardContent className="px-0">
               <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
@@ -214,30 +215,30 @@ function SettingsLabelPage() {
                   <TableHeader>
                     <TableRow>
                       <TableHead className="w-8" />
-                      <TableHead className="w-10 text-center">색상</TableHead>
-                      <TableHead className="w-full">이름</TableHead>
-                      <TableHead className="w-16 pr-6 text-right">관리</TableHead>
+                      <TableHead className="w-10 text-center">{m.label_color_column()}</TableHead>
+                      <TableHead className="w-full">{m.common_name()}</TableHead>
+                      <TableHead className="w-16 pr-6 text-right">{m.label_actions_column()}</TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
                     {isPending && (
                       <TableRow>
                         <TableCell colSpan={4} className="text-center text-sm text-muted-foreground">
-                          라벨 목록을 불러오는 중입니다.
+                          {m.label_list_loading()}
                         </TableCell>
                       </TableRow>
                     )}
                     {isError && (
                       <TableRow>
                         <TableCell colSpan={4} className="text-center text-sm text-destructive">
-                          라벨 목록을 불러오지 못했습니다.
+                          {m.label_list_error()}
                         </TableCell>
                       </TableRow>
                     )}
                     {!isPending && !isError && orderedLabels.length === 0 && (
                       <TableRow>
                         <TableCell colSpan={4} className="text-center text-sm text-muted-foreground">
-                          등록된 라벨이 없습니다.
+                          {m.label_list_empty()}
                         </TableCell>
                       </TableRow>
                     )}
@@ -255,19 +256,19 @@ function SettingsLabelPage() {
           <div ref={createFilterRef}>
             <Card>
               <CardHeader>
-                <CardTitle>라벨 추가하기</CardTitle>
-                <CardDescription>이름과 색상을 지정해 새 라벨을 만들 수 있습니다.</CardDescription>
+                <CardTitle>{m.label_add_section_title()}</CardTitle>
+                <CardDescription>{m.label_add_section_description()}</CardDescription>
               </CardHeader>
               <CardContent>
                 <Button variant="outline" onClick={() => setCreateOpen(true)}>
                   <Plus data-icon="inline-start" />
-                  라벨 추가
+                  {m.sidebar_label_add()}
                 </Button>
                 <LabelFormDialog
                   open={createOpen}
                   onOpenChange={setCreateOpen}
-                  title="새 라벨 만들기"
-                  submitLabel="만들기"
+                  title={m.sidebar_label_create_title()}
+                  submitLabel={m.sidebar_label_create_submit()}
                   isPending={createLabel.isPending}
                   onSubmit={handleCreate}
                 />
@@ -277,40 +278,40 @@ function SettingsLabelPage() {
         </div>
 
         <div className="flex flex-col gap-3">
-          <p className="text-md px-1 font-semibold text-muted-foreground">라벨 그룹</p>
+          <p className="text-md px-1 font-semibold text-muted-foreground">{m.sidebar_label_groups()}</p>
           <Card>
             <CardHeader>
-              <CardTitle>라벨 그룹 관리</CardTitle>
-              <CardDescription>라벨 그룹 목록을 확인하고 수정하거나 삭제합니다.</CardDescription>
+              <CardTitle>{m.label_group_management_title()}</CardTitle>
+              <CardDescription>{m.label_group_management_description()}</CardDescription>
             </CardHeader>
             <CardContent className="px-0">
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-full pl-12.5">이름</TableHead>
-                    <TableHead className="w-20 text-center">라벨 수</TableHead>
-                    <TableHead className="w-16 pr-6 text-right">관리</TableHead>
+                    <TableHead className="w-full pl-12.5">{m.common_name()}</TableHead>
+                    <TableHead className="w-20 text-center">{m.label_group_count_column()}</TableHead>
+                    <TableHead className="w-16 pr-6 text-right">{m.label_actions_column()}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
                   {isGroupsPending && (
                     <TableRow>
                       <TableCell colSpan={3} className="text-center text-sm text-muted-foreground">
-                        라벨 그룹 목록을 불러오는 중입니다.
+                        {m.label_group_list_loading()}
                       </TableCell>
                     </TableRow>
                   )}
                   {isGroupsError && (
                     <TableRow>
                       <TableCell colSpan={3} className="text-center text-sm text-destructive">
-                        라벨 그룹 목록을 불러오지 못했습니다.
+                        {m.label_group_list_error()}
                       </TableCell>
                     </TableRow>
                   )}
                   {!isGroupsPending && !isGroupsError && labelGroups.length === 0 && (
                     <TableRow>
                       <TableCell colSpan={3} className="text-center text-sm text-muted-foreground">
-                        등록된 라벨 그룹이 없습니다.
+                        {m.label_group_list_empty()}
                       </TableCell>
                     </TableRow>
                   )}
@@ -323,13 +324,13 @@ function SettingsLabelPage() {
           </Card>
           <Card>
             <CardHeader>
-              <CardTitle>라벨 그룹 추가하기</CardTitle>
-              <CardDescription>다수의 라벨을 하나의 라벨 그룹으로 묶을 수 있습니다.</CardDescription>
+              <CardTitle>{m.label_group_add_section_title()}</CardTitle>
+              <CardDescription>{m.label_group_add_section_description()}</CardDescription>
             </CardHeader>
             <CardContent>
               <Button variant="outline" onClick={() => setCreateGroupOpen(true)}>
                 <Plus data-icon="inline-start" />
-                라벨 그룹 추가
+                {m.sidebar_label_group_add()}
               </Button>
               <CreateLabelGroupDialog
                 open={createGroupOpen}

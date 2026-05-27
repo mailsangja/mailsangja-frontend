@@ -10,6 +10,7 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { m } from "@/paraglide/messages"
 import { useLabels } from "@/queries/labels"
 
 export const Route = createFileRoute("/_authenticated/settings")({
@@ -48,9 +49,9 @@ function SettingsLayout() {
             <BreadcrumbList className="text-2xl font-semibold [&>li[role=presentation]>svg]:size-5">
               <BreadcrumbItem>
                 {isNested ? (
-                  <BreadcrumbLink render={<Link to="/settings" />}>설정</BreadcrumbLink>
+                  <BreadcrumbLink render={<Link to="/settings" />}>{m.settings_title()}</BreadcrumbLink>
                 ) : (
-                  <BreadcrumbPage className="font-semibold">설정</BreadcrumbPage>
+                  <BreadcrumbPage className="font-semibold">{m.settings_title()}</BreadcrumbPage>
                 )}
               </BreadcrumbItem>
               {activeTab === "label" && (
@@ -58,9 +59,9 @@ function SettingsLayout() {
                   <BreadcrumbSeparator />
                   <BreadcrumbItem>
                     {isLabelDetail ? (
-                      <BreadcrumbLink render={<Link to="/settings/label" />}>라벨</BreadcrumbLink>
+                      <BreadcrumbLink render={<Link to="/settings/label" />}>{m.settings_label()}</BreadcrumbLink>
                     ) : (
-                      <BreadcrumbPage className="font-semibold">라벨</BreadcrumbPage>
+                      <BreadcrumbPage className="font-semibold">{m.settings_label()}</BreadcrumbPage>
                     )}
                   </BreadcrumbItem>
                 </>
@@ -69,7 +70,7 @@ function SettingsLayout() {
                 <>
                   <BreadcrumbSeparator />
                   <BreadcrumbItem>
-                    <BreadcrumbPage className="font-semibold">메일 계정</BreadcrumbPage>
+                    <BreadcrumbPage className="font-semibold">{m.settings_mail_account()}</BreadcrumbPage>
                   </BreadcrumbItem>
                 </>
               )}
@@ -83,7 +84,7 @@ function SettingsLayout() {
               )}
             </BreadcrumbList>
           </Breadcrumb>
-          <p className="text-sm text-muted-foreground">메일상자 계정 및 메일 환경을 한 곳에서 관리합니다.</p>
+          <p className="text-sm text-muted-foreground">{m.settings_description()}</p>
         </div>
 
         <Tabs
@@ -100,15 +101,15 @@ function SettingsLayout() {
           <TabsList variant="line" className="w-full justify-start border-b">
             <TabsTrigger value="general" className="min-w-24 rounded-none px-4">
               <Settings data-icon="inline-start" />
-              일반
+              {m.settings_general()}
             </TabsTrigger>
             <TabsTrigger value="account" className="min-w-24 rounded-none px-4">
               <User data-icon="inline-start" />
-              메일 계정
+              {m.settings_mail_account()}
             </TabsTrigger>
             <TabsTrigger value="label" className="min-w-24 rounded-none px-4">
               <Tag data-icon="inline-start" />
-              라벨
+              {m.settings_label()}
             </TabsTrigger>
           </TabsList>
           <TabsContent value={activeTab} className="flex min-h-0 flex-col">

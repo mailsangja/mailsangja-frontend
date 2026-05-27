@@ -2,6 +2,7 @@ import { deleteToken, getToken, onMessage, type MessagePayload, type Unsubscribe
 
 import { getFirebaseMessaging } from "@/lib/firebase"
 import { getPwaServiceWorkerRegistration } from "@/lib/pwa"
+import { m } from "@/paraglide/messages"
 
 const FCM_TOKEN_STORAGE_KEY_PREFIX = "mailsangja:fcm-token"
 export const FCM_TOKEN_CHANGED_EVENT = "mailsangja:fcm-token-changed"
@@ -32,25 +33,25 @@ export function getPushNotificationPermission(): NotificationPermission | "unsup
 
 export async function getFcmToken() {
   if (!("Notification" in window) || !("serviceWorker" in navigator) || !("PushManager" in window)) {
-    throw new PushNotificationError("unsupported", "이 브라우저에서는 푸시 알림을 사용할 수 없습니다.")
+    throw new PushNotificationError("unsupported", m.push_error_unsupported())
   }
 
   const vapidKey = import.meta.env.VITE_FIREBASE_VAPID_KEY
 
   if (!vapidKey) {
-    throw new PushNotificationError("missing-config", "Firebase 알림 설정이 완료되지 않았습니다.")
+    throw new PushNotificationError("missing-config", m.push_error_missing_config())
   }
 
   const permission = await Notification.requestPermission()
 
   if (permission !== "granted") {
-    throw new PushNotificationError("permission-denied", "브라우저 알림 권한이 허용되지 않았습니다.")
+    throw new PushNotificationError("permission-denied", m.push_error_permission_denied())
   }
 
   const messaging = await getFirebaseMessaging()
 
   if (!messaging) {
-    throw new PushNotificationError("missing-config", "Firebase 알림 설정이 완료되지 않았습니다.")
+    throw new PushNotificationError("missing-config", m.push_error_missing_config())
   }
 
   let registration: ServiceWorkerRegistration
@@ -58,7 +59,7 @@ export async function getFcmToken() {
   try {
     registration = await getPwaServiceWorkerRegistration()
   } catch {
-    throw new PushNotificationError("token-unavailable", "푸시 알림 서비스 워커를 등록하지 못했습니다.")
+    throw new PushNotificationError("token-unavailable", m.push_error_service_worker_unavailable())
   }
 
   const token = await getToken(messaging, {
@@ -67,7 +68,7 @@ export async function getFcmToken() {
   })
 
   if (!token) {
-    throw new PushNotificationError("token-unavailable", "FCM 디바이스 토큰을 발급받지 못했습니다.")
+    throw new PushNotificationError("token-unavailable", m.push_error_token_unavailable())
   }
 
   return token

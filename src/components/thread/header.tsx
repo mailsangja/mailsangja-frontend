@@ -2,6 +2,7 @@ import { LabelChipList } from "@/components/label/label-chip"
 import { MailAccountIcon } from "@/components/mail-account-icon"
 import { Badge } from "@/components/ui/badge"
 import { cn } from "@/lib/utils"
+import { m } from "@/paraglide/messages"
 import type { ThreadLabel } from "@/types/label"
 import type { MailAccount } from "@/types/mail-account"
 
@@ -19,32 +20,34 @@ interface ThreadHeaderProps {
 
 export function ThreadHeader({ thread, account, labels, className }: ThreadHeaderProps) {
   const messageCount = thread.messages.length
-  const hasInbound = thread.messages.some((m) => m.direction === "INBOUND")
-  const hasOutbound = thread.messages.some((m) => m.direction === "OUTBOUND")
+  const hasInbound = thread.messages.some((message) => message.direction === "INBOUND")
+  const hasOutbound = thread.messages.some((message) => message.direction === "OUTBOUND")
   return (
     <div className={cn("shrink-0 border-b px-6 pb-5", className)}>
-      <h2 className="text-xl leading-snug font-semibold wrap-break-word">{thread.latestSubject || "(제목 없음)"}</h2>
+      <h2 className="text-xl leading-snug font-semibold wrap-break-word">
+        {thread.latestSubject || m.message_no_subject()}
+      </h2>
       <div className="mt-2 flex flex-wrap items-center gap-1">
         {account?.icon ? (
           <MailAccountIcon
             icon={account.icon}
             color={account.color}
-            aria-label={`${account.emailAddress} 계정`}
+            aria-label={m.thread_account_aria({ email: account.emailAddress })}
             title={account.emailAddress}
           />
         ) : null}
         {hasInbound && (
           <Badge variant="outline" className="font-normal">
-            수신
+            {m.thread_direction_inbound()}
           </Badge>
         )}
         {hasOutbound && (
           <Badge variant="outline" className="font-normal">
-            발신
+            {m.thread_direction_outbound()}
           </Badge>
         )}
         <Badge variant="outline" className="font-normal">
-          메시지 {messageCount}개
+          {m.thread_message_count({ count: messageCount })}
         </Badge>
         {labels ? <LabelChipList labels={labels} /> : null}
       </div>

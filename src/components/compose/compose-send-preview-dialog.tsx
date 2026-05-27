@@ -4,7 +4,8 @@ import { LocalAttachmentChip } from "@/components/attachment/local-chip"
 import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { cn } from "@/lib/utils"
-import { MAIL_REVIEW_ISSUE_FIELD_LABELS, MAIL_REVIEW_ISSUE_TYPE_LABELS } from "@/types/email"
+import { m } from "@/paraglide/messages"
+import { getMailReviewIssueFieldLabel, getMailReviewIssueTypeLabel } from "@/types/email"
 import type { ComposeEmailData, MailReviewIssue, MailReviewIssueSeverity, MailReviewResult } from "@/types/email"
 
 export interface ComposeSendPreviewData {
@@ -71,7 +72,7 @@ function EmailPreviewFrame({ html, text }: { html: string; text: string }) {
 
   return (
     <iframe
-      title="최종 발송 본문 미리보기"
+      title={m.compose_send_preview_frame_title()}
       sandbox="allow-popups allow-same-origin"
       srcDoc={srcDoc}
       className="h-[min(40vh,30rem)] w-full rounded-lg border bg-white"
@@ -87,8 +88,8 @@ function ReviewIssueItem({ issue }: { issue: MailReviewIssue }) {
       <AlertTriangle className={cn("mt-0.5 size-4 shrink-0", severityClass)} />
       <div className="min-w-0 flex-1 space-y-1">
         <div className="flex flex-wrap items-center gap-1.5 text-xs">
-          <span className={cn("font-medium", severityClass)}>{MAIL_REVIEW_ISSUE_TYPE_LABELS[issue.type]}</span>
-          <span className="text-muted-foreground">{MAIL_REVIEW_ISSUE_FIELD_LABELS[issue.field]}</span>
+          <span className={cn("font-medium", severityClass)}>{getMailReviewIssueTypeLabel(issue.type)}</span>
+          <span className="text-muted-foreground">{getMailReviewIssueFieldLabel(issue.field)}</span>
         </div>
         <p className="text-sm">{issue.reason}</p>
         {issue.originalText && issue.replacementText && (
@@ -116,27 +117,27 @@ function ReviewSection({
     <div className="rounded-lg border text-sm md:self-start">
       <div className="flex items-center gap-2 border-b px-4 py-2.5 font-medium text-primary">
         <Sparkles className="size-4" />
-        AI 검토 결과
+        {m.compose_review_result_title()}
       </div>
 
       {isReviewing && (
         <div className="flex items-center gap-2 px-4 py-3 text-muted-foreground">
           <Loader2 className="size-4 animate-spin" />
-          AI가 메일을 검토하는 중입니다...
+          {m.compose_review_loading()}
         </div>
       )}
 
       {!isReviewing && reviewError && (
         <div className="flex items-center gap-2 px-4 py-3 text-muted-foreground">
           <AlertCircle className="size-4" />
-          AI 검토에 실패했습니다. 메일을 수정하거나 바로 발송할 수 있습니다.
+          {m.compose_review_error()}
         </div>
       )}
 
       {!isReviewing && reviewResult && !reviewResult.hasIssues && (
         <div className="flex items-center gap-2 px-4 py-3 text-green-600 dark:text-green-400">
           <CheckCircle2 className="size-4" />
-          수정 권장 사항이 없습니다.
+          {m.compose_review_no_issues()}
         </div>
       )}
 
@@ -167,25 +168,29 @@ export function ComposeSendPreviewDialog({
     <Dialog open={open} onOpenChange={(nextOpen) => !isSending && onOpenChange(nextOpen)}>
       <DialogContent className="flex max-h-[90dvh] flex-col sm:max-w-5xl">
         <DialogHeader>
-          <DialogTitle>메일 미리보기</DialogTitle>
+          <DialogTitle>{m.compose_send_preview_title()}</DialogTitle>
         </DialogHeader>
 
         {mail && (
           <div className="grid min-h-0 flex-1 gap-4 overflow-y-auto md:grid-cols-[1fr_22rem]">
             <div className="grid gap-4">
               <dl className="overflow-hidden rounded-lg border text-sm">
-                <PreviewField label="보내는 사람" value={mail.from ?? ""} />
-                <PreviewField label="받는 사람" value={mail.to.join(", ")} />
-                {mail.cc && mail.cc.length > 0 && <PreviewField label="참조" value={mail.cc.join(", ")} />}
-                {mail.bcc && mail.bcc.length > 0 && <PreviewField label="숨은참조" value={mail.bcc.join(", ")} />}
-                <PreviewField label="제목" value={mail.subject} />
+                <PreviewField label={m.compose_field_from()} value={mail.from ?? ""} />
+                <PreviewField label={m.compose_field_to()} value={mail.to.join(", ")} />
+                {mail.cc && mail.cc.length > 0 && (
+                  <PreviewField label={m.compose_field_cc()} value={mail.cc.join(", ")} />
+                )}
+                {mail.bcc && mail.bcc.length > 0 && (
+                  <PreviewField label={m.compose_field_bcc()} value={mail.bcc.join(", ")} />
+                )}
+                <PreviewField label={m.compose_field_subject()} value={mail.subject} />
               </dl>
 
               <EmailPreviewFrame html={preview.html} text={preview.text} />
 
               {mail.attachments && mail.attachments.length > 0 && (
                 <div className="rounded-lg border px-4 py-3 text-sm">
-                  <div className="mb-2 font-medium">첨부파일</div>
+                  <div className="mb-2 font-medium">{m.compose_attachments_title()}</div>
                   <div className="flex flex-wrap gap-2 pr-1 md:max-h-20 md:overflow-y-auto">
                     {mail.attachments.map((file, index) => (
                       <LocalAttachmentChip key={`${file.name}-${file.lastModified}-${index}`} file={file} />
@@ -201,11 +206,11 @@ export function ComposeSendPreviewDialog({
 
         <DialogFooter>
           <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={isSending}>
-            수정하기
+            {m.compose_edit()}
           </Button>
           <Button type="button" onClick={onConfirm} disabled={!mail || isSending}>
             {isSending ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
-            발송
+            {m.compose_confirm_send()}
           </Button>
         </DialogFooter>
       </DialogContent>

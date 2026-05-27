@@ -5,6 +5,7 @@ import { PopoverHeader, PopoverTitle } from "@/components/ui/popover"
 import { copyTextToClipboard } from "@/lib/clipboard"
 import { formatFullDateTime } from "@/lib/date"
 import { getMailAddressFullLabel } from "@/lib/mail-address"
+import { m } from "@/paraglide/messages"
 import type { InboxMessage, MailAddress } from "@/types/email"
 
 function isSameAddress(left?: MailAddress | null, right?: MailAddress | null) {
@@ -25,11 +26,11 @@ function AddressList({ addresses }: { addresses: MailAddress[] }) {
             variant="ghost"
             size="icon-xs"
             className="shrink-0"
-            aria-label={`${address.email} 복사`}
-            title="주소 복사"
+            aria-label={m.message_copy_email_aria({ email: address.email })}
+            title={m.message_copy_address()}
             onClick={(event) => {
               event.stopPropagation()
-              copyTextToClipboard(address.email, "주소를 복사했습니다")
+              copyTextToClipboard(address.email, m.message_address_copied())
             }}
           >
             <Copy />
@@ -59,17 +60,17 @@ export function MessageMetadataContent({ message }: MessageMetadataContentProps)
   return (
     <>
       <PopoverHeader>
-        <PopoverTitle>메시지 상세 정보</PopoverTitle>
+        <PopoverTitle>{m.message_details()}</PopoverTitle>
       </PopoverHeader>
       <dl className="grid grid-cols-[max-content_minmax(0,1fr)] gap-x-4">
-        <DetailRow label="보낸 사람">
+        <DetailRow label={m.message_detail_from()}>
           <AddressList addresses={[message.from]} />
         </DetailRow>
-        <DetailRow label="받는 사람">
+        <DetailRow label={m.message_detail_to()}>
           <AddressList addresses={message.to} />
         </DetailRow>
         {message.cc.length > 0 ? (
-          <DetailRow label="참조">
+          <DetailRow label={m.message_detail_cc()}>
             <AddressList addresses={message.cc} />
           </DetailRow>
         ) : null}
@@ -78,7 +79,7 @@ export function MessageMetadataContent({ message }: MessageMetadataContentProps)
             <AddressList addresses={[message.replyTo]} />
           </DetailRow>
         ) : null}
-        <DetailRow label="보낸 날짜">{formatFullDateTime(message.sentAt)}</DetailRow>
+        <DetailRow label={m.message_detail_sent_at()}>{formatFullDateTime(message.sentAt)}</DetailRow>
       </dl>
     </>
   )

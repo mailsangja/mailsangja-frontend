@@ -16,6 +16,7 @@ import {
 } from "@/lib/fcm"
 import { getErrorMessage } from "@/lib/http-error"
 import { useRegisterFcmToken, useUnregisterFcmToken } from "@/mutations/user"
+import { m } from "@/paraglide/messages"
 import { useUser } from "@/queries/user"
 
 type NotificationPermissionState = NotificationPermission | "unsupported"
@@ -26,18 +27,18 @@ function getPermissionState(): NotificationPermissionState {
 
 function getStatusLabel(permission: NotificationPermissionState, hasRegisteredToken: boolean) {
   if (permission === "unsupported") {
-    return "지원 안 함"
+    return m.notification_status_unsupported()
   }
 
   if (permission === "denied") {
-    return "차단됨"
+    return m.notification_status_denied()
   }
 
   if (permission === "granted") {
-    return hasRegisteredToken ? "등록됨" : "등록 필요"
+    return hasRegisteredToken ? m.notification_status_registered() : m.notification_status_required()
   }
 
-  return "대기 중"
+  return m.notification_status_pending()
 }
 
 function getStatusVariant(permission: NotificationPermissionState, hasRegisteredToken: boolean) {
@@ -62,18 +63,18 @@ function getErrorDescription(error: unknown, fallbackMessage: string) {
 
 function getDescription(permission: NotificationPermissionState, isEnabled: boolean) {
   if (permission === "unsupported") {
-    return "현재 브라우저 또는 Firebase 설정에서는 웹 푸시 알림을 사용할 수 없습니다."
+    return m.notification_description_unsupported()
   }
 
   if (permission === "denied") {
-    return "브라우저에서 알림 권한이 차단되어 있습니다. 브라우저 사이트 설정에서 권한을 변경해야 합니다."
+    return m.notification_description_denied()
   }
 
   if (isEnabled) {
-    return "새 메일 알림을 받을 수 있도록 이 브라우저의 FCM 디바이스 토큰이 등록되어 있습니다."
+    return m.notification_description_enabled()
   }
 
-  return "이 브라우저에서 새 메일 알림을 받으려면 알림 권한을 허용하고 디바이스 토큰을 등록해야 합니다."
+  return m.notification_description_disabled()
 }
 
 export function NotificationSettingsCard() {
@@ -102,11 +103,11 @@ export function NotificationSettingsCard() {
     try {
       await enableFcm(user.id, (fcmToken) => registerFcmTokenMutation.mutateAsync({ fcmToken }))
       setPermission(getPermissionState())
-      toast.success("푸시 알림이 활성화되었습니다")
+      toast.success(m.notification_enable_success())
     } catch (error) {
       setPermission(getPermissionState())
-      toast.error("푸시 알림을 활성화하지 못했습니다", {
-        description: getErrorDescription(error, "푸시 알림 등록에 실패했습니다."),
+      toast.error(m.notification_enable_error(), {
+        description: getErrorDescription(error, m.notification_register_error()),
       })
     }
   }
@@ -119,11 +120,11 @@ export function NotificationSettingsCard() {
     try {
       await disableFcm(user.id, (fcmToken) => unregisterFcmTokenMutation.mutateAsync({ fcmToken }))
       setPermission(getPermissionState())
-      toast.success("푸시 알림이 비활성화되었습니다")
+      toast.success(m.notification_disable_success())
     } catch (error) {
       setPermission(getPermissionState())
-      toast.warning("푸시 알림이 비활성화되었습니다", {
-        description: getErrorDescription(error, "서버의 FCM 토큰 삭제 요청이 실패했습니다."),
+      toast.warning(m.notification_disable_success(), {
+        description: getErrorDescription(error, m.notification_unregister_error()),
       })
     }
   }
@@ -141,14 +142,14 @@ export function NotificationSettingsCard() {
     <Card>
       <CardHeader className="gap-2">
         <div className="flex flex-wrap items-center justify-between gap-2">
-          <CardTitle>푸시 알림</CardTitle>
+          <CardTitle>{m.notification_push_title()}</CardTitle>
           <div className="flex items-center gap-3">
             <Badge variant={statusVariant}>{statusLabel}</Badge>
             <Switch
               checked={isEnabled}
               onCheckedChange={handleSwitchChange}
               disabled={isMutating || !user || permission === "unsupported" || permission === "denied"}
-              aria-label="푸시 알림 활성화"
+              aria-label={m.notification_enable_aria()}
             />
           </div>
         </div>
@@ -167,12 +168,16 @@ export function NotificationSettingsCard() {
           ) : (
             <Bell data-icon="inline-start" />
           )}
-          {isMutating ? "처리 중..." : isEnabled ? "다시 등록" : "알림 켜기"}
+          {isMutating
+            ? m.notification_processing()
+            : isEnabled
+              ? m.notification_register_again()
+              : m.notification_turn_on()}
         </Button>
         {permission === "denied" ? (
           <Button variant="outline" disabled>
             <BellOff data-icon="inline-start" />
-            브라우저에서 차단됨
+            {m.notification_blocked_by_browser()}
           </Button>
         ) : null}
       </CardContent>

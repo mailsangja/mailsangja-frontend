@@ -10,24 +10,25 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { formatRelativeDate } from "@/lib/date"
 import { getMailAddressFullLabel, getMailAddressLabel } from "@/lib/mail-address"
+import { m } from "@/paraglide/messages"
 import type { InboxMessage } from "@/types/email"
 
 function getRecipientSummary(message: InboxMessage, accountEmail?: string) {
   const recipients = message.to
 
   if (recipients.length === 0) {
-    return "받는 사람 없음"
+    return m.message_no_recipients()
   }
 
   const normalizedAccountEmail = accountEmail?.trim().toLowerCase()
   const first = recipients[0]
   const firstLabel =
     normalizedAccountEmail && first.email.trim().toLowerCase() === normalizedAccountEmail
-      ? "나"
+      ? m.message_recipient_self()
       : getMailAddressLabel(first)
   const others = recipients.length - 1
 
-  return others > 0 ? `${firstLabel} 외 ${others}명` : firstLabel
+  return others > 0 ? m.message_recipient_others({ recipient: firstLabel, count: others }) : firstLabel
 }
 
 function getInitials(value: string) {
@@ -56,7 +57,7 @@ export function MessageCard({ message, isExpanded, onToggle, accountEmail, menuA
           className="shrink-0 rounded-full outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
           onClick={onToggle}
           aria-expanded={isExpanded}
-          aria-label={isExpanded ? "메시지 접기" : "메시지 펼치기"}
+          aria-label={isExpanded ? m.message_collapse() : m.message_expand()}
         >
           <Avatar>
             <AvatarFallback>{getInitials(senderName)}</AvatarFallback>
@@ -78,11 +79,11 @@ export function MessageCard({ message, isExpanded, onToggle, accountEmail, menuA
                     variant="ghost"
                     size="xs"
                     className="-ml-2 text-muted-foreground"
-                    aria-label="메시지 상세 정보"
+                    aria-label={m.message_details()}
                   />
                 }
               >
-                <span className="min-w-0 truncate">{recipientSummary}에게</span>
+                <span className="min-w-0 truncate">{m.message_to_suffix({ recipients: recipientSummary })}</span>
                 <ChevronDown data-icon="inline-end" />
               </PopoverTrigger>
               <PopoverContent align="start" className="w-80 max-w-[calc(100vw-2rem)]">
@@ -95,9 +96,9 @@ export function MessageCard({ message, isExpanded, onToggle, accountEmail, menuA
             className="block w-full min-w-0 cursor-pointer truncate rounded-sm text-left text-xs text-muted-foreground outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
             onClick={onToggle}
             aria-expanded={isExpanded}
-            aria-label={isExpanded ? "메시지 접기" : "메시지 펼치기"}
+            aria-label={isExpanded ? m.message_collapse() : m.message_expand()}
           >
-            {isExpanded ? message.subject || "(제목 없음)" : message.snippet}
+            {isExpanded ? message.subject || m.message_no_subject() : message.snippet}
           </button>
         </div>
 
@@ -110,14 +111,14 @@ export function MessageCard({ message, isExpanded, onToggle, accountEmail, menuA
               variant="ghost"
               size="icon-sm"
               disabled
-              title="즐겨찾기는 아직 지원되지 않습니다."
-              aria-label="즐겨찾기"
+              title={m.message_star_disabled()}
+              aria-label={m.message_star()}
             >
               <Star />
             </Button>
             {menuActions ? (
               <DropdownMenu>
-                <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" aria-label="메시지 더보기" />}>
+                <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" aria-label={m.message_more()} />}>
                   <MoreVertical />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end" className="min-w-36">

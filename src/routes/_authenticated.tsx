@@ -14,6 +14,7 @@ import { identifyAnalyticsUser } from "@/lib/analytics"
 import { getPushNotificationPermission, getStoredFcmToken, subscribeToFcmToken } from "@/lib/fcm"
 import { parseMailRouteSearch } from "@/lib/mail-routing"
 import { cn } from "@/lib/utils"
+import { m } from "@/paraglide/messages"
 import { userQueries, useUser } from "@/queries/user"
 import { parseMailboxId, type PrimaryMailboxId } from "@/types/email"
 
@@ -52,7 +53,7 @@ function NotificationSettingsLink() {
   )
   const isEnabled = getPushNotificationPermission() === "granted" && Boolean(registeredToken)
   const Icon = isEnabled ? Bell : BellOff
-  const label = isEnabled ? "푸시 알림 설정, 활성화됨" : "푸시 알림 설정, 비활성화됨"
+  const label = isEnabled ? m.notification_settings_enabled() : m.notification_settings_disabled()
 
   return (
     <Link
@@ -133,8 +134,8 @@ function MailSearchForm({ mailbox, query, accountId }: MailSearchFormProps) {
       <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
       <Input
         name="query"
-        aria-label="메일 검색"
-        placeholder="메일 검색"
+        aria-label={m.mail_search_label()}
+        placeholder={m.mail_search_placeholder()}
         value={currentDraft}
         onChange={(e) => {
           setDraft(e.target.value)
@@ -146,7 +147,7 @@ function MailSearchForm({ mailbox, query, accountId }: MailSearchFormProps) {
           type="button"
           variant="ghost"
           size="icon"
-          aria-label="검색어 지우기"
+          aria-label={m.mail_search_clear()}
           className="absolute top-1/2 right-1 size-7 -translate-y-1/2 active:not-aria-[haspopup]:-translate-y-1/2"
           onClick={() => {
             setDraft("")
@@ -185,7 +186,7 @@ function AuthenticatedRouteLayout() {
         ) : (
           <Link to="/mail/$mailbox" params={{ mailbox: "inbox" }} className="flex shrink-0 items-center gap-2">
             <Mail className="size-5" />
-            <span className="font-bold">메일상자</span>
+            <span className="font-bold">{m.app_name()}</span>
           </Link>
         )}
 

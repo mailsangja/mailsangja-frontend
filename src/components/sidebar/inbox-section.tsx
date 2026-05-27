@@ -8,9 +8,11 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
 } from "@/components/ui/sidebar"
+import { formatNumber } from "@/lib/date"
+import { m } from "@/paraglide/messages"
 import { useMailboxThreads } from "@/queries/emails"
 import { useTrashThreads } from "@/queries/trash"
-import { MAILBOX_LABELS, PRIMARY_MAILBOX_IDS } from "@/types/email"
+import { getMailboxLabel, PRIMARY_MAILBOX_IDS } from "@/types/email"
 import type { PrimaryMailboxId } from "@/types/email"
 
 const folderIcons: Record<PrimaryMailboxId, React.ReactNode> = {
@@ -26,7 +28,7 @@ interface SidebarInboxSectionProps {
 }
 
 function formatUnreadCount(count: number) {
-  return count > 99 ? "99+" : count.toLocaleString()
+  return count > 99 ? "99+" : formatNumber(count)
 }
 
 export function SidebarInboxSection({ mailbox, onMailboxChange }: SidebarInboxSectionProps) {
@@ -42,24 +44,27 @@ export function SidebarInboxSection({ mailbox, onMailboxChange }: SidebarInboxSe
 
   return (
     <SidebarGroup>
-      <SidebarGroupLabel>메일함</SidebarGroupLabel>
+      <SidebarGroupLabel>{m.sidebar_mailboxes()}</SidebarGroupLabel>
       <SidebarMenu>
         {PRIMARY_MAILBOX_IDS.map((mailboxId) => {
           const unreadCount = unreadCounts[mailboxId] ?? 0
+          const mailboxLabel = getMailboxLabel(mailboxId)
 
           return (
             <SidebarMenuItem key={mailboxId}>
               <SidebarMenuButton
-                tooltip={MAILBOX_LABELS[mailboxId]}
+                tooltip={mailboxLabel}
                 isActive={mailbox === mailboxId}
                 onClick={() => onMailboxChange(mailboxId)}
                 className={unreadCount > 0 ? "pr-12" : undefined}
               >
                 {folderIcons[mailboxId]}
-                <span>{MAILBOX_LABELS[mailboxId]}</span>
+                <span>{mailboxLabel}</span>
               </SidebarMenuButton>
               {unreadCount > 0 ? (
-                <SidebarMenuBadge aria-label={`${MAILBOX_LABELS[mailboxId]} 안읽음 ${unreadCount.toLocaleString()}개`}>
+                <SidebarMenuBadge
+                  aria-label={m.mail_unread_count({ mailbox: mailboxLabel, count: formatNumber(unreadCount) })}
+                >
                   <div className="h-4 min-w-5 px-1.5 text-[11px]">{formatUnreadCount(unreadCount)}</div>
                 </SidebarMenuBadge>
               ) : null}

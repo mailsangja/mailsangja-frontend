@@ -6,6 +6,7 @@ import { SidebarLabelGroupItem } from "@/components/sidebar/label-group-item"
 import { Button } from "@/components/ui/button"
 import { SidebarGroup, SidebarGroupLabel, SidebarMenu } from "@/components/ui/sidebar"
 import { useLabelGroups, useLabels } from "@/queries/labels"
+import { m } from "@/paraglide/messages"
 
 interface SidebarLabelGroupsSectionProps {
   activeLabelGroupId?: string
@@ -25,10 +26,10 @@ export function SidebarLabelGroupsSection({
   return (
     <SidebarGroup className={className}>
       <SidebarGroupLabel className="flex items-center justify-between pr-1">
-        <span>라벨 그룹</span>
-        <Button variant="ghost" size="icon-xs" title="라벨 그룹 추가" onClick={() => setCreateOpen(true)}>
+        <span>{m.sidebar_label_groups()}</span>
+        <Button variant="ghost" size="icon-xs" title={m.sidebar_label_group_add()} onClick={() => setCreateOpen(true)}>
           <Plus />
-          <span className="sr-only">라벨 그룹 추가</span>
+          <span className="sr-only">{m.sidebar_label_group_add()}</span>
         </Button>
       </SidebarGroupLabel>
 

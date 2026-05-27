@@ -7,6 +7,7 @@ import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "
 import { Input } from "@/components/ui/input"
 import { getErrorMessage, getHttpStatus } from "@/lib/http-error"
 import { useCreateLabelGroup, useUpdateLabelGroup } from "@/mutations/labels"
+import { m } from "@/paraglide/messages"
 import type { LabelGroupItem, LabelListItem } from "@/types/label"
 
 function LabelPickerList({
@@ -19,7 +20,11 @@ function LabelPickerList({
   onToggle: (id: string) => void
 }) {
   if (labels.length === 0) {
-    return <div className="rounded-md border px-3 py-4 text-center text-xs text-muted-foreground">라벨이 없습니다</div>
+    return (
+      <div className="rounded-md border px-3 py-4 text-center text-xs text-muted-foreground">
+        {m.label_picker_empty()}
+      </div>
+    )
   }
   return (
     <div className="max-h-48 space-y-0.5 overflow-y-auto rounded-md border p-1">
@@ -67,20 +72,20 @@ function LabelGroupFormDialog({
         </DialogHeader>
         <div className="flex flex-col gap-4 py-2">
           <Input
-            placeholder="그룹 이름"
+            placeholder={m.label_group_name_placeholder()}
             value={name}
             onChange={(e) => onNameChange(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && onSubmit()}
             autoFocus
           />
           <div>
-            <p className="mb-2 text-xs text-muted-foreground">라벨 선택</p>
+            <p className="mb-2 text-xs text-muted-foreground">{m.label_select()}</p>
             <LabelPickerList labels={labels} selectedIds={selectedLabelIds} onToggle={onToggle} />
           </div>
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            취소
+            {m.common_cancel()}
           </Button>
           <Button onClick={onSubmit} disabled={!name.trim() || isPending}>
             {submitLabel}
@@ -114,13 +119,13 @@ export function CreateLabelGroupDialog({ open, onOpenChange, labels, groups }: C
           onOpenChange(false)
           setName("")
           setSelectedLabelIds([])
-          toast.success(`${trimmed} 그룹이 생성되었습니다`)
+          toast.success(m.label_group_create_success({ name: trimmed }))
         },
         onError: (e) => {
           if (getHttpStatus(e) === 409) {
-            toast.error("이미 존재하는 라벨 그룹입니다.")
+            toast.error(m.label_group_duplicate_error())
           } else {
-            toast.error(getErrorMessage(e, "라벨 그룹 생성에 실패했습니다."))
+            toast.error(getErrorMessage(e, m.label_group_create_error()))
           }
         },
       }
@@ -135,8 +140,8 @@ export function CreateLabelGroupDialog({ open, onOpenChange, labels, groups }: C
     <LabelGroupFormDialog
       open={open}
       onOpenChange={onOpenChange}
-      title="새 라벨 그룹 만들기"
-      submitLabel="만들기"
+      title={m.label_group_create_title()}
+      submitLabel={m.sidebar_label_create_submit()}
       name={name}
       onNameChange={setName}
       selectedLabelIds={selectedLabelIds}
@@ -168,13 +173,13 @@ export function EditLabelGroupDialog({ open, onOpenChange, group, allLabels }: E
       {
         onSuccess: () => {
           onOpenChange(false)
-          toast.success(`${trimmed} 그룹이 수정되었습니다`)
+          toast.success(m.label_group_update_success({ name: trimmed }))
         },
         onError: (e) => {
           if (getHttpStatus(e) === 409) {
-            toast.error("이미 존재하는 라벨 그룹입니다.")
+            toast.error(m.label_group_duplicate_error())
           } else {
-            toast.error(getErrorMessage(e, "라벨 그룹 수정에 실패했습니다."))
+            toast.error(getErrorMessage(e, m.label_group_update_error()))
           }
         },
       }
@@ -189,8 +194,8 @@ export function EditLabelGroupDialog({ open, onOpenChange, group, allLabels }: E
     <LabelGroupFormDialog
       open={open}
       onOpenChange={onOpenChange}
-      title="라벨 그룹 수정"
-      submitLabel="수정"
+      title={m.label_group_edit_title()}
+      submitLabel={m.common_edit()}
       name={name}
       onNameChange={setName}
       selectedLabelIds={selectedLabelIds}

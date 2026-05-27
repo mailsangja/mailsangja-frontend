@@ -10,6 +10,7 @@ import { emailQueries } from "@/queries/emails"
 import { labelQueries } from "@/queries/labels"
 import { type Label } from "@/types/label"
 import { LabelConditionList } from "@/components/label/label-condition-list"
+import { m } from "@/paraglide/messages"
 
 interface LabelDeleteDialogProps {
   open: boolean
@@ -36,14 +37,14 @@ export function LabelDeleteDialog({ open, onOpenChange, label, onSuccess }: Labe
     deleteLabel.mutate(label.id, {
       onSuccess: () => {
         onOpenChange(false)
-        toast.warning(`${label.name} 라벨이 삭제되었습니다`)
+        toast.warning(m.label_delete_success({ name: label.name }))
         if (onSuccess) {
           onSuccess()
         } else if ("labelId" in search && search.labelId === label.id) {
           void navigate({ to: "/mail/$mailbox", params: { mailbox: "inbox" }, replace: true })
         }
       },
-      onError: (e) => toast.error(getErrorMessage(e, "라벨 삭제에 실패했습니다.")),
+      onError: (e) => toast.error(getErrorMessage(e, m.label_delete_error())),
     })
   }
 
@@ -51,7 +52,7 @@ export function LabelDeleteDialog({ open, onOpenChange, label, onSuccess }: Labe
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>라벨 삭제</DialogTitle>
+          <DialogTitle>{m.label_delete_title()}</DialogTitle>
         </DialogHeader>
         <div className="space-y-3">
           {isInfoLoading ? (
@@ -62,9 +63,7 @@ export function LabelDeleteDialog({ open, onOpenChange, label, onSuccess }: Labe
           ) : (
             <>
               {threadCountData?.totalCount != null && (
-                <p>
-                  {label.name} 라벨을 대화 {threadCountData.totalCount}개에서 제거하고 삭제하시겠습니까?
-                </p>
+                <p>{m.label_delete_confirmation_with_count({ name: label.name, count: threadCountData.totalCount })}</p>
               )}
               {labelDetail?.rule?.groups && (
                 <div className="flex flex-col gap-1.5 rounded-xl border px-4 py-3">
@@ -81,10 +80,10 @@ export function LabelDeleteDialog({ open, onOpenChange, label, onSuccess }: Labe
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            취소
+            {m.common_cancel()}
           </Button>
           <Button variant="destructive" onClick={handleDelete} disabled={deleteLabel.isPending || isInfoLoading}>
-            삭제
+            {m.common_delete()}
           </Button>
         </DialogFooter>
       </DialogContent>

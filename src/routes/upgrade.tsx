@@ -2,6 +2,7 @@ import { createFileRoute, Link, useRouter } from "@tanstack/react-router"
 import { ArrowLeft, Check } from "lucide-react"
 
 import { buttonVariants } from "@/components/ui/button"
+import { m } from "@/paraglide/messages"
 
 export const Route = createFileRoute("/upgrade")({
   component: RouteComponent,
@@ -9,32 +10,37 @@ export const Route = createFileRoute("/upgrade")({
 
 const pricingPlans = [
   {
-    name: "FREE Plan",
+    name: m.pricing_plan_free_name(),
     price: "₩0",
-    period: "/월",
-    cta: "FREE Plan 사용하기",
+    period: m.pricing_period_month(),
+    cta: m.upgrade_pricing_free_cta(),
     ctaTo: "/mail/inbox",
     featured: false,
     comingSoon: false,
-    items: ["이메일 계정 2개 연동", "AI 기반 자동 라벨 분류", "AI 이메일 초안 작성", "AI 답장 작성"],
+    items: [
+      m.pricing_feature_email_accounts_2(),
+      m.pricing_feature_ai_labeling(),
+      m.pricing_feature_ai_draft(),
+      m.pricing_feature_ai_reply(),
+    ],
   },
   {
-    name: "PRO Plan",
+    name: m.pricing_plan_pro_name(),
     originalPrice: "₩19,900",
     price: "₩9,900",
-    period: "/월",
-    cta: "PRO Plan 구독하기",
-    // 요금제 결제 페이지가 구현되면 해당 페이지로 링크 변경 필요
+    period: m.pricing_period_month(),
+    cta: m.upgrade_pricing_pro_cta(),
+    // Switch this link when the plan checkout page is implemented.
     ctaTo: "/mail/inbox",
     featured: true,
     comingSoon: true,
     items: [
-      "이메일 계정 무제한 연동",
-      "AI 기반 자동 라벨 분류",
-      "AI 이메일 초안 작성",
-      "AI 답장 작성",
-      "AI 사용량 무제한",
-      "우선 고객 지원",
+      m.pricing_feature_email_accounts_unlimited(),
+      m.pricing_feature_ai_labeling(),
+      m.pricing_feature_ai_draft(),
+      m.pricing_feature_ai_reply(),
+      m.pricing_feature_ai_usage_unlimited(),
+      m.pricing_feature_priority_support(),
     ],
   },
 ]
@@ -47,14 +53,14 @@ function RouteComponent() {
       <button
         className={buttonVariants({ variant: "ghost", size: "icon", className: "absolute top-4 left-4" })}
         onClick={() => router.history.back()}
-        aria-label="뒤로 가기"
+        aria-label={m.upgrade_back_aria()}
       >
         <ArrowLeft className="size-4" />
       </button>
       <main className="mx-auto h-screen max-w-3xl px-6 py-14">
         <div className="mb-10 space-y-3 text-center">
-          <h1 className="text-3xl font-bold">요금제</h1>
-          <p className="text-muted-foreground">지금 바로 시작하세요</p>
+          <h1 className="text-3xl font-bold">{m.pricing_title()}</h1>
+          <p className="text-muted-foreground">{m.pricing_subtitle()}</p>
         </div>
 
         <div className="grid gap-4 sm:grid-cols-2">
@@ -65,7 +71,7 @@ function RouteComponent() {
             >
               {plan.comingSoon && (
                 <span className="absolute top-4 right-4 rounded-full bg-muted px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground">
-                  출시 예정
+                  {m.pricing_coming_soon()}
                 </span>
               )}
               <div className="space-y-1">
@@ -104,9 +110,7 @@ function RouteComponent() {
           ))}
         </div>
         <div className="mt-12 space-y-3 text-center">
-          <p className="text-sm text-muted-foreground">
-            사용 한도가 적용됩니다. 가격 및 플랜은 메일상자의 재량에 따라 변경될 수 있습니다.
-          </p>
+          <p className="text-sm text-muted-foreground">{m.upgrade_pricing_notice()}</p>
         </div>
       </main>
     </div>

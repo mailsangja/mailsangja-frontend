@@ -1,24 +1,42 @@
+import { getCurrentLocale } from "@/lib/i18n"
+import { m } from "@/paraglide/messages"
+
 const MS_PER_DAY = 1000 * 60 * 60 * 24
 
-const monthDayFormatter = new Intl.DateTimeFormat("ko-KR", { month: "long", day: "numeric" })
-const fullDateFormatter = new Intl.DateTimeFormat("ko-KR", {
-  year: "numeric",
-  month: "numeric",
-  day: "numeric",
-})
-const fullDateTimeFormatter = new Intl.DateTimeFormat("ko-KR", {
-  year: "numeric",
-  month: "long",
-  day: "numeric",
-  hour: "numeric",
-  minute: "2-digit",
-  hourCycle: "h12",
-})
-const timeFormatter = new Intl.DateTimeFormat("ko-KR", {
-  hour: "numeric",
-  minute: "2-digit",
-  hourCycle: "h12",
-})
+function getIntlLocale() {
+  return getCurrentLocale() === "ko" ? "ko-KR" : "en-US"
+}
+
+function createMonthDayFormatter() {
+  return new Intl.DateTimeFormat(getIntlLocale(), { month: "long", day: "numeric" })
+}
+
+function createFullDateFormatter() {
+  return new Intl.DateTimeFormat(getIntlLocale(), {
+    year: "numeric",
+    month: "numeric",
+    day: "numeric",
+  })
+}
+
+function createFullDateTimeFormatter() {
+  return new Intl.DateTimeFormat(getIntlLocale(), {
+    year: "numeric",
+    month: "long",
+    day: "numeric",
+    hour: "numeric",
+    minute: "2-digit",
+    hourCycle: "h12",
+  })
+}
+
+function createTimeFormatter() {
+  return new Intl.DateTimeFormat(getIntlLocale(), {
+    hour: "numeric",
+    minute: "2-digit",
+    hourCycle: "h12",
+  })
+}
 
 function isValidDate(value: Date) {
   return !Number.isNaN(value.getTime())
@@ -32,24 +50,8 @@ function getCalendarDayDiff(left: Date, right: Date) {
   return Math.round((getStartOfDayTime(left) - getStartOfDayTime(right)) / MS_PER_DAY)
 }
 
-function formatKoreanTime(value: Date) {
-  const parts = timeFormatter.formatToParts(value)
-  const hour = parts.find((part) => part.type === "hour")?.value
-  const minute = parts.find((part) => part.type === "minute")?.value
-  const rawDayPeriod = parts.find((part) => part.type === "dayPeriod")?.value
-
-  if (!hour || !minute) {
-    return timeFormatter.format(value)
-  }
-
-  const dayPeriod =
-    rawDayPeriod === "AM"
-      ? "오전"
-      : rawDayPeriod === "PM"
-        ? "오후"
-        : rawDayPeriod || (value.getHours() < 12 ? "오전" : "오후")
-
-  return `${dayPeriod} ${hour}:${minute}`
+export function formatNumber(value: number): string {
+  return new Intl.NumberFormat(getIntlLocale()).format(value)
 }
 
 export function formatRelativeDate(dateStr: string): string {
@@ -63,18 +65,18 @@ export function formatRelativeDate(dateStr: string): string {
   const dayDiff = getCalendarDayDiff(date, now)
 
   if (dayDiff === 0) {
-    return formatKoreanTime(date)
+    return createTimeFormatter().format(date)
   }
 
   if (dayDiff === -1) {
-    return "어제"
+    return m.date_yesterday()
   }
 
   if (date.getFullYear() === now.getFullYear()) {
-    return monthDayFormatter.format(date)
+    return createMonthDayFormatter().format(date)
   }
 
-  return fullDateFormatter.format(date)
+  return createFullDateFormatter().format(date)
 }
 
 export function formatFullDateTime(dateStr: string): string {
@@ -84,5 +86,5 @@ export function formatFullDateTime(dateStr: string): string {
     return ""
   }
 
-  return fullDateTimeFormatter.format(date)
+  return createFullDateTimeFormatter().format(date)
 }

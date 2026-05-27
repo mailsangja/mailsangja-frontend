@@ -1,9 +1,16 @@
+import { m } from "@/paraglide/messages"
+
 export type AiUsageType = "MAIL_DRAFT" | "MAIL_REVIEW" | "LABEL_SUGGESTION"
 
-export const AI_USAGE_TYPE_LABELS: Record<AiUsageType, string> = {
-  MAIL_DRAFT: "AI 초안 생성",
-  MAIL_REVIEW: "AI 메일 검토",
-  LABEL_SUGGESTION: "라벨 제안",
+export function getAiUsageTypeLabel(type: AiUsageType): string {
+  switch (type) {
+    case "MAIL_DRAFT":
+      return m.ai_usage_mail_draft()
+    case "MAIL_REVIEW":
+      return m.ai_usage_mail_review()
+    case "LABEL_SUGGESTION":
+      return m.ai_usage_label_suggestion()
+  }
 }
 
 export interface AiUsageItem {

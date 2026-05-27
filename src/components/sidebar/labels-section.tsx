@@ -14,6 +14,7 @@ import { trackEvent } from "@/lib/analytics"
 import { getErrorMessage, getHttpStatus } from "@/lib/http-error"
 import { cn } from "@/lib/utils"
 import { useCreateLabel, useCreateLabelSuggestions } from "@/mutations/labels"
+import { m } from "@/paraglide/messages"
 import { useLabels, useLabelSuggestions } from "@/queries/labels"
 
 interface SidebarLabelsSectionProps {
@@ -41,9 +42,9 @@ export function SidebarLabelsSection({ activeLabelId, onLabelToggle, className }
         },
         onError: (e) => {
           if (getHttpStatus(e) === 409) {
-            toast.error("이미 존재하는 라벨입니다.")
+            toast.error(m.sidebar_label_duplicate_error())
           } else {
-            toast.error(getErrorMessage(e, "라벨 생성에 실패했습니다."))
+            toast.error(getErrorMessage(e, m.sidebar_label_create_error()))
           }
         },
       }
@@ -53,34 +54,34 @@ export function SidebarLabelsSection({ activeLabelId, onLabelToggle, className }
   return (
     <SidebarGroup className={className}>
       <SidebarGroupLabel className="flex items-center justify-between pr-1">
-        <span>라벨</span>
+        <span>{m.sidebar_labels()}</span>
         <div className="flex items-center">
           <button
             type="button"
-            title="AI 라벨 추천 받기"
+            title={m.sidebar_label_ai_suggest()}
             className={cn(
               buttonVariants({ variant: "ghost", size: "icon-xs" }),
               "text-primary hover:bg-primary/10 hover:text-primary",
               createSuggestions.isPending && "animate-pulse"
             )}
             onClick={() => {
-              const toastId = toast.loading("AI 추천 라벨을 생성 중입니다...")
+              const toastId = toast.loading(m.sidebar_label_ai_loading())
               createSuggestions.mutate(undefined, {
                 onSuccess: () => {
                   trackEvent("ai_label_suggestions_generate")
-                  toast.success("AI 추천 라벨 생성이 완료되었습니다!", { id: toastId })
+                  toast.success(m.sidebar_label_ai_success(), { id: toastId })
                 },
-                onError: (e) => toast.error(getErrorMessage(e, "AI 추천 라벨 생성에 실패했습니다."), { id: toastId }),
+                onError: (e) => toast.error(getErrorMessage(e, m.sidebar_label_ai_error()), { id: toastId }),
               })
             }}
             disabled={createSuggestions.isPending}
           >
             <Sparkles className="ai-sparkle-icon size-3.5" />
-            <span className="sr-only">AI 라벨 추천 받기</span>
+            <span className="sr-only">{m.sidebar_label_ai_suggest()}</span>
           </button>
-          <Button variant="ghost" size="icon-xs" title="라벨 추가" onClick={() => setOpen(true)}>
+          <Button variant="ghost" size="icon-xs" title={m.sidebar_label_add()} onClick={() => setOpen(true)}>
             <Plus />
-            <span className="sr-only">라벨 추가</span>
+            <span className="sr-only">{m.sidebar_label_add()}</span>
           </Button>
         </div>
       </SidebarGroupLabel>
@@ -113,8 +114,8 @@ export function SidebarLabelsSection({ activeLabelId, onLabelToggle, className }
       <LabelFormDialog
         open={open}
         onOpenChange={setOpen}
-        title="새 라벨 만들기"
-        submitLabel="만들기"
+        title={m.sidebar_label_create_title()}
+        submitLabel={m.sidebar_label_create_submit()}
         isPending={createLabel.isPending}
         onSubmit={handleCreate}
       />

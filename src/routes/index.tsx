@@ -3,6 +3,7 @@ import { ArrowRight, ArrowUp, Check, ChevronDown, Mail, PenLine, Reply, Sparkles
 import { useEffect, useRef, useState } from "react"
 
 import { buttonVariants } from "@/components/ui/button"
+import { m } from "@/paraglide/messages"
 import { userQueries } from "@/queries/user"
 
 export const Route = createFileRoute("/")({
@@ -40,23 +41,23 @@ function LabelVisual() {
   const [ref, inView] = useInView(0.3)
   const rows = [
     {
-      subject: "이번 달 카드 명세서",
-      label: "청구서",
+      subject: m.landing_label_visual_subject_card_statement(),
+      label: m.landing_label_visual_label_bill(),
       color: "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/50",
     },
     {
-      subject: "[쿠팡] 주문이 완료되었습니다",
-      label: "알림",
+      subject: m.landing_label_visual_subject_order_complete(),
+      label: m.landing_label_visual_label_notification(),
       color: "text-green-600 dark:text-green-400 bg-green-50 dark:bg-green-950/50",
     },
     {
-      subject: "RE: 프로젝트 미팅 일정 조율",
-      label: "중요",
+      subject: m.landing_label_visual_subject_meeting_schedule(),
+      label: m.landing_label_visual_label_important(),
       color: "text-orange-600 dark:text-orange-400 bg-orange-50 dark:bg-orange-950/50",
     },
     {
-      subject: "주간 뉴스레터 Vol.42",
-      label: "광고",
+      subject: m.landing_label_visual_subject_newsletter(),
+      label: m.landing_label_visual_label_promotion(),
       color: "text-purple-600 dark:text-purple-400 bg-purple-50 dark:bg-purple-950/50",
     },
   ]
@@ -67,14 +68,14 @@ function LabelVisual() {
     >
       <div className="flex items-center gap-2 border-b bg-muted/20 px-4 py-3">
         <Tag className="size-3.5 text-primary" />
-        <span className="text-xs font-medium">AI 라벨 자동 분류</span>
+        <span className="text-xs font-medium">{m.landing_label_visual_title()}</span>
         <span className="ml-auto flex items-center gap-1.5 text-[10px] text-primary">
           <span className="relative flex size-2">
             <span className="absolute inline-flex size-full animate-ping rounded-full bg-primary opacity-60" />
             <span className="relative inline-flex size-2 rounded-full bg-primary" />
           </span>
           <Sparkles className="ai-sparkle-icon size-3" />
-          활성
+          {m.landing_label_visual_status_active()}
         </span>
       </div>
       <div className="divide-y">
@@ -100,32 +101,32 @@ function DraftVisual() {
     <div className="w-full max-w-sm overflow-hidden rounded-2xl border bg-background shadow-md transition-all duration-300 hover:-translate-y-2 hover:shadow-xl">
       <div className="flex items-center gap-2 border-b bg-muted/20 px-4 py-3">
         <PenLine className="size-3.5 text-primary" />
-        <span className="text-xs font-medium">AI 초안 작성</span>
+        <span className="text-xs font-medium">{m.landing_feature_draft_title()}</span>
       </div>
       <div className="space-y-3 p-4">
         <div className="space-y-1.5 text-xs leading-relaxed text-foreground/70">
           <div className="flex gap-2">
-            <span className="shrink-0 text-muted-foreground">제목</span>
-            <span className="text-foreground/80">프로젝트 진행 현황 보고</span>
+            <span className="shrink-0 text-muted-foreground">{m.landing_draft_visual_subject_label()}</span>
+            <span className="text-foreground/80">{m.landing_draft_visual_subject()}</span>
           </div>
           <div className="h-px bg-border/50" />
-          <p>안녕하세요,</p>
+          <p>{m.landing_draft_visual_greeting()}</p>
           <p>
-            이번 주 프로젝트 진행 상황을 보고드립니다. 현재 주요 기능 개발은 80% 완료되었으며
+            {m.landing_draft_visual_body()}
             <span className="ml-0.5 inline-block h-3 w-px animate-pulse bg-foreground/70 align-middle" />
           </p>
         </div>
 
         <div className="relative flex items-center gap-1.5 overflow-hidden rounded-lg bg-primary/8 px-3 py-2 text-[11px] text-primary">
           <Sparkles className="ai-sparkle-icon size-3 shrink-0" />
-          AI가 초안을 작성하고 있습니다
+          {m.landing_draft_visual_loading()}
           <div className="compose-email-editor-ai-sweep" />
         </div>
 
         <div className="rounded-xl border border-primary/30 bg-muted/20 px-3 py-2.5 text-xs ring-1 ring-primary/15">
           <div className="flex items-end gap-2">
             <p className="flex-1 leading-relaxed text-foreground/80">
-              팀장님께 이번 주 프로젝트 진행 현황 보고 메일 써줘
+              {m.landing_draft_visual_prompt()}
               <span className="ml-0.5 inline-block h-3 w-px animate-pulse bg-foreground/60 align-middle" />
             </p>
             <div className="shrink-0 rounded-lg bg-primary p-1 text-primary-foreground">
@@ -143,21 +144,17 @@ function ReplyVisual() {
     <div className="w-full max-w-xs space-y-3">
       <div className="overflow-hidden rounded-2xl border bg-muted/30 shadow-sm transition-all duration-300 hover:-translate-y-2 hover:shadow-xl">
         <div className="px-4 py-3 text-xs">
-          <div className="mb-1 font-medium">김팀장</div>
-          <div className="leading-relaxed text-muted-foreground">
-            이번 프로젝트 결과물 검토해봤는데, 수정이 필요한 부분이 있을 것 같습니다. 내일 미팅 가능하신가요?
-          </div>
+          <div className="mb-1 font-medium">{m.landing_reply_visual_sender()}</div>
+          <div className="leading-relaxed text-muted-foreground">{m.landing_reply_visual_inbound()}</div>
         </div>
       </div>
       <div className="overflow-hidden rounded-2xl border border-primary/25 bg-primary/5 shadow-sm transition-all duration-300 hover:-translate-y-2 hover:shadow-xl">
         <div className="px-4 py-3 text-xs">
           <div className="mb-2 flex items-center gap-1.5 font-medium text-primary">
             <Sparkles className="ai-sparkle-icon size-3" />
-            AI 제안 답장
+            {m.landing_reply_visual_title()}
           </div>
-          <div className="leading-relaxed text-foreground/75">
-            안녕하세요, 김팀장님. 네, 내일 오전 10시에 미팅 가능합니다. 수정 사항 함께 검토하겠습니다.
-          </div>
+          <div className="leading-relaxed text-foreground/75">{m.landing_reply_visual_suggestion()}</div>
         </div>
       </div>
     </div>
@@ -167,24 +164,35 @@ function ReplyVisual() {
 const features = [
   {
     icon: Tag,
-    title: "AI 라벨 분류",
-    description:
-      "인박스를 열기 전에 이미 분류되어 있습니다.\nAI가 메일에 대한 패턴을 학습해 필요한 라벨을 추천해줍니다.",
-    benefits: ["직접 라벨 추가도 가능", "라벨 생성 시간 ↓", "여러 계정도 하나의 기준으로"],
+    title: m.landing_feature_label_title(),
+    description: m.landing_feature_label_description(),
+    benefits: [
+      m.landing_feature_label_benefit_manual(),
+      m.landing_feature_label_benefit_save_time(),
+      m.landing_feature_label_benefit_multi_account(),
+    ],
     Visual: LabelVisual,
   },
   {
     icon: PenLine,
-    title: "AI 초안 작성",
-    description: "첫 문장이 막혀 미루고 있다면,\n프롬프트를 작성하여 초안을 작성해보세요.",
-    benefits: ["LLM 기반 초안 작성", "톤 고민 없이 바로 작성", "초안 기반으로 자유롭게 수정"],
+    title: m.landing_feature_draft_title(),
+    description: m.landing_feature_draft_description(),
+    benefits: [
+      m.landing_feature_draft_benefit_llm(),
+      m.landing_feature_draft_benefit_tone(),
+      m.landing_feature_draft_benefit_edit(),
+    ],
     Visual: DraftVisual,
   },
   {
     icon: Reply,
-    title: "AI 답장 작성",
-    description: "읽고, 파악하고, 쓰는 과정을 AI가 대신합니다.\n제안된 답장을 그대로 보내거나 한 줄만 고쳐도 됩니다.",
-    benefits: ["2개 이상의 답장 옵션 제공", "상황에 맞는 말투 자동 판단", "밀린 답장도 빠르게"],
+    title: m.landing_feature_reply_title(),
+    description: m.landing_feature_reply_description(),
+    benefits: [
+      m.landing_feature_reply_benefit_options(),
+      m.landing_feature_reply_benefit_tone(),
+      m.landing_feature_reply_benefit_backlog(),
+    ],
     Visual: ReplyVisual,
   },
 ]
@@ -228,32 +236,37 @@ function FeatureSection({ feature, index }: { feature: (typeof features)[0]; ind
 
 const pricingPlans = [
   {
-    name: "FREE Plan",
+    name: m.pricing_plan_free_name(),
     price: "₩0",
-    period: "/월",
-    cta: "FREE로 시작하기",
+    period: m.pricing_period_month(),
+    cta: m.landing_pricing_free_cta(),
     ctaTo: "/signup" as const,
     featured: false,
     comingSoon: false,
-    items: ["이메일 계정 2개 연동", "AI 기반 자동 라벨 분류", "AI 이메일 초안 작성", "AI 답장 작성"],
+    items: [
+      m.pricing_feature_email_accounts_2(),
+      m.pricing_feature_ai_labeling(),
+      m.pricing_feature_ai_draft(),
+      m.pricing_feature_ai_reply(),
+    ],
   },
   {
-    name: "PRO Plan",
+    name: m.pricing_plan_pro_name(),
     originalPrice: "₩19,900",
     price: "₩9,900",
-    period: "/월",
-    cta: "PRO로 시작하기",
-    // 요금제 결제 페이지가 구현되면 해당 페이지로 링크 변경 필요
+    period: m.pricing_period_month(),
+    cta: m.landing_pricing_pro_cta(),
+    // Switch this link when the plan checkout page is implemented.
     ctaTo: "/signup" as const,
     featured: true,
     comingSoon: true,
     items: [
-      "이메일 계정 무제한 연동",
-      "AI 기반 자동 라벨 분류",
-      "AI 이메일 초안 작성",
-      "AI 답장 작성",
-      "AI 사용량 무제한",
-      "우선 고객 지원",
+      m.pricing_feature_email_accounts_unlimited(),
+      m.pricing_feature_ai_labeling(),
+      m.pricing_feature_ai_draft(),
+      m.pricing_feature_ai_reply(),
+      m.pricing_feature_ai_usage_unlimited(),
+      m.pricing_feature_priority_support(),
     ],
   },
 ]
@@ -268,8 +281,8 @@ function PricingSection() {
         className={`mx-auto max-w-3xl space-y-12 text-center transition-all duration-700 ${inView ? "translate-y-0 opacity-100" : "translate-y-12 opacity-0"}`}
       >
         <div className="space-y-3">
-          <h2 className="text-3xl font-bold">요금제</h2>
-          <p className="text-muted-foreground">지금 바로 시작하세요</p>
+          <h2 className="text-3xl font-bold">{m.pricing_title()}</h2>
+          <p className="text-muted-foreground">{m.pricing_subtitle()}</p>
         </div>
         <div className="grid gap-4 sm:grid-cols-2">
           {pricingPlans.map((plan, pi) => (
@@ -279,7 +292,7 @@ function PricingSection() {
             >
               {plan.comingSoon && (
                 <span className="absolute top-4 right-4 rounded-full bg-muted px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground">
-                  출시 예정
+                  {m.pricing_coming_soon()}
                 </span>
               )}
               <div className="space-y-1">
@@ -335,7 +348,7 @@ function RouteComponent() {
           <div className="flex items-center gap-2">
             <Mail className="size-5 text-primary" />
             <Link to="/" className="font-semibold">
-              메일상자
+              {m.app_name()}
             </Link>
           </div>
           <nav className="flex items-center gap-6">
@@ -345,13 +358,13 @@ function RouteComponent() {
               rel="noopener noreferrer"
               className="text-sm text-muted-foreground transition-colors hover:text-foreground"
             >
-              팀소개
+              {m.landing_nav_team()}
             </a>
             <Link to="/signup" className="text-sm text-muted-foreground transition-colors hover:text-foreground">
-              회원가입
+              {m.auth_signup_link()}
             </Link>
             <Link to="/login" className="text-sm font-medium transition-colors hover:text-primary">
-              로그인
+              {m.auth_login_submit()}
             </Link>
           </nav>
         </div>
@@ -377,24 +390,24 @@ function RouteComponent() {
             style={{ animationDelay: "0ms" }}
           >
             <Sparkles className="ai-sparkle-icon size-3.5 text-primary" />
-            AI 이메일 자동화
+            {m.landing_hero_badge()}
           </div>
           <h1
             className="mt-8 animate-in text-4xl leading-tight font-bold tracking-tight duration-700 fill-mode-both fade-in slide-in-from-bottom-4 sm:text-5xl md:text-6xl"
             style={{ animationDelay: "150ms" }}
           >
-            모든 이메일 계정,
+            {m.landing_hero_title_prefix()}
             <br />
             <span className="bg-linear-to-r from-primary to-sky-400 bg-clip-text text-transparent">
-              하나의 받은편지함
+              {m.landing_hero_title_highlight()}
             </span>
-            으로
+            {m.landing_hero_title_suffix()}
           </h1>
           <p
             className="mt-8 animate-in text-lg text-muted-foreground duration-700 fill-mode-both fade-in slide-in-from-bottom-4 sm:text-xl"
             style={{ animationDelay: "300ms" }}
           >
-            여러 이메일 계정을 하나로, AI가 분류하고 답장까지
+            {m.landing_hero_subtitle()}
           </p>
           <div
             className="mt-8 flex animate-in flex-wrap justify-center gap-3 duration-700 fill-mode-both fade-in slide-in-from-bottom-4"
@@ -430,16 +443,16 @@ function RouteComponent() {
         <div className="mx-auto flex max-w-5xl items-center justify-between text-sm text-muted-foreground">
           <div className="flex items-center gap-2">
             <Mail className="size-4" />
-            <span>메일상자</span>
+            <span>{m.app_name()}</span>
           </div>
           <div className="flex items-center gap-4">
             <Link to="/terms" className="transition-colors hover:text-foreground">
-              이용약관
+              {m.landing_footer_terms()}
             </Link>
             <Link to="/privacy" className="transition-colors hover:text-foreground">
-              개인정보처리방침
+              {m.auth_privacy_link()}
             </Link>
-            <span>© 2026 메일상자. All rights reserved.</span>
+            <span>{m.landing_footer_copyright()}</span>
           </div>
         </div>
       </footer>

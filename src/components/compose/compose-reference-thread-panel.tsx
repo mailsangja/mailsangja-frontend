@@ -7,6 +7,7 @@ import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
 import { useThreadMessageExpansion } from "@/hooks/use-thread-message-expansion"
 import { getErrorMessage, getHttpStatus } from "@/lib/http-error"
+import { m } from "@/paraglide/messages"
 import { useThread } from "@/queries/emails"
 import { useMailAccounts } from "@/queries/mail-accounts"
 
@@ -14,23 +15,23 @@ function getThreadDetailErrorCopy(error: unknown) {
   switch (getHttpStatus(error)) {
     case 401:
       return {
-        title: "로그인이 필요합니다",
-        description: "세션이 만료되었거나 인증 정보가 없습니다. 다시 로그인한 뒤 스레드를 열어주세요.",
+        title: m.thread_error_login_title(),
+        description: m.thread_error_login_description(),
       }
     case 403:
       return {
-        title: "이 스레드에 접근할 수 없습니다",
-        description: "현재 로그인한 사용자에게 이 스레드를 볼 권한이 없습니다.",
+        title: m.thread_error_forbidden_title(),
+        description: m.thread_error_forbidden_description(),
       }
     case 404:
       return {
-        title: "스레드를 찾을 수 없습니다",
-        description: "삭제되었거나 더 이상 접근할 수 없는 메일 스레드입니다.",
+        title: m.thread_error_not_found_title(),
+        description: m.thread_error_not_found_description(),
       }
     default:
       return {
-        title: "스레드 내용을 불러오지 못했습니다",
-        description: getErrorMessage(error, "네트워크 상태를 확인한 뒤 다시 시도해주세요."),
+        title: m.thread_error_generic_title(),
+        description: getErrorMessage(error, m.thread_error_generic_description()),
       }
   }
 }
@@ -42,8 +43,8 @@ function ReferenceEmptyState() {
         <Mail className="size-7 text-muted-foreground/60" />
       </div>
       <div>
-        <p className="font-medium text-muted-foreground">레퍼런스 메일</p>
-        <p className="mt-1 text-sm text-muted-foreground">메일 작성시 참고할 메일이 여기 표시됩니다</p>
+        <p className="font-medium text-muted-foreground">{m.compose_reference_empty_title()}</p>
+        <p className="mt-1 text-sm text-muted-foreground">{m.compose_reference_empty_description()}</p>
       </div>
     </div>
   )
@@ -86,7 +87,7 @@ export function ComposeReferenceThreadPanel({ threadId, messageId = null }: Comp
   return (
     <div className="flex h-full w-full min-w-0 flex-1 flex-col overflow-hidden">
       <div className="flex h-11 shrink-0 items-center border-b px-4">
-        <h1 className="text-sm font-medium">참고 메일</h1>
+        <h1 className="text-sm font-medium">{m.compose_reference_title()}</h1>
       </div>
       {!threadId || (!isLoading && !thread && !isError) ? (
         <ReferenceEmptyState />

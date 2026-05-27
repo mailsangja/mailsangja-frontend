@@ -8,7 +8,8 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/lib/utils"
 import { LABEL_COLORS } from "@/lib/label-colors"
 import { LabelConditionList } from "@/components/label/label-condition-list"
-import { NOTIFICATION_POLICY_LABELS, type LabelConditionGroup, type NotificationPolicy } from "@/types/label"
+import { m } from "@/paraglide/messages"
+import { getNotificationPolicyLabel, type LabelConditionGroup, type NotificationPolicy } from "@/types/label"
 
 const NOTIFICATION_OPTIONS: { value: NotificationPolicy; icon: ElementType }[] = [
   { value: "URGENT", icon: BellRing },
@@ -78,11 +79,11 @@ function LabelFormContent({
             value={name}
             onChange={(e) => setName(e.target.value)}
             onKeyDown={(e) => e.key === "Enter" && handleSubmit()}
-            placeholder="라벨 이름"
+            placeholder={m.label_name_placeholder()}
             autoFocus
           />
           <div>
-            <p className="mb-2 text-xs text-muted-foreground">색상 선택</p>
+            <p className="mb-2 text-xs text-muted-foreground">{m.label_color_select()}</p>
             <div className="grid grid-cols-10 gap-1.5">
               {LABEL_COLORS.map((color) => (
                 <button
@@ -101,7 +102,7 @@ function LabelFormContent({
             </div>
           </div>
           <div>
-            <p className="mb-2 text-xs text-muted-foreground">알림 설정</p>
+            <p className="mb-2 text-xs text-muted-foreground">{m.label_notification_settings_title()}</p>
             <div className="flex gap-2">
               {NOTIFICATION_OPTIONS.map(({ value, icon: Icon }) => (
                 <button
@@ -116,18 +117,20 @@ function LabelFormContent({
                   )}
                 >
                   <Icon className="size-3.5" />
-                  {NOTIFICATION_POLICY_LABELS[value]}
+                  {getNotificationPolicyLabel(value)}
                 </button>
               ))}
             </div>
           </div>
           {groups && groups.length > 0 && (
             <div className="flex flex-col gap-3">
-              <p className="text-xs text-muted-foreground">라벨 규칙</p>
+              <p className="text-xs text-muted-foreground">{m.label_rules_title()}</p>
               {groups.map((group, groupIndex) => (
                 <div key={groupIndex} className="flex flex-col gap-2">
                   {groups.length > 1 && (
-                    <p className="text-xs font-medium text-muted-foreground">규칙 {groupIndex + 1}</p>
+                    <p className="text-xs font-medium text-muted-foreground">
+                      {m.label_rule_title({ index: groupIndex + 1 })}
+                    </p>
                   )}
                   <LabelConditionList conditions={group.conditions} />
                 </div>
@@ -138,7 +141,7 @@ function LabelFormContent({
       </ScrollArea>
       <DialogFooter>
         <Button variant="outline" onClick={onClose}>
-          취소
+          {m.common_cancel()}
         </Button>
         <Button onClick={handleSubmit} disabled={!name.trim() || isPending || submitDisabled}>
           {submitLabel}
@@ -158,7 +161,7 @@ export function LabelFormDialog({
   groups,
   onSubmit,
   isPending,
-  submitLabel = "확인",
+  submitLabel = m.common_confirm(),
   submitDisabled,
 }: LabelFormDialogProps) {
   return (

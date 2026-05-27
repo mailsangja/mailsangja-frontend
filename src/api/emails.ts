@@ -1,6 +1,7 @@
 import { apiClient, buildApiUrl } from "@/lib/api-client"
 import { getVisibleAttachments } from "@/lib/email-attachments"
 import { normalizeSnippetText } from "@/lib/html-entities"
+import { m } from "@/paraglide/messages"
 import type {
   ComposeEmailData,
   InboxMessage,
@@ -143,7 +144,7 @@ function parseMailDraftStreamEvent(frame: SseFrame): MailDraftStreamEvent | null
     const message =
       typeof data === "object" && data !== null && "message" in data && typeof data.message === "string"
         ? data.message
-        : "메일 초안 생성에 실패했습니다."
+        : m.compose_error_draft_failed()
 
     return { type: "error", code, message }
   }
@@ -155,7 +156,7 @@ async function parseErrorResponseMessage(response: Response) {
   const text = await response.text()
 
   if (!text) {
-    return response.statusText || "메일 초안 생성 요청에 실패했습니다."
+    return response.statusText || m.compose_error_draft_request_failed()
   }
 
   try {
@@ -168,7 +169,7 @@ async function parseErrorResponseMessage(response: Response) {
     return text
   }
 
-  return response.statusText || "메일 초안 생성 요청에 실패했습니다."
+  return response.statusText || m.compose_error_draft_request_failed()
 }
 
 export async function getMailboxThreads(
@@ -248,7 +249,7 @@ export async function streamMailDraft(
   }
 
   if (!response.body) {
-    throw new MailDraftStreamError("메일 초안 생성 응답을 읽을 수 없습니다.")
+    throw new MailDraftStreamError(m.compose_error_draft_stream_unreadable())
   }
 
   const reader = response.body.getReader()
@@ -296,7 +297,7 @@ export async function streamMailDraft(
       return
     }
 
-    throw new MailDraftStreamError("메일 초안 생성이 완료되기 전에 연결이 종료되었습니다.")
+    throw new MailDraftStreamError(m.compose_error_draft_stream_ended())
   } finally {
     if (shouldCancelReader) {
       await reader.cancel().catch(() => undefined)

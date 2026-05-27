@@ -9,6 +9,8 @@ import { ThreadListToolbar } from "@/components/thread/list-toolbar"
 import { useDeleteThread, useRestoreTrashThread } from "@/mutations/trash"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { useSuspenseLabels } from "@/queries/labels"
+import { formatNumber } from "@/lib/date"
+import { m } from "@/paraglide/messages"
 import type { EmailFilter, InboxThreadSummary } from "@/types/email"
 import type { MailAccount } from "@/types/mail-account"
 
@@ -52,7 +54,7 @@ export function ThreadList({
   onLoadMore,
   onRefresh,
   getAccount,
-  emptyTitle = "메일이 없습니다",
+  emptyTitle = m.mail_empty_title(),
   emptyDescription,
   errorTitle,
   errorDescription,
@@ -122,31 +124,31 @@ export function ThreadList({
           if (ids.length === 0) return
           setSelectedIds(new Set())
           ids.forEach((id) => deleteThread(id))
-          toast(`${ids.length}개 메일을 휴지통으로 옮겼습니다`, {
+          toast(m.mail_moved_to_trash({ count: formatNumber(ids.length) }), {
             action: {
-              label: "실행 취소",
+              label: m.common_undo(),
               onClick: () => {
                 ids.forEach((id) => restoreThread(id))
-                toast.success("삭제가 취소되었습니다")
+                toast.success(m.mail_delete_undone())
               },
             },
           })
         }}
         onLabelSelected={() => {
-          toast.info("라벨 기능은 준비 중입니다")
+          toast.info(m.mail_label_feature_pending())
         }}
       />
 
       <ScrollArea className="min-h-0 flex-1">
         {isLoading ? (
-          <div role="list" aria-label={`${mailboxName} 메일 목록`} className="min-w-0">
+          <div role="list" aria-label={m.mail_list_label({ mailbox: mailboxName })} className="min-w-0">
             <ThreadListSkeletonRows />
           </div>
         ) : errorTitle && errorDescription ? (
           <MailErrorState title={errorTitle} description={errorDescription} onRetry={onRetry} />
         ) : threads && threads.length > 0 ? (
           <>
-            <div role="list" aria-label={`${mailboxName} 메일 목록`} className="min-w-0">
+            <div role="list" aria-label={m.mail_list_label({ mailbox: mailboxName })} className="min-w-0">
               {threads.map((thread) => {
                 return (
                   <ThreadListItem
@@ -169,7 +171,7 @@ export function ThreadList({
                 <MailErrorState
                   title={loadMoreErrorTitle}
                   description={loadMoreErrorDescription}
-                  retryLabel="추가 메일 다시 불러오기"
+                  retryLabel={m.mail_load_more_retry()}
                   onRetry={onRetryLoadMore}
                 />
               </div>

@@ -6,6 +6,7 @@ import { emailKeys } from "@/queries/emails"
 import { useRegisterFcmToken } from "@/mutations/user"
 import { useUser } from "@/queries/user"
 import { FCM_TOKEN_CHANGED_EVENT, listenToForegroundFcmMessages, syncFcmToken } from "@/lib/fcm"
+import { m } from "@/paraglide/messages"
 import { toNewMailPushData } from "@/types/fcm"
 
 function openNotificationUrl(url: string) {
@@ -45,14 +46,14 @@ export function PushNotificationListener() {
       unsubscribe()
 
       void listenToForegroundFcmMessages((payload) => {
-        const { title, body, threadDetailUrl } = toNewMailPushData(payload.data)
+        const { title, body, threadDetailUrl } = toNewMailPushData(payload.data, m.push_new_mail_title())
 
         void queryClient.invalidateQueries({ queryKey: emailKeys.all() })
         toast(title, {
           description: body,
           action: threadDetailUrl
             ? {
-                label: "열기",
+                label: m.push_open_action(),
                 onClick: () => openNotificationUrl(threadDetailUrl),
               }
             : undefined,

@@ -9,6 +9,7 @@ import { useIsMobile } from "@/hooks/use-mobile"
 import { formatFullDateTime, formatRelativeDate } from "@/lib/date"
 import { getMailAddressLabel } from "@/lib/mail-address"
 import { cn } from "@/lib/utils"
+import { m } from "@/paraglide/messages"
 import type { InboxThreadSummary } from "@/types/email"
 import type { MailAccount } from "@/types/mail-account"
 
@@ -30,12 +31,12 @@ function SenderTooltipContent({ participant }: { participant: InboxThreadSummary
   return (
     <span className="flex min-w-0 flex-col items-start gap-1">
       <span className="flex min-w-0 items-center gap-2">
-        <span className="shrink-0 text-background/70">이름</span>
-        <span className="min-w-0 truncate">{name || email || "알 수 없음"}</span>
+        <span className="shrink-0 text-background/70">{m.thread_sender_tooltip_name()}</span>
+        <span className="min-w-0 truncate">{name || email || m.thread_sender_unknown()}</span>
       </span>
       {name && email ? (
         <span className="flex min-w-0 items-center gap-2">
-          <span className="shrink-0 text-background/70">이메일</span>
+          <span className="shrink-0 text-background/70">{m.thread_sender_tooltip_email()}</span>
           <span className="min-w-0 truncate">{email}</span>
         </span>
       ) : null}
@@ -45,7 +46,7 @@ function SenderTooltipContent({ participant }: { participant: InboxThreadSummary
 
 function AccountTooltipContent({ account }: { account?: MailAccount }) {
   if (!account) {
-    return <span>계정 정보 없음</span>
+    return <span>{m.thread_account_missing()}</span>
   }
 
   return <span>{account.alias ? `${account.alias} (${account.emailAddress})` : account.emailAddress}</span>
@@ -94,7 +95,7 @@ function ThreadListItemContent({
           onClick={(event) => event.stopPropagation()}
           onKeyDown={(event) => event.stopPropagation()}
         >
-          <Checkbox checked={isChecked} onCheckedChange={onToggleCheck} aria-label="메일 선택" />
+          <Checkbox checked={isChecked} onCheckedChange={onToggleCheck} aria-label={m.thread_select_mail()} />
         </div>
 
         <span
@@ -105,7 +106,7 @@ function ThreadListItemContent({
         >
           <Tooltip>
             <TooltipTrigger
-              aria-label="계정 정보"
+              aria-label={m.thread_account_info()}
               render={<MailAccountIcon icon={account?.icon} color={account?.color} />}
             />
             <TooltipContent side="bottom" align="start" className="max-w-72 items-start">
@@ -136,7 +137,7 @@ function ThreadListItemContent({
               isUnread ? "font-semibold text-foreground" : "font-medium text-muted-foreground"
             )}
           >
-            {thread.latestSubject || "(제목 없음)"}
+            {thread.latestSubject || m.message_no_subject()}
           </span>
 
           {renderTime("hidden md:flex")}
@@ -154,14 +155,16 @@ function ThreadListItemContent({
                   </TooltipTrigger>
                   <TooltipContent side="bottom" align="end" className="max-w-72 items-start">
                     <span className="flex min-w-0 flex-col items-start gap-1">
-                      <span>첨부파일 {thread.attachments.length}개</span>
+                      <span>{m.thread_attachment_count({ count: thread.attachments.length })}</span>
                       {thread.attachments.slice(0, 3).map((attachment) => (
                         <span key={attachment.id} className="max-w-64 truncate text-background/80">
                           {attachment.filename}
                         </span>
                       ))}
                       {thread.attachments.length > 3 ? (
-                        <span className="text-background/70">외 {thread.attachments.length - 3}개</span>
+                        <span className="text-background/70">
+                          {m.thread_attachment_more_count({ count: thread.attachments.length - 3 })}
+                        </span>
                       ) : null}
                     </span>
                   </TooltipContent>

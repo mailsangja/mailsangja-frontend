@@ -15,6 +15,7 @@ import {
 import { SidebarMenuAction, SidebarMenuButton, SidebarMenuItem } from "@/components/ui/sidebar"
 import { getErrorMessage } from "@/lib/http-error"
 import { useDeleteLabelGroup } from "@/mutations/labels"
+import { m } from "@/paraglide/messages"
 import type { LabelGroupItem, LabelListItem } from "@/types/label"
 
 function LabelGroupDeleteDialog({
@@ -32,9 +33,9 @@ function LabelGroupDeleteDialog({
     deleteLabelGroup.mutate(group.id, {
       onSuccess: () => {
         onOpenChange(false)
-        toast.success(`${group.name} 그룹이 삭제되었습니다`)
+        toast.success(m.label_group_delete_success({ name: group.name }))
       },
-      onError: (e) => toast.error(getErrorMessage(e, "라벨 그룹 삭제에 실패했습니다.")),
+      onError: (e) => toast.error(getErrorMessage(e, m.label_group_delete_error())),
     })
   }
 
@@ -42,17 +43,15 @@ function LabelGroupDeleteDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>삭제</DialogTitle>
+          <DialogTitle>{m.common_delete()}</DialogTitle>
         </DialogHeader>
-        <p className="text-base text-muted-foreground">
-          {group.name} 그룹을 삭제하시겠습니까? 라벨 자체는 삭제되지 않습니다.
-        </p>
+        <p className="text-base text-muted-foreground">{m.label_group_delete_confirmation({ name: group.name })}</p>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>
-            취소
+            {m.common_cancel()}
           </Button>
           <Button variant="destructive" onClick={handleDelete} disabled={deleteLabelGroup.isPending}>
-            삭제
+            {m.common_delete()}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -100,7 +99,12 @@ export function SidebarLabelGroupItem({ group, allLabels, isActive, onGroupToggl
 
       <DropdownMenu open={dropdownOpen} onOpenChange={setDropdownOpen}>
         <DropdownMenuTrigger
-          render={<SidebarMenuAction aria-label="그룹 메뉴" className="size-5 hover:bg-sidebar-accent-foreground/15" />}
+          render={
+            <SidebarMenuAction
+              aria-label={m.label_group_menu()}
+              className="size-5 hover:bg-sidebar-accent-foreground/15"
+            />
+          }
         >
           {(isHovered || dropdownOpen) && <MoreVertical />}
         </DropdownMenuTrigger>
@@ -112,7 +116,7 @@ export function SidebarLabelGroupItem({ group, allLabels, isActive, onGroupToggl
             }}
           >
             <Pencil />
-            라벨 그룹 수정
+            {m.label_group_edit_menu()}
           </DropdownMenuItem>
           <DropdownMenuSeparator className="my-0.5" />
           <DropdownMenuItem
@@ -123,7 +127,7 @@ export function SidebarLabelGroupItem({ group, allLabels, isActive, onGroupToggl
             }}
           >
             <Trash2 />
-            삭제
+            {m.common_delete()}
           </DropdownMenuItem>
         </DropdownMenuContent>
       </DropdownMenu>

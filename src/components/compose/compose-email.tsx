@@ -27,6 +27,7 @@ import { getErrorMessage } from "@/lib/http-error"
 import { formatMailAddressesForSend, parseMailRecipients } from "@/lib/mail-address"
 import { cn } from "@/lib/utils"
 import { useReviewMail, useSendMail } from "@/mutations/emails"
+import { m } from "@/paraglide/messages"
 import { useActiveMailAccounts } from "@/queries/mail-accounts"
 import { useUser } from "@/queries/user"
 import type { ComposeInlineImage, MailAddress, MailDraftStreamPhase, MailDraftUsage } from "@/types/email"
@@ -304,7 +305,7 @@ function RecipientField({
           id={id}
           recipients={recipients}
           onRecipientsChange={onRecipientsChange}
-          placeholder="이름 또는 이메일 입력"
+          placeholder={m.compose_recipient_placeholder()}
           disabled={disabled}
         />
       </div>
@@ -431,7 +432,7 @@ export function ComposeEmail({
   }
 
   const showUploadLimitError = () => {
-    toast.error("첨부 용량은 본문 이미지를 포함해 20MB 이하만 가능합니다")
+    toast.error(m.compose_error_upload_limit())
   }
 
   const handleAttachmentInputChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -462,7 +463,7 @@ export function ComposeEmail({
 
   const uploadInlineImage = useCallback(async (file: File) => {
     if (!file.type.startsWith("image/")) {
-      toast.error("이미지 파일만 본문에 삽입할 수 있습니다")
+      toast.error(m.compose_error_inline_image_only())
       throw new Error("Only image files can be inserted inline")
     }
 
@@ -526,22 +527,22 @@ export function ComposeEmail({
     }
 
     if (!selectedFromAddress) {
-      toast.error("발신 계정을 선택해주세요")
+      toast.error(m.compose_error_select_from_account())
       return
     }
 
     if (!editorRef.current?.editor || !isEditorReady) {
-      toast.error("메일 에디터를 불러오는 중입니다")
+      toast.error(m.compose_error_editor_loading())
       return
     }
 
     if (!draftPromptText) {
-      toast.error("AI 초안 요청을 입력해주세요")
+      toast.error(m.compose_error_ai_prompt_required())
       return
     }
 
     if (!isCurrentDraftContentEmpty()) {
-      toast.error("작성 중인 내용을 비운 뒤 다시 시도해주세요")
+      toast.error(m.compose_error_clear_draft_first())
       return
     }
 
@@ -622,9 +623,9 @@ export function ComposeEmail({
       }
 
       setDraftStreamPhase("error")
-      toast.error("메일 초안 생성에 실패했습니다", {
+      toast.error(m.compose_error_draft_failed(), {
         description:
-          error instanceof MailDraftStreamError ? error.message : getErrorMessage(error, "잠시 후 다시 시도해주세요."),
+          error instanceof MailDraftStreamError ? error.message : getErrorMessage(error, m.common_try_again_later()),
       })
     } finally {
       if (draftAbortControllerRef.current === abortController) {
@@ -647,34 +648,34 @@ export function ComposeEmail({
 
   const createSendPreview = async () => {
     if (isFromAddressPending) {
-      toast.error("발신 계정을 불러오는 중입니다")
+      toast.error(m.compose_error_from_accounts_loading())
       return null
     }
 
     if (!selectedFromAddress) {
-      toast.error("발신 메일 계정을 먼저 연결해주세요")
+      toast.error(m.compose_error_connect_from_account())
       return null
     }
 
     if (!editorRef.current || !isEditorReady) {
-      toast.error("메일 에디터를 불러오는 중입니다")
+      toast.error(m.compose_error_editor_loading())
       return null
     }
 
     if (to.length === 0) {
-      toast.error("받는 사람을 입력해주세요")
+      toast.error(m.compose_error_to_required())
       return null
     }
 
     if (!subject.trim()) {
-      toast.error("제목을 입력해주세요")
+      toast.error(m.compose_error_subject_required())
       return null
     }
 
     const editorContent = editorRef.current.getJSON()
 
     if (isEditorEmpty || isEditorContentEmpty(editorContent)) {
-      toast.error("메일 내용을 입력해주세요")
+      toast.error(m.compose_error_body_required())
       return null
     }
 
@@ -682,7 +683,7 @@ export function ComposeEmail({
     const imageMetadata = collectImageMetadata(editorContent)
 
     if (!emailContent.text.trim() && !emailContent.html.trim()) {
-      toast.error("메일 내용을 입력해주세요")
+      toast.error(m.compose_error_body_required())
       return null
     }
 
@@ -734,8 +735,8 @@ export function ComposeEmail({
         })
       }
     } catch (error) {
-      toast.error("메일 미리보기를 생성하지 못했습니다", {
-        description: getErrorMessage(error, "잠시 후 다시 시도해주세요."),
+      toast.error(m.compose_error_preview_failed(), {
+        description: getErrorMessage(error, m.common_try_again_later()),
       })
     } finally {
       setIsPreparingPreview(false)
@@ -755,12 +756,12 @@ export function ComposeEmail({
         attachment_count: sendPreview.mail.attachments?.length ?? 0,
         inline_image_count: sendPreview.mail.inlineImages?.length ?? 0,
       })
-      toast.success("메일이 발송되었습니다")
+      toast.success(m.compose_send_success())
       setSendPreview(null)
       await navigate({ to: "/mail/$mailbox", params: { mailbox: "inbox" } })
     } catch (error) {
-      toast.error("메일 발송에 실패했습니다", {
-        description: getErrorMessage(error, "잠시 후 다시 시도해주세요."),
+      toast.error(m.compose_send_error(), {
+        description: getErrorMessage(error, m.common_try_again_later()),
       })
     }
   }
@@ -776,13 +777,13 @@ export function ComposeEmail({
   return (
     <div className="relative flex h-full w-full min-w-0 flex-1 flex-col">
       <div className="flex h-11 shrink-0 items-center justify-between border-b px-4">
-        <h1 className="text-sm font-medium">{messageId ? "답장" : "새 메일 작성"}</h1>
+        <h1 className="text-sm font-medium">{messageId ? m.compose_reply() : m.compose_new_mail()}</h1>
         <Button
           variant="ghost"
           size="icon-sm"
           onClick={handleClose}
           className="-mr-2"
-          aria-label="메일 작성 닫기"
+          aria-label={m.compose_close()}
           disabled={isDraftStreaming}
         >
           <X className="size-4" />
@@ -791,19 +792,19 @@ export function ComposeEmail({
 
       <RecipientField
         id="compose-to"
-        label="받는 사람"
+        label={m.compose_field_to()}
         recipients={to}
         onRecipientsChange={setTo}
         disabled={isDraftStreaming}
       >
         {!showCc && (
           <Button variant="ghost" size="xs" onClick={() => setShowCc(true)} disabled={isDraftStreaming}>
-            참조
+            {m.compose_field_cc()}
           </Button>
         )}
         {!showBcc && (
           <Button variant="ghost" size="xs" onClick={() => setShowBcc(true)} disabled={isDraftStreaming}>
-            숨은참조
+            {m.compose_field_bcc()}
           </Button>
         )}
       </RecipientField>
@@ -811,7 +812,7 @@ export function ComposeEmail({
       {showCc && (
         <RecipientField
           id="compose-cc"
-          label="참조"
+          label={m.compose_field_cc()}
           recipients={cc}
           onRecipientsChange={setCc}
           disabled={isDraftStreaming}
@@ -821,7 +822,7 @@ export function ComposeEmail({
       {showBcc && (
         <RecipientField
           id="compose-bcc"
-          label="숨은 참조"
+          label={m.compose_field_bcc_spaced()}
           recipients={bcc}
           onRecipientsChange={setBcc}
           disabled={isDraftStreaming}
@@ -830,14 +831,14 @@ export function ComposeEmail({
 
       <div className="flex h-10 items-center border-b px-4 py-2">
         <label htmlFor="compose-subject" className="w-20 shrink-0 text-sm text-muted-foreground">
-          제목
+          {m.compose_field_subject()}
         </label>
         <input
           id="compose-subject"
           type="text"
           value={subject}
           onChange={(e) => setSubject(e.target.value)}
-          placeholder="메일 제목 입력"
+          placeholder={m.compose_subject_placeholder()}
           disabled={isReplyMode || isDraftStreaming}
           className="min-w-0 flex-1 bg-transparent text-sm outline-none placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-60"
         />
@@ -845,7 +846,7 @@ export function ComposeEmail({
 
       <div className="flex h-10 items-center border-b px-4 py-2">
         <span id="compose-from-label" className="w-20 shrink-0 text-sm text-muted-foreground">
-          보내는 사람
+          {m.compose_field_from()}
         </span>
         <Select
           value={selectedFromAddress}
@@ -857,7 +858,13 @@ export function ComposeEmail({
             aria-labelledby="compose-from-label"
             className="h-auto min-w-0 flex-1 border-0 bg-transparent px-0 py-0 shadow-none focus-visible:ring-0 dark:bg-transparent dark:hover:bg-transparent"
           >
-            <SelectValue placeholder={isFromAddressPending ? "발신 계정을 불러오는 중..." : "발신 계정을 선택하세요"} />
+            <SelectValue
+              placeholder={
+                isFromAddressPending
+                  ? m.compose_from_account_loading_placeholder()
+                  : m.compose_from_account_select_placeholder()
+              }
+            />
           </SelectTrigger>
           <SelectContent align="start" alignItemWithTrigger={false}>
             {(activeMailAccounts ?? []).map((mailAccount) => (
@@ -865,7 +872,12 @@ export function ComposeEmail({
                 <span className="flex min-w-0 items-center gap-2">
                   <MailAccountLabel account={mailAccount} />
                   {mailAccount.id === user?.defaultMailAccountId && (
-                    <Badge variant="secondary" className="px-1.5" aria-label="기본 발신 계정" title="기본 발신 계정">
+                    <Badge
+                      variant="secondary"
+                      className="px-1.5"
+                      aria-label={m.mail_default_from_account()}
+                      title={m.mail_default_from_account()}
+                    >
                       <Star stroke="var(--secondary-foreground)" fill="var(--secondary-foreground)" />
                     </Badge>
                   )}
@@ -880,12 +892,12 @@ export function ComposeEmail({
 
       <div
         className={cn("relative flex-1 overflow-hidden", isDraftStreaming && "compose-email-editor-ai-streaming")}
-        aria-label="메일 본문"
+        aria-label={m.compose_body_label()}
       >
         <EmailEditor
           ref={editorRef}
           theme={EDITOR_THEME}
-          placeholder="메일 내용을 입력하세요. / 로 블록을 추가할 수 있습니다."
+          placeholder={m.compose_body_placeholder()}
           bubbleMenu={{ hideWhenActiveNodes: ["button", "image"] }}
           className="compose-email-editor h-full overflow-auto text-sm outline-none"
           editable={!isDraftStreaming}
@@ -957,13 +969,13 @@ export function ComposeEmail({
             size="lg"
             onClick={() => attachmentInputRef.current?.click()}
             disabled={isDraftStreaming || sendMailMutation.isPending || isPreparingPreview}
-            aria-label="첨부파일 추가"
+            aria-label={m.compose_add_attachment()}
           >
             <Paperclip className="size-4" />
           </Button>
           <Button className="flex-1" size="lg" onClick={handleSendPreview} disabled={cannotSend}>
             {isPreparingPreview || sendMailMutation.isPending ? <Loader2 className="size-4 animate-spin" /> : null}
-            보내기
+            {m.compose_send()}
           </Button>
         </div>
       </div>

@@ -23,12 +23,14 @@ import { ScrollArea } from "@/components/ui/scroll-area"
 import { getErrorMessage } from "@/lib/http-error"
 import { useUpdateLabelRule } from "@/mutations/labels"
 import { useLabelDetail } from "@/queries/labels"
+import { m } from "@/paraglide/messages"
 import {
   LABEL_ATTACHMENT_OPTIONS,
   LABEL_CONDITION_FIELDS,
-  LABEL_CONDITION_FIELD_LABELS,
-  LABEL_CONDITION_OPERATOR_LABELS,
   LABEL_FIELD_OPERATORS,
+  getLabelAttachmentValueLabel,
+  getLabelConditionFieldLabel,
+  getLabelConditionOperatorLabel,
   type ConditionField,
   type ConditionOperator,
 } from "@/types/label"
@@ -104,10 +106,10 @@ export function LabelRuleDialog({ open, onOpenChange, labelId }: LabelRuleDialog
       { labelId, data: { groups: [...existingGroups, { conditions }] } },
       {
         onSuccess: () => {
-          toast.success("규칙이 생성되었습니다.")
+          toast.success(m.label_rule_create_success())
           handleOpenChange(false)
         },
-        onError: (e) => toast.error(getErrorMessage(e, "규칙 생성에 실패했습니다.")),
+        onError: (e) => toast.error(getErrorMessage(e, m.label_rule_create_error())),
       }
     )
   }
@@ -116,8 +118,8 @@ export function LabelRuleDialog({ open, onOpenChange, labelId }: LabelRuleDialog
     <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-2xl">
         <DialogHeader>
-          <DialogTitle>규칙 만들기</DialogTitle>
-          <DialogDescription>모든 조건을 만족하는 메일에 라벨이 적용됩니다.</DialogDescription>
+          <DialogTitle>{m.label_rule_create_title()}</DialogTitle>
+          <DialogDescription>{m.label_rule_create_description()}</DialogDescription>
         </DialogHeader>
 
         <ScrollArea className="max-h-[40vh]">
@@ -128,9 +130,9 @@ export function LabelRuleDialog({ open, onOpenChange, labelId }: LabelRuleDialog
                   <DropdownMenuTrigger className="flex h-9 w-36 shrink-0 items-center justify-between gap-1 rounded-md border border-input bg-background px-3 text-sm disabled:cursor-not-allowed disabled:opacity-50">
                     <span className="truncate">
                       {entry.field ? (
-                        LABEL_CONDITION_FIELD_LABELS[entry.field]
+                        getLabelConditionFieldLabel(entry.field)
                       ) : (
-                        <span className="text-muted-foreground">필드 선택</span>
+                        <span className="text-muted-foreground">{m.label_rule_field_placeholder()}</span>
                       )}
                     </span>
                     <ChevronDown className="size-4 shrink-0 opacity-50" />
@@ -142,7 +144,7 @@ export function LabelRuleDialog({ open, onOpenChange, labelId }: LabelRuleDialog
                     >
                       {LABEL_CONDITION_FIELDS.map((field) => (
                         <DropdownMenuRadioItem key={field} value={field}>
-                          {LABEL_CONDITION_FIELD_LABELS[field]}
+                          {getLabelConditionFieldLabel(field)}
                         </DropdownMenuRadioItem>
                       ))}
                     </DropdownMenuRadioGroup>
@@ -155,25 +157,30 @@ export function LabelRuleDialog({ open, onOpenChange, labelId }: LabelRuleDialog
                       <DropdownMenuTrigger className="flex h-9 w-28 shrink-0 items-center justify-between gap-1 rounded-md border border-input bg-background px-3 text-sm disabled:cursor-not-allowed disabled:opacity-50">
                         <span className="truncate">
                           {entry.value ? (
-                            LABEL_ATTACHMENT_OPTIONS.find((o) => o.value === entry.value)?.label
+                            getLabelAttachmentValueLabel(entry.value)
                           ) : (
-                            <span className="text-muted-foreground">선택</span>
+                            <span className="text-muted-foreground">{m.label_rule_select_placeholder()}</span>
                           )}
                         </span>
                         <ChevronDown className="size-4 shrink-0 opacity-50" />
                       </DropdownMenuTrigger>
                       <DropdownMenuContent>
                         <DropdownMenuRadioGroup value={entry.value} onValueChange={(v) => handleValueChange(index, v)}>
-                          {LABEL_ATTACHMENT_OPTIONS.map((o) => (
-                            <DropdownMenuRadioItem key={o.value} value={o.value}>
-                              {o.label}
+                          {LABEL_ATTACHMENT_OPTIONS.map((value) => (
+                            <DropdownMenuRadioItem key={value} value={value}>
+                              {getLabelAttachmentValueLabel(value)}
                             </DropdownMenuRadioItem>
                           ))}
                         </DropdownMenuRadioGroup>
                       </DropdownMenuContent>
                     </DropdownMenu>
                     {entries.length > 1 && (
-                      <Button variant="ghost" size="icon-sm" onClick={() => removeEntry(index)} aria-label="조건 삭제">
+                      <Button
+                        variant="ghost"
+                        size="icon-sm"
+                        onClick={() => removeEntry(index)}
+                        aria-label={m.label_condition_delete()}
+                      >
                         <Minus className="size-4" />
                       </Button>
                     )}
@@ -187,9 +194,9 @@ export function LabelRuleDialog({ open, onOpenChange, labelId }: LabelRuleDialog
                       >
                         <span className="truncate">
                           {entry.operator ? (
-                            LABEL_CONDITION_OPERATOR_LABELS[entry.operator as ConditionOperator]
+                            getLabelConditionOperatorLabel(entry.operator as ConditionOperator)
                           ) : (
-                            <span className="text-muted-foreground">연산자</span>
+                            <span className="text-muted-foreground">{m.label_rule_operator_placeholder()}</span>
                           )}
                         </span>
                         <ChevronDown className="size-4 shrink-0 opacity-50" />
@@ -202,7 +209,7 @@ export function LabelRuleDialog({ open, onOpenChange, labelId }: LabelRuleDialog
                           {entry.field &&
                             LABEL_FIELD_OPERATORS[entry.field].map((op) => (
                               <DropdownMenuRadioItem key={op} value={op}>
-                                {LABEL_CONDITION_OPERATOR_LABELS[op]}
+                                {getLabelConditionOperatorLabel(op)}
                               </DropdownMenuRadioItem>
                             ))}
                         </DropdownMenuRadioGroup>
@@ -213,7 +220,7 @@ export function LabelRuleDialog({ open, onOpenChange, labelId }: LabelRuleDialog
                         value={entry.value}
                         onChange={(e) => handleValueChange(index, e.target.value)}
                         className="h-8 flex-1"
-                        placeholder="값 입력..."
+                        placeholder={m.label_rule_value_placeholder()}
                         disabled={!entry.field}
                       />
                       {entries.length > 1 && (
@@ -221,7 +228,7 @@ export function LabelRuleDialog({ open, onOpenChange, labelId }: LabelRuleDialog
                           variant="ghost"
                           size="icon-sm"
                           onClick={() => removeEntry(index)}
-                          aria-label="조건 삭제"
+                          aria-label={m.label_condition_delete()}
                         >
                           <Minus className="size-4" />
                         </Button>
@@ -240,15 +247,15 @@ export function LabelRuleDialog({ open, onOpenChange, labelId }: LabelRuleDialog
           className="flex w-fit items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
         >
           <Plus className="size-4" />
-          조건 추가하기
+          {m.label_condition_add()}
         </button>
 
         <DialogFooter>
           <Button variant="outline" onClick={() => handleOpenChange(false)}>
-            취소
+            {m.common_cancel()}
           </Button>
           <Button onClick={handleSubmit} disabled={!canSubmit || updateRule.isPending}>
-            {updateRule.isPending ? "생성 중..." : "규칙 만들기"}
+            {updateRule.isPending ? m.label_rule_creating() : m.label_rule_create_submit()}
           </Button>
         </DialogFooter>
       </DialogContent>
