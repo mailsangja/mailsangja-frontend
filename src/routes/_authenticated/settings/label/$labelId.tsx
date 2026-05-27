@@ -189,7 +189,7 @@ function LabelDetailContent({ labelId, label }: { labelId: string; label: LabelD
 
   return (
     <ScrollArea className="min-h-0 flex-1">
-      <div className="flex flex-col gap-4 pb-4">
+      <div className="flex flex-col gap-4 px-6 pb-4">
         <Link to="/settings/label" className="inline-flex items-center gap-2 text-sm text-muted-foreground">
           <ChevronLeft className="size-4" />
           뒤로

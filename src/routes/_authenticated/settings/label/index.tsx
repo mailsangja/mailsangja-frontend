@@ -200,7 +200,7 @@ function SettingsLabelPage() {
 
   return (
     <ScrollArea className="min-h-0 flex-1">
-      <div className="flex flex-col gap-4 pb-4">
+      <div className="flex flex-col gap-4 px-6 pb-4">
         <div className="flex flex-col gap-3">
           <p className="text-md px-1 font-semibold text-muted-foreground">라벨</p>
           <Card>
