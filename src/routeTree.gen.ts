@@ -9,6 +9,7 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as UpgradeRouteImport } from './routes/upgrade'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as GuestRouteImport } from './routes/_guest'
@@ -26,6 +27,11 @@ import { Route as AuthenticatedMailMailboxRouteImport } from './routes/_authenti
 import { Route as AuthenticatedSettingsLabelIndexRouteImport } from './routes/_authenticated/settings/label/index'
 import { Route as AuthenticatedSettingsLabelLabelIdRouteImport } from './routes/_authenticated/settings/label/$labelId'
 
+const UpgradeRoute = UpgradeRouteImport.update({
+  id: '/upgrade',
+  path: '/upgrade',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
   path: '/terms',
@@ -114,6 +120,7 @@ export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/privacy': typeof PrivacyRoute
   '/terms': typeof TermsRoute
+  '/upgrade': typeof UpgradeRoute
   '/compose': typeof AuthenticatedComposeRoute
   '/mail': typeof AuthenticatedMailRouteWithChildren
   '/settings': typeof AuthenticatedSettingsRouteWithChildren
@@ -130,6 +137,7 @@ export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/privacy': typeof PrivacyRoute
   '/terms': typeof TermsRoute
+  '/upgrade': typeof UpgradeRoute
   '/compose': typeof AuthenticatedComposeRoute
   '/login': typeof GuestLoginRoute
   '/signup': typeof GuestSignupRoute
@@ -147,6 +155,7 @@ export interface FileRoutesById {
   '/_guest': typeof GuestRouteWithChildren
   '/privacy': typeof PrivacyRoute
   '/terms': typeof TermsRoute
+  '/upgrade': typeof UpgradeRoute
   '/_authenticated/compose': typeof AuthenticatedComposeRoute
   '/_authenticated/mail': typeof AuthenticatedMailRouteWithChildren
   '/_authenticated/settings': typeof AuthenticatedSettingsRouteWithChildren
@@ -165,6 +174,7 @@ export interface FileRouteTypes {
     | '/'
     | '/privacy'
     | '/terms'
+    | '/upgrade'
     | '/compose'
     | '/mail'
     | '/settings'
@@ -181,6 +191,7 @@ export interface FileRouteTypes {
     | '/'
     | '/privacy'
     | '/terms'
+    | '/upgrade'
     | '/compose'
     | '/login'
     | '/signup'
@@ -197,6 +208,7 @@ export interface FileRouteTypes {
     | '/_guest'
     | '/privacy'
     | '/terms'
+    | '/upgrade'
     | '/_authenticated/compose'
     | '/_authenticated/mail'
     | '/_authenticated/settings'
@@ -216,10 +228,18 @@ export interface RootRouteChildren {
   GuestRoute: typeof GuestRouteWithChildren
   PrivacyRoute: typeof PrivacyRoute
   TermsRoute: typeof TermsRoute
+  UpgradeRoute: typeof UpgradeRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/upgrade': {
+      id: '/upgrade'
+      path: '/upgrade'
+      fullPath: '/upgrade'
+      preLoaderRoute: typeof UpgradeRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/terms': {
       id: '/terms'
       path: '/terms'
@@ -402,6 +422,7 @@ const rootRouteChildren: RootRouteChildren = {
   GuestRoute: GuestRouteWithChildren,
   PrivacyRoute: PrivacyRoute,
   TermsRoute: TermsRoute,
+  UpgradeRoute: UpgradeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
