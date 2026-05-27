@@ -2,7 +2,6 @@ import { useState } from "react"
 import { Link, createFileRoute } from "@tanstack/react-router"
 import {
   Check,
-  Languages,
   LayoutList,
   List,
   Monitor,
@@ -15,17 +14,15 @@ import {
 } from "lucide-react"
 
 import { InboxSingleLinePreview, InboxTwoLinePreview } from "@/components/inbox-preview"
+import { LanguageSelect } from "@/components/language-select"
 import { NotificationSettingsCard } from "@/components/notification-settings-card"
 import { useTheme } from "@/components/theme-provider"
 import { DarkPreview, LightPreview, SystemPreview } from "@/components/theme-preview"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { ScrollArea } from "@/components/ui/scroll-area"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
 import { m } from "@/paraglide/messages"
-import { getLocale, locales, setLocale } from "@/paraglide/runtime"
-import type { Locale } from "@/paraglide/runtime"
 import { useAiUsages } from "@/queries/ai"
 import { useUser } from "@/queries/user"
 import { getAiUsageTypeLabel } from "@/types/ai"
@@ -33,19 +30,6 @@ import { getAiUsageTypeLabel } from "@/types/ai"
 export const Route = createFileRoute("/_authenticated/settings/")({
   component: SettingsPage,
 })
-
-function getLanguageLabel(locale: Locale) {
-  switch (locale) {
-    case "ko":
-      return m.settings_language_ko()
-    case "en":
-      return m.settings_language_en()
-  }
-}
-
-function isLocale(value: string | null | undefined): value is Locale {
-  return typeof value === "string" && (locales as readonly string[]).includes(value)
-}
 
 function SettingsPage() {
   const { data: user, isPending: isUserPending } = useUser()
@@ -60,16 +44,6 @@ function SettingsPage() {
   // TODO: 실제 설정 저장/불러오기 기능은 추후 구현 예정
   const [inboxView, setInboxView] = useState<"single" | "double">("double")
   const [hoverAction, setHoverAction] = useState<"enabled" | "disabled">("enabled")
-  const currentLocale = getLocale()
-  const languageItems = locales.map((locale) => ({ value: locale, label: getLanguageLabel(locale) }))
-
-  const handleLocaleChange = (value: string | null) => {
-    if (!isLocale(value) || value === currentLocale) {
-      return
-    }
-
-    setLocale(value)
-  }
 
   return (
     <ScrollArea className="h-full">
@@ -182,19 +156,7 @@ function SettingsPage() {
               <CardDescription>{m.settings_language_description()}</CardDescription>
             </CardHeader>
             <CardContent className="pt-1 pb-5">
-              <Select value={currentLocale} onValueChange={handleLocaleChange} items={languageItems}>
-                <SelectTrigger className="w-full sm:w-72" aria-label={m.settings_language_title()}>
-                  <Languages className="size-4 text-muted-foreground" />
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent align="start" alignItemWithTrigger={false}>
-                  {languageItems.map((item) => (
-                    <SelectItem key={item.value} value={item.value} className="px-3 py-2">
-                      {item.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <LanguageSelect />
             </CardContent>
           </Card>
         </div>

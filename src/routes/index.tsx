@@ -2,6 +2,7 @@ import { createFileRoute, Link, redirect } from "@tanstack/react-router"
 import { ArrowRight, ArrowUp, Check, ChevronDown, Mail, PenLine, Reply, Sparkles, Tag } from "lucide-react"
 import { useEffect, useRef, useState } from "react"
 
+import { LanguageSelect } from "@/components/language-select"
 import { buttonVariants } from "@/components/ui/button"
 import { m } from "@/paraglide/messages"
 import { userQueries } from "@/queries/user"
@@ -440,12 +441,12 @@ function RouteComponent() {
       <PricingSection />
 
       <footer className="snap-start border-t px-6 py-8">
-        <div className="mx-auto flex max-w-5xl items-center justify-between text-sm text-muted-foreground">
+        <div className="mx-auto flex max-w-5xl flex-col gap-4 text-sm text-muted-foreground sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-center gap-2">
             <Mail className="size-4" />
             <span>{m.app_name()}</span>
           </div>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center gap-4">
             <Link to="/terms" className="transition-colors hover:text-foreground">
               {m.landing_footer_terms()}
             </Link>
@@ -453,6 +454,7 @@ function RouteComponent() {
               {m.auth_privacy_link()}
             </Link>
             <span>{m.landing_footer_copyright()}</span>
+            <LanguageSelect size="sm" contentAlign="end" triggerClassName="w-48 sm:w-48 text-xs" />
           </div>
         </div>
       </footer>
