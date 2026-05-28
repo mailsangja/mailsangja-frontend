@@ -45,7 +45,7 @@ export function registerPwaServiceWorker() {
       immediate: true,
       onNeedRefresh() {
         if (shouldApplyDeferredUpdateOnLoad) {
-          void applyPwaUpdate()
+          void applyPwaUpdate().catch(() => {})
           return
         }
 
@@ -54,7 +54,7 @@ export function registerPwaServiceWorker() {
       },
       onRegisteredSW(_swUrl, registration) {
         if (shouldApplyDeferredUpdateOnLoad && registration?.waiting) {
-          void applyPwaUpdate()
+          void applyPwaUpdate().catch(() => {})
           return
         }
 
@@ -123,11 +123,17 @@ export async function applyPwaUpdate() {
   setDeferredPwaUpdate(false)
 
   try {
-    await updateServiceWorker?.()
+    if (!updateServiceWorker) {
+      throw new Error("PWA update service worker is not initialized.")
+    }
+
+    await updateServiceWorker()
   } catch (error) {
     setDeferredPwaUpdate(true)
-    setPwaUpdateSnapshot({ isApplyingUpdate: false, isUpdateAvailable: true })
+    setPwaUpdateSnapshot({ isUpdateAvailable: true })
     throw error
+  } finally {
+    setPwaUpdateSnapshot({ isApplyingUpdate: false })
   }
 }
 

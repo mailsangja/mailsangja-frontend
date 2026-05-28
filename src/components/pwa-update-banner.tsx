@@ -29,7 +29,7 @@ export function PwaUpdateBanner() {
         className="h-8 w-full justify-start gap-1.5"
         disabled={isApplyingUpdate}
         onClick={() => {
-          void applyPwaUpdate()
+          void applyPwaUpdate().catch(() => {})
         }}
       >
         <RefreshCw className={cn("size-3.5", isApplyingUpdate && "animate-spin")} />
