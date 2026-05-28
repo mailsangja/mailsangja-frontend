@@ -37,6 +37,7 @@ import {
   type NotificationPolicy,
   type UpdateLabelPayload,
 } from "@/types/label"
+import { Badge } from "@/components/ui/badge"
 
 export const Route = createFileRoute("/_authenticated/settings/label/$labelId")({
   component: LabelDetailPage,
@@ -374,17 +375,17 @@ function LabelDetailContent({ labelId, label }: { labelId: string; label: LabelD
               이 라벨에 자동으로 분류될 메일의 규칙을 설정합니다. 규칙이 여러 개이면 하나라도 만족하면 분류됩니다.
             </CardDescription>
           </CardHeader>
-          <CardContent className="flex flex-col gap-1">
+          <CardContent className="flex flex-col">
             {isEditingRules ? (
               <>
                 {localGroups.map((conditions, groupIndex) => (
                   <div key={groupIndex}>
                     {groupIndex > 0 && (
-                      <div className="flex items-center gap-3 py-2">
+                      <div className="my-1 flex items-center gap-3 py-2">
                         <div className="h-px flex-1 bg-border" />
-                        <span className="rounded-full border border-orange-200 bg-orange-50 px-3 py-0.5 text-xs font-bold tracking-wide text-orange-500 dark:border-orange-800 dark:bg-orange-900/20 dark:text-orange-400">
+                        <Badge variant="outline" className="px-3">
                           OR
-                        </span>
+                        </Badge>
                         <div className="h-px flex-1 bg-border" />
                       </div>
                     )}
@@ -554,16 +555,16 @@ function LabelDetailContent({ labelId, label }: { labelId: string; label: LabelD
                 </div>
               </>
             ) : (
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col">
                 {label.rule && label.rule.groups.length > 0 ? (
                   label.rule.groups.map((group, gi) => (
                     <div key={gi}>
                       {gi > 0 && (
-                        <div className="flex items-center gap-3 py-2">
+                        <div className="my-1 flex items-center gap-3 py-2">
                           <div className="h-px flex-1 bg-border" />
-                          <span className="rounded-full border border-orange-200 bg-orange-50 px-3 py-0.5 text-xs font-bold tracking-wide text-orange-500 dark:border-orange-800 dark:bg-orange-900/20 dark:text-orange-400">
+                          <Badge variant="outline" className="px-3">
                             OR
-                          </span>
+                          </Badge>
                           <div className="h-px flex-1 bg-border" />
                         </div>
                       )}

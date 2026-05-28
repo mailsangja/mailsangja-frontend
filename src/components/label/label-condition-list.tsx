@@ -4,6 +4,7 @@ import {
   getLabelConditionOperatorLabel,
   type LabelCondition,
 } from "@/types/label"
+import { Badge } from "@/components/ui/badge"
 
 function FieldBadge({ children }: { children: React.ReactNode }) {
   return (
@@ -35,7 +36,7 @@ function ConditionSentence({ condition }: { condition: LabelCondition }) {
   if (condition.field === "HAS_ATTACHMENT") {
     const valueLabel = getLabelAttachmentValueLabel(condition.value) ?? condition.value
     return (
-      <p className="flex flex-wrap items-center gap-1.5 text-base leading-loose">
+      <p className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-base leading-normal">
         <FieldBadge>{fieldLabel}</FieldBadge>
         <span className="text-muted-foreground">이</span>
         <OperatorBadge>{valueLabel}</OperatorBadge>
@@ -46,7 +47,7 @@ function ConditionSentence({ condition }: { condition: LabelCondition }) {
 
   if (condition.operator === "EQUALS") {
     return (
-      <p className="flex flex-wrap items-center gap-1.5 text-base leading-loose">
+      <p className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-base leading-normal">
         <FieldBadge>{fieldLabel}</FieldBadge>
         <span className="text-muted-foreground">이</span>
         <ValueBadge>{condition.value}</ValueBadge>
@@ -59,7 +60,7 @@ function ConditionSentence({ condition }: { condition: LabelCondition }) {
 
   if (condition.operator === "CONTAINS") {
     return (
-      <p className="flex flex-wrap items-center gap-1.5 text-base leading-loose">
+      <p className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-base leading-normal">
         <FieldBadge>{fieldLabel}</FieldBadge>
         <span className="text-muted-foreground">에</span>
         <ValueBadge>{condition.value}</ValueBadge>
@@ -72,7 +73,7 @@ function ConditionSentence({ condition }: { condition: LabelCondition }) {
 
   if (condition.operator === "NOT_CONTAINS") {
     return (
-      <p className="flex flex-wrap items-center gap-1.5 text-base leading-loose">
+      <p className="flex flex-wrap items-center gap-x-1.5 gap-y-1 text-base leading-normal">
         <FieldBadge>{fieldLabel}</FieldBadge>
         <span className="text-muted-foreground">에</span>
         <ValueBadge>{condition.value}</ValueBadge>
@@ -95,11 +96,11 @@ export function LabelConditionList({ conditions }: { conditions: LabelCondition[
             <ConditionSentence condition={condition} />
           </div>
           {index < conditions.length - 1 && (
-            <div className="flex items-center gap-3">
+            <div className="-my-3 flex items-center gap-3">
               <div className="h-px flex-1 bg-border" />
-              <span className="rounded-full border border-border bg-muted px-2.5 py-0.5 text-xs font-bold tracking-wide text-muted-foreground">
+              <Badge variant="outline" className="px-3">
                 AND
-              </span>
+              </Badge>
               <div className="h-px flex-1 bg-border" />
             </div>
           )}
