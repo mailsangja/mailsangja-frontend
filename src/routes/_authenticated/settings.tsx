@@ -9,6 +9,7 @@ import {
   BreadcrumbPage,
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb"
+import { ScrollArea } from "@/components/ui/scroll-area"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { m } from "@/paraglide/messages"
 import { useLabels } from "@/queries/labels"
@@ -96,7 +97,7 @@ function SettingsLayout() {
 
             void navigate({ to: settingsTabRoutes[value as keyof typeof settingsTabRoutes] })
           }}
-          className="min-h-0 flex-1 gap-6"
+          className="min-h-0 flex-1"
         >
           <TabsList variant="line" className="w-full justify-start border-b">
             <TabsTrigger value="general" className="min-w-24 rounded-none px-4">
@@ -113,7 +114,11 @@ function SettingsLayout() {
             </TabsTrigger>
           </TabsList>
           <TabsContent value={activeTab} className="flex min-h-0 flex-col">
-            <Outlet />
+            <ScrollArea className="min-h-0 flex-1">
+              <div className="flex flex-col gap-4 px-4 pt-2 pb-4 sm:px-6 sm:pt-4">
+                <Outlet />
+              </div>
+            </ScrollArea>
           </TabsContent>
         </Tabs>
       </div>
