@@ -20,7 +20,6 @@ import { getErrorMessage } from "@/lib/http-error"
 import { useCreateLabel, useDeleteLabelGroup } from "@/mutations/labels"
 import { useLabels, useLabelGroups } from "@/queries/labels"
 import { useLabelOrder } from "@/hooks/use-label-order"
-import { ScrollArea } from "@/components/ui/scroll-area"
 import { LabelFormDialog, type LabelFormData } from "@/components/label/label-form-dialog"
 import { CreateLabelGroupDialog, EditLabelGroupDialog } from "@/components/label/label-group-form-dialog"
 import { m } from "@/paraglide/messages"
@@ -200,148 +199,146 @@ function SettingsLabelPage() {
   }, [location.hash])
 
   return (
-    <ScrollArea className="min-h-0 flex-1">
-      <div className="flex flex-col gap-4 px-6 pt-1 pb-4">
-        <div className="flex flex-col gap-3">
-          <p className="text-md px-1 font-semibold text-muted-foreground">{m.settings_label()}</p>
-          <Card>
-            <CardHeader>
-              <CardTitle>{m.label_management_title()}</CardTitle>
-              <CardDescription>{m.label_management_description()}</CardDescription>
-            </CardHeader>
-            <CardContent className="px-0">
-              <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead className="w-8" />
-                      <TableHead className="w-10 text-center">{m.label_color_column()}</TableHead>
-                      <TableHead className="w-full">{m.common_name()}</TableHead>
-                      <TableHead className="w-16 pr-6 text-right">{m.label_actions_column()}</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {isPending && (
-                      <TableRow>
-                        <TableCell colSpan={4} className="text-center text-sm text-muted-foreground">
-                          {m.label_list_loading()}
-                        </TableCell>
-                      </TableRow>
-                    )}
-                    {isError && (
-                      <TableRow>
-                        <TableCell colSpan={4} className="text-center text-sm text-destructive">
-                          {m.label_list_error()}
-                        </TableCell>
-                      </TableRow>
-                    )}
-                    {!isPending && !isError && orderedLabels.length === 0 && (
-                      <TableRow>
-                        <TableCell colSpan={4} className="text-center text-sm text-muted-foreground">
-                          {m.label_list_empty()}
-                        </TableCell>
-                      </TableRow>
-                    )}
-                    <SortableContext items={orderedLabels.map((l) => l.id)} strategy={verticalListSortingStrategy}>
-                      {orderedLabels.map((label) => (
-                        <SortableLabelRow key={label.id} label={label} />
-                      ))}
-                    </SortableContext>
-                  </TableBody>
-                </Table>
-              </DndContext>
-            </CardContent>
-          </Card>
-
-          <div ref={createFilterRef}>
-            <Card>
-              <CardHeader>
-                <CardTitle>{m.label_add_section_title()}</CardTitle>
-                <CardDescription>{m.label_add_section_description()}</CardDescription>
-              </CardHeader>
-              <CardContent>
-                <Button variant="outline" onClick={() => setCreateOpen(true)}>
-                  <Plus data-icon="inline-start" />
-                  {m.sidebar_label_add()}
-                </Button>
-                <LabelFormDialog
-                  open={createOpen}
-                  onOpenChange={setCreateOpen}
-                  title={m.sidebar_label_create_title()}
-                  submitLabel={m.sidebar_label_create_submit()}
-                  isPending={createLabel.isPending}
-                  onSubmit={handleCreate}
-                />
-              </CardContent>
-            </Card>
-          </div>
-        </div>
-
-        <div className="flex flex-col gap-3">
-          <p className="text-md px-1 font-semibold text-muted-foreground">{m.sidebar_label_groups()}</p>
-          <Card>
-            <CardHeader>
-              <CardTitle>{m.label_group_management_title()}</CardTitle>
-              <CardDescription>{m.label_group_management_description()}</CardDescription>
-            </CardHeader>
-            <CardContent className="px-0">
+    <>
+      <div className="flex flex-col gap-3">
+        <p className="text-md px-1 font-semibold text-muted-foreground">{m.settings_label()}</p>
+        <Card>
+          <CardHeader>
+            <CardTitle>{m.label_management_title()}</CardTitle>
+            <CardDescription>{m.label_management_description()}</CardDescription>
+          </CardHeader>
+          <CardContent className="px-0">
+            <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
               <Table>
                 <TableHeader>
                   <TableRow>
-                    <TableHead className="w-full pl-12.5">{m.common_name()}</TableHead>
-                    <TableHead className="w-20 text-center">{m.label_group_count_column()}</TableHead>
+                    <TableHead className="w-8" />
+                    <TableHead className="w-10 text-center">{m.label_color_column()}</TableHead>
+                    <TableHead className="w-full">{m.common_name()}</TableHead>
                     <TableHead className="w-16 pr-6 text-right">{m.label_actions_column()}</TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {isGroupsPending && (
+                  {isPending && (
                     <TableRow>
-                      <TableCell colSpan={3} className="text-center text-sm text-muted-foreground">
-                        {m.label_group_list_loading()}
+                      <TableCell colSpan={4} className="text-center text-sm text-muted-foreground">
+                        {m.label_list_loading()}
                       </TableCell>
                     </TableRow>
                   )}
-                  {isGroupsError && (
+                  {isError && (
                     <TableRow>
-                      <TableCell colSpan={3} className="text-center text-sm text-destructive">
-                        {m.label_group_list_error()}
+                      <TableCell colSpan={4} className="text-center text-sm text-destructive">
+                        {m.label_list_error()}
                       </TableCell>
                     </TableRow>
                   )}
-                  {!isGroupsPending && !isGroupsError && labelGroups.length === 0 && (
+                  {!isPending && !isError && orderedLabels.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={3} className="text-center text-sm text-muted-foreground">
-                        {m.label_group_list_empty()}
+                      <TableCell colSpan={4} className="text-center text-sm text-muted-foreground">
+                        {m.label_list_empty()}
                       </TableCell>
                     </TableRow>
                   )}
-                  {labelGroups.map((group) => (
-                    <LabelGroupTableRow key={group.id} group={group} allLabels={serverLabels} />
-                  ))}
+                  <SortableContext items={orderedLabels.map((l) => l.id)} strategy={verticalListSortingStrategy}>
+                    {orderedLabels.map((label) => (
+                      <SortableLabelRow key={label.id} label={label} />
+                    ))}
+                  </SortableContext>
                 </TableBody>
               </Table>
-            </CardContent>
-          </Card>
+            </DndContext>
+          </CardContent>
+        </Card>
+
+        <div ref={createFilterRef}>
           <Card>
             <CardHeader>
-              <CardTitle>{m.label_group_add_section_title()}</CardTitle>
-              <CardDescription>{m.label_group_add_section_description()}</CardDescription>
+              <CardTitle>{m.label_add_section_title()}</CardTitle>
+              <CardDescription>{m.label_add_section_description()}</CardDescription>
             </CardHeader>
             <CardContent>
-              <Button variant="outline" onClick={() => setCreateGroupOpen(true)}>
+              <Button variant="outline" onClick={() => setCreateOpen(true)}>
                 <Plus data-icon="inline-start" />
-                {m.sidebar_label_group_add()}
+                {m.sidebar_label_add()}
               </Button>
-              <CreateLabelGroupDialog
-                open={createGroupOpen}
-                onOpenChange={setCreateGroupOpen}
-                labels={serverLabels}
-                groups={labelGroups}
+              <LabelFormDialog
+                open={createOpen}
+                onOpenChange={setCreateOpen}
+                title={m.sidebar_label_create_title()}
+                submitLabel={m.sidebar_label_create_submit()}
+                isPending={createLabel.isPending}
+                onSubmit={handleCreate}
               />
             </CardContent>
           </Card>
         </div>
       </div>
-    </ScrollArea>
+
+      <div className="flex flex-col gap-3">
+        <p className="text-md px-1 font-semibold text-muted-foreground">{m.sidebar_label_groups()}</p>
+        <Card>
+          <CardHeader>
+            <CardTitle>{m.label_group_management_title()}</CardTitle>
+            <CardDescription>{m.label_group_management_description()}</CardDescription>
+          </CardHeader>
+          <CardContent className="px-0">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead className="w-full pl-12.5">{m.common_name()}</TableHead>
+                  <TableHead className="w-20 text-center">{m.label_group_count_column()}</TableHead>
+                  <TableHead className="w-16 pr-6 text-right">{m.label_actions_column()}</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {isGroupsPending && (
+                  <TableRow>
+                    <TableCell colSpan={3} className="text-center text-sm text-muted-foreground">
+                      {m.label_group_list_loading()}
+                    </TableCell>
+                  </TableRow>
+                )}
+                {isGroupsError && (
+                  <TableRow>
+                    <TableCell colSpan={3} className="text-center text-sm text-destructive">
+                      {m.label_group_list_error()}
+                    </TableCell>
+                  </TableRow>
+                )}
+                {!isGroupsPending && !isGroupsError && labelGroups.length === 0 && (
+                  <TableRow>
+                    <TableCell colSpan={3} className="text-center text-sm text-muted-foreground">
+                      {m.label_group_list_empty()}
+                    </TableCell>
+                  </TableRow>
+                )}
+                {labelGroups.map((group) => (
+                  <LabelGroupTableRow key={group.id} group={group} allLabels={serverLabels} />
+                ))}
+              </TableBody>
+            </Table>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader>
+            <CardTitle>{m.label_group_add_section_title()}</CardTitle>
+            <CardDescription>{m.label_group_add_section_description()}</CardDescription>
+          </CardHeader>
+          <CardContent>
+            <Button variant="outline" onClick={() => setCreateGroupOpen(true)}>
+              <Plus data-icon="inline-start" />
+              {m.sidebar_label_group_add()}
+            </Button>
+            <CreateLabelGroupDialog
+              open={createGroupOpen}
+              onOpenChange={setCreateGroupOpen}
+              labels={serverLabels}
+              groups={labelGroups}
+            />
+          </CardContent>
+        </Card>
+      </div>
+    </>
   )
 }
