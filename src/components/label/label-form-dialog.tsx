@@ -7,7 +7,7 @@ import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { cn } from "@/lib/utils"
 import { LABEL_COLORS } from "@/lib/label-colors"
-import { LabelConditionList } from "@/components/label/label-condition-list"
+import { LabelRuleGroupList } from "@/components/label/label-condition-list"
 import { m } from "@/paraglide/messages"
 import { getNotificationPolicyLabel, type LabelConditionGroup, type NotificationPolicy } from "@/types/label"
 
@@ -125,16 +125,7 @@ function LabelFormContent({
           {groups && groups.length > 0 && (
             <div className="flex flex-col gap-3">
               <p className="text-xs text-muted-foreground">{m.label_rules_title()}</p>
-              {groups.map((group, groupIndex) => (
-                <div key={groupIndex} className="flex flex-col gap-2">
-                  {groups.length > 1 && (
-                    <p className="text-xs font-medium text-muted-foreground">
-                      {m.label_rule_title({ index: groupIndex + 1 })}
-                    </p>
-                  )}
-                  <LabelConditionList conditions={group.conditions} />
-                </div>
-              ))}
+              <LabelRuleGroupList groups={groups} />
             </div>
           )}
         </div>

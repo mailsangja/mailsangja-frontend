@@ -3,8 +3,10 @@ import {
   getLabelConditionFieldLabel,
   getLabelConditionOperatorLabel,
   type LabelCondition,
+  type LabelConditionGroup,
 } from "@/types/label"
 import { Badge } from "@/components/ui/badge"
+import { cn } from "@/lib/utils"
 
 function FieldBadge({ children }: { children: React.ReactNode }) {
   return (
@@ -27,6 +29,18 @@ function OperatorBadge({ children }: { children: React.ReactNode }) {
     <span className="inline-flex items-center rounded-md bg-emerald-500/15 px-2 py-0.5 text-sm font-semibold text-emerald-600 dark:text-emerald-400">
       {children}
     </span>
+  )
+}
+
+export function LabelRuleJoiner({ label, className }: { label: "AND" | "OR"; className?: string }) {
+  return (
+    <div className={cn("flex items-center gap-3", className)}>
+      <div className="h-px flex-1 bg-border" />
+      <Badge variant="outline" className="px-3">
+        {label}
+      </Badge>
+      <div className="h-px flex-1 bg-border" />
+    </div>
   )
 }
 
@@ -95,15 +109,33 @@ export function LabelConditionList({ conditions }: { conditions: LabelCondition[
           <div className="py-3">
             <ConditionSentence condition={condition} />
           </div>
-          {index < conditions.length - 1 && (
-            <div className="-my-3 flex items-center gap-3">
-              <div className="h-px flex-1 bg-border" />
-              <Badge variant="outline" className="px-3">
-                AND
-              </Badge>
-              <div className="h-px flex-1 bg-border" />
-            </div>
-          )}
+          {index < conditions.length - 1 && <LabelRuleJoiner label="AND" className="-my-3" />}
+        </div>
+      ))}
+    </div>
+  )
+}
+
+interface LabelRuleGroupListProps {
+  groups: LabelConditionGroup[]
+  className?: string
+  groupClassName?: string
+  emptyMessage?: React.ReactNode
+}
+
+export function LabelRuleGroupList({ groups, className, groupClassName, emptyMessage }: LabelRuleGroupListProps) {
+  if (groups.length === 0) {
+    return emptyMessage ? <>{emptyMessage}</> : null
+  }
+
+  return (
+    <div className={cn("flex flex-col", className)}>
+      {groups.map((group, groupIndex) => (
+        <div key={groupIndex}>
+          {groupIndex > 0 && <LabelRuleJoiner label="OR" className="my-1 py-2" />}
+          <div className={cn("overflow-hidden rounded-xl border bg-background px-4 shadow-sm", groupClassName)}>
+            <LabelConditionList conditions={group.conditions} />
+          </div>
         </div>
       ))}
     </div>

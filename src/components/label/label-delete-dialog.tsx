@@ -9,7 +9,7 @@ import { useDeleteLabel } from "@/mutations/labels"
 import { emailQueries } from "@/queries/emails"
 import { labelQueries } from "@/queries/labels"
 import { type Label } from "@/types/label"
-import { LabelConditionList } from "@/components/label/label-condition-list"
+import { LabelRuleGroupList } from "@/components/label/label-condition-list"
 import { m } from "@/paraglide/messages"
 
 interface LabelDeleteDialogProps {
@@ -54,9 +54,9 @@ export function LabelDeleteDialog({ open, onOpenChange, label, onSuccess }: Labe
         <DialogHeader>
           <DialogTitle>{m.label_delete_title()}</DialogTitle>
         </DialogHeader>
-        <div className="space-y-3">
+        <div className="flex flex-col gap-3">
           {isInfoLoading ? (
-            <div className="space-y-2">
+            <div className="flex flex-col gap-2">
               <div className="h-4 w-3/4 animate-pulse rounded bg-muted" />
               <div className="h-4 w-1/2 animate-pulse rounded bg-muted" />
             </div>
@@ -66,14 +66,7 @@ export function LabelDeleteDialog({ open, onOpenChange, label, onSuccess }: Labe
                 <p>{m.label_delete_confirmation_with_count({ name: label.name, count: threadCountData.totalCount })}</p>
               )}
               {labelDetail?.rule?.groups && (
-                <div className="flex flex-col gap-1.5 rounded-xl border px-4 py-3">
-                  {labelDetail.rule.groups.map((group, gi) => (
-                    <div key={gi}>
-                      {gi > 0 && <hr className="my-1 border-border" />}
-                      <LabelConditionList conditions={group.conditions} />
-                    </div>
-                  ))}
-                </div>
+                <LabelRuleGroupList groups={labelDetail.rule.groups} groupClassName="shadow-none" />
               )}
             </>
           )}
