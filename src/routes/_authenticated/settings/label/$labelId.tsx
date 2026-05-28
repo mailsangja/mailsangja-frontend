@@ -1,6 +1,6 @@
 import { useState, type ElementType } from "react"
 import { createFileRoute, useNavigate, Link } from "@tanstack/react-router"
-import { Bell, BellOff, BellRing, ChevronDown, ChevronLeft, Minus, Pencil, Plus, X } from "lucide-react"
+import { Bell, BellOff, BellRing, ChevronDown, ChevronLeft, Pencil, Plus, X } from "lucide-react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { Skeleton } from "@/components/ui/skeleton"
-import { LabelConditionList } from "@/components/label/label-condition-list"
+import { LabelRuleGroupList, LabelRuleJoiner } from "@/components/label/label-condition-list"
 import { LabelDeleteDialog } from "@/components/label/label-delete-dialog"
 import { LABEL_COLORS } from "@/lib/label-colors"
 import { getErrorMessage } from "@/lib/http-error"
@@ -36,7 +36,6 @@ import {
   type NotificationPolicy,
   type UpdateLabelPayload,
 } from "@/types/label"
-import { Badge } from "@/components/ui/badge"
 
 export const Route = createFileRoute("/_authenticated/settings/label/$labelId")({
   component: LabelDetailPage,
@@ -241,16 +240,17 @@ function LabelDetailContent({ labelId, label }: { labelId: string; label: LabelD
 
   function removeCondition(groupIndex: number, condIndex: number) {
     setLocalGroups((prev) =>
-      prev.map((group, gi) => (gi !== groupIndex ? group : group.filter((_, ci) => ci !== condIndex)))
+      prev.flatMap((group, gi) => {
+        if (gi !== groupIndex) return [group]
+
+        const nextGroup = group.filter((_, ci) => ci !== condIndex)
+        return nextGroup.length > 0 ? [nextGroup] : []
+      })
     )
   }
 
   function addGroup() {
     setLocalGroups((prev) => [...prev, [{ ...EMPTY_CONDITION }]])
-  }
-
-  function removeGroup(groupIndex: number) {
-    setLocalGroups((prev) => prev.filter((_, gi) => gi !== groupIndex))
   }
 
   const currentNotifOption = NOTIFICATION_OPTIONS.find((o) => o.value === label.notificationPolicy)
@@ -372,41 +372,13 @@ function LabelDetailContent({ labelId, label }: { labelId: string; label: LabelD
             <>
               {localGroups.map((conditions, groupIndex) => (
                 <div key={groupIndex}>
-                  {groupIndex > 0 && (
-                    <div className="my-1 flex items-center gap-3 py-2">
-                      <div className="h-px flex-1 bg-border" />
-                      <Badge variant="outline" className="px-3">
-                        OR
-                      </Badge>
-                      <div className="h-px flex-1 bg-border" />
-                    </div>
-                  )}
+                  {groupIndex > 0 && <LabelRuleJoiner label="OR" className="my-1 py-2" />}
 
                   <div className="overflow-hidden rounded-xl border bg-background shadow-sm">
-                    <div className="flex items-center justify-between bg-muted/40 px-3 py-2">
-                      <span className="text-sm font-semibold">규칙 {groupIndex + 1}</span>
-                      <Button
-                        variant="ghost"
-                        size="icon-sm"
-                        onClick={() => removeGroup(groupIndex)}
-                        aria-label="규칙 삭제"
-                      >
-                        <X className="size-4 text-muted-foreground" />
-                      </Button>
-                    </div>
-
-                    <div className="flex flex-col gap-2 border-t px-4 py-3">
+                    <div className="flex flex-col gap-2 px-4 py-3">
                       {conditions.map((entry, condIndex) => (
                         <div key={condIndex}>
-                          {condIndex > 0 && (
-                            <div className="flex items-center gap-2 pb-2">
-                              <div className="h-px flex-1 bg-border" />
-                              <span className="rounded-full border border-border bg-muted px-2.5 py-0.5 text-[10px] font-bold tracking-wide text-muted-foreground">
-                                AND
-                              </span>
-                              <div className="h-px flex-1 bg-border" />
-                            </div>
-                          )}
+                          {condIndex > 0 && <LabelRuleJoiner label="AND" className="pb-2" />}
 
                           <div className="flex flex-wrap items-center gap-2">
                             {/* Field */}
@@ -511,10 +483,10 @@ function LabelDetailContent({ labelId, label }: { labelId: string; label: LabelD
                               variant="ghost"
                               size="icon-sm"
                               onClick={() => removeCondition(groupIndex, condIndex)}
-                              disabled={conditions.length <= 1}
                               aria-label="조건 삭제"
+                              className="-mr-2 -ml-1"
                             >
-                              <Minus className="size-4" />
+                              <X className="size-4" />
                             </Button>
                           </div>
                         </div>
@@ -548,26 +520,10 @@ function LabelDetailContent({ labelId, label }: { labelId: string; label: LabelD
             </>
           ) : (
             <div className="flex flex-col">
-              {label.rule && label.rule.groups.length > 0 ? (
-                label.rule.groups.map((group, gi) => (
-                  <div key={gi}>
-                    {gi > 0 && (
-                      <div className="my-1 flex items-center gap-3 py-2">
-                        <div className="h-px flex-1 bg-border" />
-                        <Badge variant="outline" className="px-3">
-                          OR
-                        </Badge>
-                        <div className="h-px flex-1 bg-border" />
-                      </div>
-                    )}
-                    <div className="overflow-hidden rounded-xl border bg-background px-4 shadow-sm">
-                      <LabelConditionList conditions={group.conditions} />
-                    </div>
-                  </div>
-                ))
-              ) : (
-                <p className="py-2 text-sm text-muted-foreground">설정된 규칙이 없습니다.</p>
-              )}
+              <LabelRuleGroupList
+                groups={label.rule?.groups ?? []}
+                emptyMessage={<p className="py-2 text-sm text-muted-foreground">설정된 규칙이 없습니다.</p>}
+              />
               <div className="flex justify-end pt-2">
                 <Button variant="outline" size="sm" onClick={() => setIsEditingRules(true)}>
                   <Pencil className="size-3.5" />
