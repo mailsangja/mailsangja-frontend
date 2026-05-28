@@ -8,7 +8,7 @@ import {
   themeStylesToPanelOverrides,
 } from "@react-email/editor/plugins"
 import type { JSONContent } from "@tiptap/core"
-import { Loader2, Paperclip, Star, X } from "lucide-react"
+import { Loader2, Paperclip, Sparkles, Star, X } from "lucide-react"
 import { useNavigate } from "@tanstack/react-router"
 import { toast } from "sonner"
 
@@ -26,11 +26,17 @@ import { trackEvent } from "@/lib/analytics"
 import { getErrorMessage } from "@/lib/http-error"
 import { formatMailAddressesForSend, parseMailRecipients } from "@/lib/mail-address"
 import { cn } from "@/lib/utils"
-import { useReviewMail, useSendMail } from "@/mutations/emails"
+import { useSendMail } from "@/mutations/emails"
 import { m } from "@/paraglide/messages"
 import { useActiveMailAccounts } from "@/queries/mail-accounts"
 import { useUser } from "@/queries/user"
-import type { ComposeInlineImage, MailAddress, MailDraftStreamPhase, MailDraftUsage } from "@/types/email"
+import type {
+  ComposeInlineImage,
+  MailAddress,
+  MailDraftStreamPhase,
+  MailDraftUsage,
+  MailReviewRequest,
+} from "@/types/email"
 
 interface ComposeEmailProps {
   fromAddress: string | null
@@ -40,6 +46,7 @@ interface ComposeEmailProps {
   initialSubject?: string
   initialCc?: string
   initialBody?: string
+  onReview?: (request: MailReviewRequest) => void
 }
 
 interface PendingInlineImage extends ComposeInlineImage {
@@ -322,6 +329,7 @@ export function ComposeEmail({
   initialSubject,
   initialCc,
   initialBody,
+  onReview,
 }: ComposeEmailProps) {
   const navigate = useNavigate()
   const editorRef = useRef<EmailEditorRef>(null)
@@ -333,7 +341,6 @@ export function ComposeEmail({
   const { data: user, isPending: isUserPending } = useUser()
   const { data: activeMailAccounts, isPending: isMailAccountsPending } = useActiveMailAccounts()
   const sendMailMutation = useSendMail()
-  const reviewMutation = useReviewMail()
   const [editor, setEditor] = useState<ComposeEditor | null>(null)
   const [to, setTo] = useState<MailAddress[]>(() => parseMailRecipients(initialTo ?? ""))
   const [cc, setCc] = useState<MailAddress[]>(() => parseMailRecipients(initialCc ?? ""))
@@ -727,13 +734,59 @@ export function ComposeEmail({
           attachment_count: preview.mail.attachments?.length ?? 0,
           inline_image_count: preview.mail.inlineImages?.length ?? 0,
         })
-        reviewMutation.mutate({
-          subject: preview.mail.subject,
-          body: preview.text,
-          attachmentCount: preview.mail.attachments?.length ?? 0,
-          attachmentNames: preview.mail.attachments?.map((f) => f.name) ?? [],
-        })
       }
+
+      return preview ?? null
+    } catch (error) {
+      toast.error(m.compose_error_preview_failed(), {
+        description: getErrorMessage(error, m.common_try_again_later()),
+      })
+      return null
+    } finally {
+      setIsPreparingPreview(false)
+    }
+  }
+
+  const handleAiReview = async () => {
+    if (isFromAddressPending) {
+      toast.error(m.compose_error_from_accounts_loading())
+      return
+    }
+
+    if (!editorRef.current || !isEditorReady) {
+      toast.error(m.compose_error_editor_loading())
+      return
+    }
+
+    if (to.length === 0) {
+      toast.error(m.compose_error_to_required())
+      return
+    }
+
+    if (!subject.trim()) {
+      toast.error(m.compose_error_subject_required())
+      return
+    }
+
+    const editorContent = editorRef.current.getJSON()
+    if (isEditorEmpty || isEditorContentEmpty(editorContent)) {
+      toast.error(m.compose_error_body_required())
+      return
+    }
+
+    setIsPreparingPreview(true)
+    try {
+      const emailContent = await editorRef.current.getEmail()
+      if (!emailContent.text.trim()) {
+        toast.error(m.compose_error_body_required())
+        return
+      }
+      onReview?.({
+        subject: subject.trim(),
+        body: emailContent.text,
+        attachmentCount: attachments.length,
+        attachmentNames: attachments.map((f) => f.name),
+      })
     } catch (error) {
       toast.error(m.compose_error_preview_failed(), {
         description: getErrorMessage(error, m.common_try_again_later()),
@@ -977,6 +1030,12 @@ export function ComposeEmail({
             {isPreparingPreview || sendMailMutation.isPending ? <Loader2 className="size-4 animate-spin" /> : null}
             {m.compose_send()}
           </Button>
+          {onReview && (
+            <Button type="button" variant="outline" size="lg" onClick={handleAiReview} disabled={cannotSend}>
+              {isPreparingPreview ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
+              {m.compose_review()}
+            </Button>
+          )}
         </div>
       </div>
 
@@ -984,14 +1043,8 @@ export function ComposeEmail({
         open={isSendPreviewOpen}
         preview={sendPreview}
         isSending={sendMailMutation.isPending}
-        isReviewing={reviewMutation.isPending}
-        reviewResult={reviewMutation.data ?? null}
-        reviewError={reviewMutation.isError}
         onOpenChange={(open) => {
-          if (!open) {
-            setSendPreview(null)
-            reviewMutation.reset()
-          }
+          if (!open) setSendPreview(null)
         }}
         onConfirm={handleConfirmSend}
       />

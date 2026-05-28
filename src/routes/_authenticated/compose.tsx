@@ -1,10 +1,14 @@
 import { createFileRoute, useLocation } from "@tanstack/react-router"
+import { toast } from "sonner"
 
 import { ComposeEmail } from "@/components/compose/compose-email"
 import { ComposeReferenceThreadPanel } from "@/components/compose/compose-reference-thread-panel"
+import { ComposeReviewPanel } from "@/components/compose/compose-review-panel"
 import { Separator } from "@/components/ui/separator"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { formatMailAddressList } from "@/lib/mail-address"
+import { useReviewMail } from "@/mutations/emails"
+import { m } from "@/paraglide/messages"
 import { emailQueries } from "@/queries/emails"
 import { mailAccountQueries } from "@/queries/mail-accounts"
 
@@ -67,6 +71,7 @@ function ComposePage() {
     select: (location) => location.state.replyDraftSuggestion ?? null,
   })
   const navigate = Route.useNavigate()
+  const reviewMutation = useReviewMail()
 
   const handleFromAddressChange = (nextFrom: string | null) => {
     navigate({
@@ -79,6 +84,7 @@ function ComposePage() {
   const fromAddress = from ?? loaderData?.defaultFrom ?? null
   const initialSubject = replyDraftSuggestion?.subject ?? loaderData?.replySubject
   const initialBody = replyDraftSuggestion?.body
+  const showReviewPanel = reviewMutation.isPending || !!reviewMutation.data || reviewMutation.isError
 
   if (isMobile) {
     return (
@@ -99,7 +105,16 @@ function ComposePage() {
   return (
     <div className="flex min-h-0 w-full min-w-0 flex-1 overflow-hidden">
       <div className="min-h-0 min-w-0 basis-1/2 border-r-0">
-        <ComposeReferenceThreadPanel threadId={thread ?? null} messageId={message ?? null} />
+        {showReviewPanel ? (
+          <ComposeReviewPanel
+            isReviewing={reviewMutation.isPending}
+            reviewResult={reviewMutation.data ?? null}
+            reviewError={reviewMutation.isError}
+            onClose={() => reviewMutation.reset()}
+          />
+        ) : (
+          <ComposeReferenceThreadPanel threadId={thread ?? null} messageId={message ?? null} />
+        )}
       </div>
       <Separator orientation="vertical" />
       <div className="min-h-0 min-w-0 basis-2/3">
@@ -111,6 +126,12 @@ function ComposePage() {
           initialSubject={initialSubject}
           initialCc={loaderData?.replyCc}
           initialBody={initialBody}
+          onReview={(request) => {
+            const toastId = toast.loading(m.compose_review_loading())
+            reviewMutation.mutate(request, {
+              onSettled: () => toast.dismiss(toastId),
+            })
+          }}
         />
       </div>
     </div>
