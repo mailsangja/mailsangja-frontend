@@ -2,6 +2,7 @@ import { Link } from "@tanstack/react-router"
 import { ChevronDown, Mail, Pencil, Star } from "lucide-react"
 
 import { MailAccountLabel } from "@/components/mail-account-label"
+import { PwaUpdateBanner } from "@/components/pwa-update-banner"
 import { Badge } from "@/components/ui/badge"
 import { buttonVariants } from "@/components/ui/button"
 import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
@@ -125,6 +126,7 @@ export function AppSidebar({
       </SidebarContent>
 
       <SidebarFooter>
+        <PwaUpdateBanner />
         <SidebarUserMenu />
       </SidebarFooter>
     </Sidebar>
