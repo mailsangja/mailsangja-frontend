@@ -5,6 +5,7 @@ import { ComposeEmail } from "@/components/compose/compose-email"
 import { ComposeReferenceThreadPanel } from "@/components/compose/compose-reference-thread-panel"
 import { ComposeReviewPanel } from "@/components/compose/compose-review-panel"
 import { Separator } from "@/components/ui/separator"
+import { Sheet, SheetContent } from "@/components/ui/sheet"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { formatMailAddressList } from "@/lib/mail-address"
 import { useReviewMail } from "@/mutations/emails"
@@ -97,7 +98,28 @@ function ComposePage() {
           initialSubject={initialSubject}
           initialCc={loaderData?.replyCc}
           initialBody={initialBody}
+          onReview={(request) => {
+            const toastId = toast.loading(m.compose_review_loading())
+            reviewMutation.mutate(request, {
+              onSettled: () => toast.dismiss(toastId),
+            })
+          }}
         />
+        <Sheet
+          open={showReviewPanel}
+          onOpenChange={(open) => {
+            if (!open) reviewMutation.reset()
+          }}
+        >
+          <SheetContent side="bottom" showCloseButton={false} className="max-h-[70vh] gap-0 p-0">
+            <ComposeReviewPanel
+              isReviewing={reviewMutation.isPending}
+              reviewResult={reviewMutation.data ?? null}
+              reviewError={reviewMutation.isError}
+              onClose={() => reviewMutation.reset()}
+            />
+          </SheetContent>
+        </Sheet>
       </div>
     )
   }
