@@ -203,6 +203,14 @@ interface ThreadDetailProps {
 export function ThreadDetail({ threadId, messageId = null, onClose }: ThreadDetailProps) {
   const navigate = useNavigate()
   const [showSuggestions, setShowSuggestions] = useState(false)
+  const [prevThreadId, setPrevThreadId] = useState(threadId)
+  const [prevMessageId, setPrevMessageId] = useState(messageId)
+
+  if (prevThreadId !== threadId || prevMessageId !== messageId) {
+    setPrevThreadId(threadId)
+    setPrevMessageId(messageId)
+    setShowSuggestions(false)
+  }
   const { data: thread, isLoading, isError, error, refetch } = useThread(threadId)
   const { data: accounts } = useMailAccounts()
   const { mutate: deleteThread, isPending: isDeleting } = useDeleteThread()

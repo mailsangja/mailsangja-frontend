@@ -151,6 +151,7 @@ export function ReplyDraftSuggestionCards({ threadId, message, show, onClose }: 
   return (
     <div
       data-show={show}
+      inert={!show}
       className={cn(
         "ai-cards-wrapper absolute right-0 bottom-12 left-0 z-10 px-2 py-3",
         "transition-all duration-300 ease-out",
