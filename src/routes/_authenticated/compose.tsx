@@ -12,6 +12,7 @@ import { useReviewMail } from "@/mutations/emails"
 import { m } from "@/paraglide/messages"
 import { emailQueries } from "@/queries/emails"
 import { mailAccountQueries } from "@/queries/mail-accounts"
+import type { MailReviewRequest } from "@/types/email"
 
 interface ComposeRouteSearch {
   from?: string
@@ -87,6 +88,11 @@ function ComposePage() {
   const initialBody = replyDraftSuggestion?.body
   const showReviewPanel = reviewMutation.isPending || !!reviewMutation.data || reviewMutation.isError
 
+  const handleReview = (request: MailReviewRequest) => {
+    const toastId = toast.loading(m.compose_review_loading())
+    reviewMutation.mutate(request, { onSettled: () => toast.dismiss(toastId) })
+  }
+
   if (isMobile) {
     return (
       <div className="flex min-h-0 w-full min-w-0 flex-1 overflow-hidden">
@@ -98,12 +104,7 @@ function ComposePage() {
           initialSubject={initialSubject}
           initialCc={loaderData?.replyCc}
           initialBody={initialBody}
-          onReview={(request) => {
-            const toastId = toast.loading(m.compose_review_loading())
-            reviewMutation.mutate(request, {
-              onSettled: () => toast.dismiss(toastId),
-            })
-          }}
+          onReview={handleReview}
         />
         <Sheet
           open={showReviewPanel}
@@ -148,12 +149,7 @@ function ComposePage() {
           initialSubject={initialSubject}
           initialCc={loaderData?.replyCc}
           initialBody={initialBody}
-          onReview={(request) => {
-            const toastId = toast.loading(m.compose_review_loading())
-            reviewMutation.mutate(request, {
-              onSettled: () => toast.dismiss(toastId),
-            })
-          }}
+          onReview={handleReview}
         />
       </div>
     </div>

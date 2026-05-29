@@ -52,7 +52,13 @@ export function ComposeReviewPanel({ isReviewing, reviewResult, reviewError, onC
           <Sparkles className="size-4" />
           {m.compose_review_result_title()}
         </div>
-        <Button variant="ghost" size="icon-sm" onClick={onClose} className="-mr-2" aria-label={m.compose_ai_close()}>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          onClick={onClose}
+          className="-mr-2"
+          aria-label={m.compose_review_close()}
+        >
           <X className="size-4" />
         </Button>
       </div>

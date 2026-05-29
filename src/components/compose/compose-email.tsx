@@ -350,6 +350,7 @@ export function ComposeEmail({
   const [isEditorReady, setIsEditorReady] = useState(false)
   const [isEditorEmpty, setIsEditorEmpty] = useState(true)
   const [isPreparingPreview, setIsPreparingPreview] = useState(false)
+  const [isPreparingReview, setIsPreparingReview] = useState(false)
   const [sendPreview, setSendPreview] = useState<ComposeSendPreviewData | null>(null)
   const [showCc, setShowCc] = useState(!!initialCc)
   const [showBcc, setShowBcc] = useState(false)
@@ -384,6 +385,7 @@ export function ComposeEmail({
   const cannotSend =
     sendMailMutation.isPending ||
     isPreparingPreview ||
+    isPreparingReview ||
     isDraftStreaming ||
     isFromAddressPending ||
     !selectedFromAddress ||
@@ -436,6 +438,34 @@ export function ComposeEmail({
 
   const isCurrentDraftContentEmpty = () => {
     return isDraftSubjectEmpty && isCurrentEditorContentEmpty()
+  }
+
+  const validateComposeForm = (options?: { requireFromAddress?: boolean }): boolean => {
+    if (isFromAddressPending) {
+      toast.error(m.compose_error_from_accounts_loading())
+      return false
+    }
+    if (options?.requireFromAddress && !selectedFromAddress) {
+      toast.error(m.compose_error_connect_from_account())
+      return false
+    }
+    if (!editorRef.current || !isEditorReady) {
+      toast.error(m.compose_error_editor_loading())
+      return false
+    }
+    if (to.length === 0) {
+      toast.error(m.compose_error_to_required())
+      return false
+    }
+    if (!subject.trim()) {
+      toast.error(m.compose_error_subject_required())
+      return false
+    }
+    if (isEditorEmpty || isEditorContentEmpty(editorRef.current.getJSON())) {
+      toast.error(m.compose_error_body_required())
+      return false
+    }
+    return true
   }
 
   const showUploadLimitError = () => {
@@ -654,39 +684,10 @@ export function ComposeEmail({
   }
 
   const createSendPreview = async () => {
-    if (isFromAddressPending) {
-      toast.error(m.compose_error_from_accounts_loading())
-      return null
-    }
+    if (!validateComposeForm({ requireFromAddress: true })) return null
 
-    if (!selectedFromAddress) {
-      toast.error(m.compose_error_connect_from_account())
-      return null
-    }
-
-    if (!editorRef.current || !isEditorReady) {
-      toast.error(m.compose_error_editor_loading())
-      return null
-    }
-
-    if (to.length === 0) {
-      toast.error(m.compose_error_to_required())
-      return null
-    }
-
-    if (!subject.trim()) {
-      toast.error(m.compose_error_subject_required())
-      return null
-    }
-
-    const editorContent = editorRef.current.getJSON()
-
-    if (isEditorEmpty || isEditorContentEmpty(editorContent)) {
-      toast.error(m.compose_error_body_required())
-      return null
-    }
-
-    const emailContent = await editorRef.current.getEmail()
+    const editorContent = editorRef.current!.getJSON()
+    const emailContent = await editorRef.current!.getEmail()
     const imageMetadata = collectImageMetadata(editorContent)
 
     if (!emailContent.text.trim() && !emailContent.html.trim()) {
@@ -703,7 +704,7 @@ export function ComposeEmail({
 
     return {
       mail: {
-        from: selectedFromAddress,
+        from: selectedFromAddress!,
         to: formatMailAddressesForSend(to),
         cc: formatMailAddressesForSend(cc),
         bcc: formatMailAddressesForSend(bcc),
@@ -748,35 +749,11 @@ export function ComposeEmail({
   }
 
   const handleAiReview = async () => {
-    if (isFromAddressPending) {
-      toast.error(m.compose_error_from_accounts_loading())
-      return
-    }
+    if (!validateComposeForm()) return
 
-    if (!editorRef.current || !isEditorReady) {
-      toast.error(m.compose_error_editor_loading())
-      return
-    }
-
-    if (to.length === 0) {
-      toast.error(m.compose_error_to_required())
-      return
-    }
-
-    if (!subject.trim()) {
-      toast.error(m.compose_error_subject_required())
-      return
-    }
-
-    const editorContent = editorRef.current.getJSON()
-    if (isEditorEmpty || isEditorContentEmpty(editorContent)) {
-      toast.error(m.compose_error_body_required())
-      return
-    }
-
-    setIsPreparingPreview(true)
+    setIsPreparingReview(true)
     try {
-      const emailContent = await editorRef.current.getEmail()
+      const emailContent = await editorRef.current!.getEmail()
       if (!emailContent.text.trim()) {
         toast.error(m.compose_error_body_required())
         return
@@ -792,7 +769,7 @@ export function ComposeEmail({
         description: getErrorMessage(error, m.common_try_again_later()),
       })
     } finally {
-      setIsPreparingPreview(false)
+      setIsPreparingReview(false)
     }
   }
 
@@ -1032,7 +1009,7 @@ export function ComposeEmail({
           </Button>
           {onReview && (
             <Button type="button" variant="outline" size="lg" onClick={handleAiReview} disabled={cannotSend}>
-              {isPreparingPreview ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
+              {isPreparingReview ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
               {m.compose_review()}
             </Button>
           )}

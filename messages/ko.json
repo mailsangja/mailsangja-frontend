@@ -319,6 +319,7 @@
   "compose_review_error": "AI 검토에 실패했습니다. 메일을 수정하거나 바로 발송할 수 있습니다.",
   "compose_review_loading": "AI가 메일을 검토하는 중입니다...",
   "compose_review_no_issues": "수정 권장 사항이 없습니다.",
+  "compose_review_close": "AI 검토 닫기",
   "compose_review_result_title": "AI 검토 결과",
   "compose_review": "AI 검토",
   "compose_review_start": "AI 검토 시작",
