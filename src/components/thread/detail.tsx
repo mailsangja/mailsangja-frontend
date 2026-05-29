@@ -1,3 +1,4 @@
+import { useState } from "react"
 import { Archive, ArrowLeft, Copy, Forward, MailOpen, Mail, Reply, Trash2 } from "lucide-react"
 import { useNavigate } from "@tanstack/react-router"
 import { toast } from "sonner"
@@ -5,7 +6,10 @@ import { toast } from "sonner"
 import { MailErrorState } from "@/components/mail-error-state"
 import { ThreadHeader } from "@/components/thread/header"
 import { ThreadMessageList } from "@/components/thread/message-list"
-import { ReplyDraftSuggestionAction } from "@/components/thread/reply-draft-suggestion-action"
+import {
+  ReplyDraftSuggestionButton,
+  ReplyDraftSuggestionCards,
+} from "@/components/thread/reply-draft-suggestion-action"
 import { Button } from "@/components/ui/button"
 import { DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu"
 import { Separator } from "@/components/ui/separator"
@@ -169,11 +173,11 @@ function ThreadToolbar({
 function ThreadFooter({
   onReply,
   replyDraftMessage,
-  threadId,
+  onShowSuggestions,
 }: {
   onReply: () => void
   replyDraftMessage: InboxMessage | null
-  threadId: string
+  onShowSuggestions: () => void
 }) {
   return (
     <div className="shrink-0 border-t px-6 py-2">
@@ -182,7 +186,9 @@ function ThreadFooter({
           <Reply />
           {m.thread_reply()}
         </Button>
-        {replyDraftMessage ? <ReplyDraftSuggestionAction threadId={threadId} message={replyDraftMessage} /> : null}
+        {replyDraftMessage ? (
+          <ReplyDraftSuggestionButton messageId={replyDraftMessage.id} onClick={onShowSuggestions} />
+        ) : null}
       </div>
     </div>
   )
@@ -196,6 +202,7 @@ interface ThreadDetailProps {
 
 export function ThreadDetail({ threadId, messageId = null, onClose }: ThreadDetailProps) {
   const navigate = useNavigate()
+  const [showSuggestions, setShowSuggestions] = useState(false)
   const { data: thread, isLoading, isError, error, refetch } = useThread(threadId)
   const { data: accounts } = useMailAccounts()
   const { mutate: deleteThread, isPending: isDeleting } = useDeleteThread()
@@ -314,7 +321,7 @@ export function ThreadDetail({ threadId, messageId = null, onClose }: ThreadDeta
   const replyDraftMessage = getLatestInboundMessage(messages)
 
   return (
-    <div className="flex h-full w-full min-w-0 flex-1 flex-col">
+    <div className="relative flex h-full w-full min-w-0 flex-1 flex-col">
       <ThreadToolbar
         isRead={thread.isRead}
         onClose={onClose}
@@ -357,7 +364,19 @@ export function ThreadDetail({ threadId, messageId = null, onClose }: ThreadDeta
           </>
         )}
       />
-      <ThreadFooter onReply={() => handleReply()} threadId={thread.threadId} replyDraftMessage={replyDraftMessage} />
+      {replyDraftMessage && (
+        <ReplyDraftSuggestionCards
+          threadId={thread.threadId}
+          message={replyDraftMessage}
+          show={showSuggestions}
+          onClose={() => setShowSuggestions(false)}
+        />
+      )}
+      <ThreadFooter
+        onReply={() => handleReply()}
+        replyDraftMessage={replyDraftMessage}
+        onShowSuggestions={() => setShowSuggestions((prev) => !prev)}
+      />
     </div>
   )
 }

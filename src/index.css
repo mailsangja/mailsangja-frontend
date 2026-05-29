@@ -691,3 +691,85 @@
     animation: none;
   }
 }
+
+@keyframes ai-shimmer {
+  0% {
+    background-position: 200% center;
+  }
+  100% {
+    background-position: -200% center;
+  }
+}
+
+@keyframes ai-card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(20px) scale(0.94);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes ai-glow-pulse {
+  0%,
+  100% {
+    box-shadow: 0 2px 8px -1px color-mix(in oklch, var(--primary) 15%, transparent);
+  }
+  50% {
+    box-shadow:
+      0 6px 32px -2px color-mix(in oklch, var(--primary) 50%, transparent),
+      0 2px 16px -2px color-mix(in oklch, var(--primary) 30%, transparent);
+  }
+}
+
+/* data-show가 false일 때 animation-name을 none으로 리셋 → true가 되면 애니메이션 재시작 */
+.ai-cards-wrapper:not([data-show="true"]) .ai-suggestion-card {
+  animation-name: none;
+}
+
+.ai-suggestion-card {
+  background:
+    linear-gradient(var(--background), var(--background)) padding-box,
+    linear-gradient(
+        90deg,
+        color-mix(in oklch, var(--primary) 30%, transparent),
+        color-mix(in oklch, var(--primary) 60%, transparent),
+        color-mix(in oklch, var(--primary) 30%, transparent)
+      )
+      border-box;
+  background-size: 200% auto;
+  border: 1px solid transparent;
+  animation:
+    ai-card-enter 0.4s cubic-bezier(0.16, 1, 0.3, 1) both,
+    ai-shimmer 3s 0.4s linear infinite,
+    ai-glow-pulse 2.4s 0.4s ease-in-out infinite;
+}
+
+.ai-suggestion-card:nth-child(2) {
+  animation-delay: 0.1s, 0.5s, 0.5s;
+}
+
+.ai-suggestion-card:nth-child(3) {
+  animation-delay: 0.2s, 0.6s, 0.6s;
+}
+
+.ai-suggestion-card:hover {
+  background:
+    linear-gradient(var(--background), var(--background)) padding-box,
+    linear-gradient(
+        90deg,
+        color-mix(in oklch, var(--primary) 50%, transparent),
+        color-mix(in oklch, var(--primary) 90%, transparent),
+        color-mix(in oklch, var(--primary) 50%, transparent)
+      )
+      border-box;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ai-suggestion-card {
+    animation: none;
+    border-color: color-mix(in oklch, var(--primary) 30%, transparent);
+  }
+}
