@@ -1,4 +1,4 @@
-import { AlertCircle, AlertTriangle, CheckCircle2, Sparkles, X } from "lucide-react"
+import { AlertCircle, AlertTriangle, CheckCircle2, RefreshCw, Sparkles, X } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -12,6 +12,7 @@ interface ComposeReviewPanelProps {
   reviewResult: MailReviewResult | null
   reviewError: boolean
   onClose: () => void
+  onReReview?: () => void
 }
 
 function getSeverityClass(severity: MailReviewIssueSeverity) {
@@ -44,7 +45,13 @@ function ReviewIssueItem({ issue }: { issue: MailReviewIssue }) {
   )
 }
 
-export function ComposeReviewPanel({ isReviewing, reviewResult, reviewError, onClose }: ComposeReviewPanelProps) {
+export function ComposeReviewPanel({
+  isReviewing,
+  reviewResult,
+  reviewError,
+  onClose,
+  onReReview,
+}: ComposeReviewPanelProps) {
   return (
     <div className="flex h-full w-full min-w-0 flex-1 flex-col overflow-hidden">
       <div className="flex h-11 shrink-0 items-center justify-between border-b px-4">
@@ -52,15 +59,28 @@ export function ComposeReviewPanel({ isReviewing, reviewResult, reviewError, onC
           <Sparkles className="size-4" />
           {m.compose_review_result_title()}
         </div>
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          onClick={onClose}
-          className="-mr-2"
-          aria-label={m.compose_review_close()}
-        >
-          <X className="size-4" />
-        </Button>
+        <div className="flex items-center gap-1">
+          {!isReviewing && onReReview && (
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={onReReview}
+              aria-label={m.compose_review_retry()}
+              title={m.compose_review_retry()}
+            >
+              <RefreshCw className="size-4" />
+            </Button>
+          )}
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={onClose}
+            className="-mr-2"
+            aria-label={m.compose_review_close()}
+          >
+            <X className="size-4" />
+          </Button>
+        </div>
       </div>
 
       <div className="flex-1 overflow-y-auto text-sm">

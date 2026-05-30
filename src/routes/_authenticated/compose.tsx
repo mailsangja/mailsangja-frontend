@@ -1,4 +1,5 @@
 import { createFileRoute, useLocation } from "@tanstack/react-router"
+import { useRef, useState } from "react"
 import { toast } from "sonner"
 
 import { ComposeEmail } from "@/components/compose/compose-email"
@@ -74,6 +75,8 @@ function ComposePage() {
   })
   const navigate = Route.useNavigate()
   const reviewMutation = useReviewMail()
+  const [isReviewPanelOpen, setIsReviewPanelOpen] = useState(false)
+  const lastReviewRequest = useRef<MailReviewRequest | null>(null)
 
   const handleFromAddressChange = (nextFrom: string | null) => {
     navigate({
@@ -86,11 +89,27 @@ function ComposePage() {
   const fromAddress = from ?? loaderData?.defaultFrom ?? null
   const initialSubject = replyDraftSuggestion?.subject ?? loaderData?.replySubject
   const initialBody = replyDraftSuggestion?.body
-  const showReviewPanel = reviewMutation.isPending || !!reviewMutation.data || reviewMutation.isError
 
-  const handleReview = (request: MailReviewRequest) => {
+  const fireReview = (request: MailReviewRequest) => {
     const toastId = toast.loading(m.compose_review_loading())
     reviewMutation.mutate(request, { onSettled: () => toast.dismiss(toastId) })
+  }
+
+  const handleReview = (request: MailReviewRequest) => {
+    lastReviewRequest.current = request
+    setIsReviewPanelOpen(true)
+    if (!reviewMutation.isPending && !reviewMutation.data && !reviewMutation.isError) {
+      fireReview(request)
+    }
+  }
+
+  const handleReReview = () => {
+    if (!lastReviewRequest.current || reviewMutation.isPending) return
+    fireReview(lastReviewRequest.current)
+  }
+
+  const handleCloseReviewPanel = () => {
+    setIsReviewPanelOpen(false)
   }
 
   if (isMobile) {
@@ -107,9 +126,9 @@ function ComposePage() {
           onReview={handleReview}
         />
         <Sheet
-          open={showReviewPanel}
+          open={isReviewPanelOpen}
           onOpenChange={(open) => {
-            if (!open) reviewMutation.reset()
+            if (!open) setIsReviewPanelOpen(false)
           }}
         >
           <SheetContent side="bottom" showCloseButton={false} className="max-h-[70vh] gap-0 p-0">
@@ -117,7 +136,8 @@ function ComposePage() {
               isReviewing={reviewMutation.isPending}
               reviewResult={reviewMutation.data ?? null}
               reviewError={reviewMutation.isError}
-              onClose={() => reviewMutation.reset()}
+              onClose={handleCloseReviewPanel}
+              onReReview={handleReReview}
             />
           </SheetContent>
         </Sheet>
@@ -128,12 +148,13 @@ function ComposePage() {
   return (
     <div className="flex min-h-0 w-full min-w-0 flex-1 overflow-hidden">
       <div className="min-h-0 min-w-0 basis-1/2 border-r-0">
-        {showReviewPanel ? (
+        {isReviewPanelOpen ? (
           <ComposeReviewPanel
             isReviewing={reviewMutation.isPending}
             reviewResult={reviewMutation.data ?? null}
             reviewError={reviewMutation.isError}
-            onClose={() => reviewMutation.reset()}
+            onClose={handleCloseReviewPanel}
+            onReReview={handleReReview}
           />
         ) : (
           <ComposeReferenceThreadPanel threadId={thread ?? null} messageId={message ?? null} />

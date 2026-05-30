@@ -323,6 +323,7 @@
   "compose_review_result_title": "AI review result",
   "compose_review": "AI Review",
   "compose_review_start": "Start AI Review",
+  "compose_review_retry": "Re-review",
   "compose_send_error": "Failed to send email",
   "compose_send_preview_frame_title": "Final send body preview",
   "compose_send_preview_title": "Email preview",
