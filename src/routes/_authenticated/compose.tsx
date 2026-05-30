@@ -98,7 +98,7 @@ function ComposePage() {
   const handleReview = (request: MailReviewRequest) => {
     lastReviewRequest.current = request
     setIsReviewPanelOpen(true)
-    if (!reviewMutation.isPending && !reviewMutation.data && !reviewMutation.isError) {
+    if (!reviewMutation.isPending) {
       fireReview(request)
     }
   }
