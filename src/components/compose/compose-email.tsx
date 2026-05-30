@@ -15,7 +15,6 @@ import { toast } from "sonner"
 import { LocalAttachmentChip } from "@/components/attachment/local-chip"
 import { ComposeAiDraftPanel } from "@/components/compose/compose-ai-draft-panel"
 import { ComposeEditorToolbar, type ComposeEditor } from "@/components/compose/compose-editor-toolbar"
-import { ComposeSendPreviewDialog, type ComposeSendPreviewData } from "@/components/compose/compose-send-preview-dialog"
 import { MailAccountLabel } from "@/components/mail-account-label"
 import { RecipientInput } from "@/components/compose/recipient-input"
 import { Badge } from "@/components/ui/badge"
@@ -349,9 +348,8 @@ export function ComposeEmail({
   const [initialSubjectValue] = useState(() => initialSubject ?? "")
   const [isEditorReady, setIsEditorReady] = useState(false)
   const [isEditorEmpty, setIsEditorEmpty] = useState(true)
-  const [isPreparingPreview, setIsPreparingPreview] = useState(false)
+  const [isPreparingSend, setIsPreparingSend] = useState(false)
   const [isPreparingReview, setIsPreparingReview] = useState(false)
-  const [sendPreview, setSendPreview] = useState<ComposeSendPreviewData | null>(null)
   const [showCc, setShowCc] = useState(!!initialCc)
   const [showBcc, setShowBcc] = useState(false)
   const [attachments, setAttachments] = useState<File[]>([])
@@ -381,10 +379,9 @@ export function ComposeEmail({
     [activeMailAccounts]
   )
   const isFromAddressPending = isUserPending || isMailAccountsPending
-  const isSendPreviewOpen = sendPreview !== null
   const cannotSend =
     sendMailMutation.isPending ||
-    isPreparingPreview ||
+    isPreparingSend ||
     isPreparingReview ||
     isDraftStreaming ||
     isFromAddressPending ||
@@ -683,27 +680,25 @@ export function ComposeEmail({
     draftAbortControllerRef.current?.abort()
   }
 
-  const createSendPreview = async () => {
-    if (!validateComposeForm({ requireFromAddress: true })) return null
+  const handleSend = async () => {
+    if (!validateComposeForm({ requireFromAddress: true })) return
 
-    const editorContent = editorRef.current!.getJSON()
-    const emailContent = await editorRef.current!.getEmail()
-    const imageMetadata = collectImageMetadata(editorContent)
+    setIsPreparingSend(true)
+    try {
+      const editorContent = editorRef.current!.getJSON()
+      const emailContent = await editorRef.current!.getEmail()
+      const imageMetadata = collectImageMetadata(editorContent)
 
-    if (!emailContent.text.trim() && !emailContent.html.trim()) {
-      toast.error(m.compose_error_body_required())
-      return null
-    }
+      if (!emailContent.text.trim() && !emailContent.html.trim()) {
+        toast.error(m.compose_error_body_required())
+        return
+      }
 
-    const previewContent = buildMailContentWithImages(emailContent.html, inlineImagesRef.current, imageMetadata, {
-      replaceInlineImageSrcWithCid: false,
-    })
-    const sendContent = buildMailContentWithImages(emailContent.html, inlineImagesRef.current, imageMetadata, {
-      replaceInlineImageSrcWithCid: true,
-    })
+      const sendContent = buildMailContentWithImages(emailContent.html, inlineImagesRef.current, imageMetadata, {
+        replaceInlineImageSrcWithCid: true,
+      })
 
-    return {
-      mail: {
+      const mailData = {
         from: selectedFromAddress!,
         to: formatMailAddressesForSend(to),
         cc: formatMailAddressesForSend(cc),
@@ -713,38 +708,25 @@ export function ComposeEmail({
         ...(messageId ? { messageId } : {}),
         attachments,
         inlineImages: sendContent.inlineImages,
-      },
-      text: emailContent.text,
-      html: previewContent.content,
-    } satisfies ComposeSendPreviewData
-  }
-
-  const handleSendPreview = async () => {
-    setIsPreparingPreview(true)
-
-    try {
-      const preview = await createSendPreview()
-
-      if (preview) {
-        setSendPreview(preview)
-        trackEvent("compose_preview_open", {
-          is_reply: Boolean(preview.mail.messageId),
-          recipient_count: preview.mail.to.length,
-          cc_count: preview.mail.cc?.length ?? 0,
-          bcc_count: preview.mail.bcc?.length ?? 0,
-          attachment_count: preview.mail.attachments?.length ?? 0,
-          inline_image_count: preview.mail.inlineImages?.length ?? 0,
-        })
       }
 
-      return preview ?? null
+      await sendMailMutation.mutateAsync(mailData)
+      trackEvent("email_send", {
+        is_reply: Boolean(mailData.messageId),
+        recipient_count: mailData.to.length,
+        cc_count: mailData.cc?.length ?? 0,
+        bcc_count: mailData.bcc?.length ?? 0,
+        attachment_count: mailData.attachments?.length ?? 0,
+        inline_image_count: mailData.inlineImages?.length ?? 0,
+      })
+      toast.success(m.compose_send_success())
+      await navigate({ to: "/mail/$mailbox", params: { mailbox: "inbox" } })
     } catch (error) {
-      toast.error(m.compose_error_preview_failed(), {
+      toast.error(m.compose_send_error(), {
         description: getErrorMessage(error, m.common_try_again_later()),
       })
-      return null
     } finally {
-      setIsPreparingPreview(false)
+      setIsPreparingSend(false)
     }
   }
 
@@ -770,29 +752,6 @@ export function ComposeEmail({
       })
     } finally {
       setIsPreparingReview(false)
-    }
-  }
-
-  const handleConfirmSend = async () => {
-    if (!sendPreview) return
-
-    try {
-      await sendMailMutation.mutateAsync(sendPreview.mail)
-      trackEvent("email_send", {
-        is_reply: Boolean(sendPreview.mail.messageId),
-        recipient_count: sendPreview.mail.to.length,
-        cc_count: sendPreview.mail.cc?.length ?? 0,
-        bcc_count: sendPreview.mail.bcc?.length ?? 0,
-        attachment_count: sendPreview.mail.attachments?.length ?? 0,
-        inline_image_count: sendPreview.mail.inlineImages?.length ?? 0,
-      })
-      toast.success(m.compose_send_success())
-      setSendPreview(null)
-      await navigate({ to: "/mail/$mailbox", params: { mailbox: "inbox" } })
-    } catch (error) {
-      toast.error(m.compose_send_error(), {
-        description: getErrorMessage(error, m.common_try_again_later()),
-      })
     }
   }
 
@@ -998,13 +957,13 @@ export function ComposeEmail({
             variant="outline"
             size="lg"
             onClick={() => attachmentInputRef.current?.click()}
-            disabled={isDraftStreaming || sendMailMutation.isPending || isPreparingPreview}
+            disabled={isDraftStreaming || sendMailMutation.isPending || isPreparingSend}
             aria-label={m.compose_add_attachment()}
           >
             <Paperclip className="size-4" />
           </Button>
-          <Button className="flex-1" size="lg" onClick={handleSendPreview} disabled={cannotSend}>
-            {isPreparingPreview || sendMailMutation.isPending ? <Loader2 className="size-4 animate-spin" /> : null}
+          <Button className="flex-1" size="lg" onClick={() => void handleSend()} disabled={cannotSend}>
+            {isPreparingSend || sendMailMutation.isPending ? <Loader2 className="size-4 animate-spin" /> : null}
             {m.compose_send()}
           </Button>
           {onReview && (
@@ -1015,16 +974,6 @@ export function ComposeEmail({
           )}
         </div>
       </div>
-
-      <ComposeSendPreviewDialog
-        open={isSendPreviewOpen}
-        preview={sendPreview}
-        isSending={sendMailMutation.isPending}
-        onOpenChange={(open) => {
-          if (!open) setSendPreview(null)
-        }}
-        onConfirm={handleConfirmSend}
-      />
     </div>
   )
 }
