@@ -1,12 +1,20 @@
 import { createFileRoute, useLocation } from "@tanstack/react-router"
+import { useRef, useState } from "react"
+import { toast } from "sonner"
 
-import { ComposeEmail } from "@/components/compose/compose-email"
+import { ComposeEmail, type ComposeEmailHandle } from "@/components/compose/compose-email"
 import { ComposeReferenceThreadPanel } from "@/components/compose/compose-reference-thread-panel"
+import { ComposeReviewPanel } from "@/components/compose/compose-review-panel"
 import { Separator } from "@/components/ui/separator"
+import { Sheet, SheetContent } from "@/components/ui/sheet"
 import { useIsMobile } from "@/hooks/use-mobile"
+import { getHttpStatus } from "@/lib/http-error"
 import { formatMailAddressList } from "@/lib/mail-address"
+import { useReviewMail } from "@/mutations/emails"
+import { m } from "@/paraglide/messages"
 import { emailQueries } from "@/queries/emails"
 import { mailAccountQueries } from "@/queries/mail-accounts"
+import type { MailReviewRequest } from "@/types/email"
 
 interface ComposeRouteSearch {
   from?: string
@@ -67,6 +75,10 @@ function ComposePage() {
     select: (location) => location.state.replyDraftSuggestion ?? null,
   })
   const navigate = Route.useNavigate()
+  const reviewMutation = useReviewMail()
+  const [isReviewPanelOpen, setIsReviewPanelOpen] = useState(false)
+  const composeEmailRef = useRef<ComposeEmailHandle>(null)
+  const forceReviewRef = useRef(false)
 
   const handleFromAddressChange = (nextFrom: string | null) => {
     navigate({
@@ -80,6 +92,37 @@ function ComposePage() {
   const initialSubject = replyDraftSuggestion?.subject ?? loaderData?.replySubject
   const initialBody = replyDraftSuggestion?.body
 
+  const fireReview = (request: MailReviewRequest) => {
+    const toastId = toast.loading(m.compose_review_loading())
+    reviewMutation.mutate(request, {
+      onSettled: () => toast.dismiss(toastId),
+      onError: (error) => {
+        if (getHttpStatus(error) === 429) {
+          toast.error(m.compose_review_quota_exceeded())
+        }
+      },
+    })
+  }
+
+  const handleReview = (request: MailReviewRequest) => {
+    setIsReviewPanelOpen(true)
+    const force = forceReviewRef.current
+    forceReviewRef.current = false
+    if (!reviewMutation.isPending && (force || !isMobile || !reviewMutation.data)) {
+      fireReview(request)
+    }
+  }
+
+  const handleReReview = () => {
+    if (reviewMutation.isPending) return
+    forceReviewRef.current = true
+    composeEmailRef.current?.requestReview()
+  }
+
+  const handleCloseReviewPanel = () => {
+    setIsReviewPanelOpen(false)
+  }
+
   if (isMobile) {
     return (
       <div className="flex min-h-0 w-full min-w-0 flex-1 overflow-hidden">
@@ -91,7 +134,26 @@ function ComposePage() {
           initialSubject={initialSubject}
           initialCc={loaderData?.replyCc}
           initialBody={initialBody}
+          onReview={handleReview}
+          isReviewing={reviewMutation.isPending}
+          ref={composeEmailRef}
         />
+        <Sheet
+          open={isReviewPanelOpen}
+          onOpenChange={(open) => {
+            if (!open) setIsReviewPanelOpen(false)
+          }}
+        >
+          <SheetContent side="bottom" showCloseButton={false} className="max-h-[70vh] gap-0 p-0">
+            <ComposeReviewPanel
+              isReviewing={reviewMutation.isPending}
+              reviewResult={reviewMutation.data ?? null}
+              reviewError={reviewMutation.isError}
+              onClose={handleCloseReviewPanel}
+              onReReview={handleReReview}
+            />
+          </SheetContent>
+        </Sheet>
       </div>
     )
   }
@@ -99,7 +161,16 @@ function ComposePage() {
   return (
     <div className="flex min-h-0 w-full min-w-0 flex-1 overflow-hidden">
       <div className="min-h-0 min-w-0 basis-1/2 border-r-0">
-        <ComposeReferenceThreadPanel threadId={thread ?? null} messageId={message ?? null} />
+        {isReviewPanelOpen ? (
+          <ComposeReviewPanel
+            isReviewing={reviewMutation.isPending}
+            reviewResult={reviewMutation.data ?? null}
+            reviewError={reviewMutation.isError}
+            onClose={handleCloseReviewPanel}
+          />
+        ) : (
+          <ComposeReferenceThreadPanel threadId={thread ?? null} messageId={message ?? null} />
+        )}
       </div>
       <Separator orientation="vertical" />
       <div className="min-h-0 min-w-0 basis-2/3">
@@ -111,6 +182,9 @@ function ComposePage() {
           initialSubject={initialSubject}
           initialCc={loaderData?.replyCc}
           initialBody={initialBody}
+          onReview={handleReview}
+          isReviewing={reviewMutation.isPending}
+          ref={composeEmailRef}
         />
       </div>
     </div>
