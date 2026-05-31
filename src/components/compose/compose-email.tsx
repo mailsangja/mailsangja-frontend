@@ -575,7 +575,7 @@ export function ComposeEmail({
     setInlineImages(nextInlineImages)
   }
 
-  const handleGenerateDraft = async () => {
+  const handleGenerateDraft = async (model: string | null = null) => {
     if (draftAbortControllerRef.current) {
       return
     }
@@ -621,6 +621,7 @@ export function ComposeEmail({
           replyMessageId: messageId ?? null,
           to: formatMailAddressesForSend(to),
           cc: formatMailAddressesForSend(cc),
+          ...(model ? { model } : {}),
         },
         {
           signal: abortController.signal,
@@ -945,7 +946,7 @@ export function ComposeEmail({
           isStreaming={isDraftStreaming}
           phase={draftStreamPhase}
           usage={draftUsage}
-          onGenerate={() => void handleGenerateDraft()}
+          onGenerate={(model) => void handleGenerateDraft(model)}
           onStop={handleStopDraft}
         />
       </div>
