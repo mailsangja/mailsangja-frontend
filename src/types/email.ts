@@ -144,6 +144,7 @@ export interface MailDraftStreamRequest {
   replyMessageId: string | null
   to: string[]
   cc: string[]
+  model?: string
 }
 
 export interface MailDraftUsage {
