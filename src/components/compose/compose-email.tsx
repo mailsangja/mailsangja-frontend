@@ -1,4 +1,14 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ChangeEvent, type ReactNode } from "react"
+import {
+  useCallback,
+  useEffect,
+  useImperativeHandle,
+  useMemo,
+  useRef,
+  useState,
+  type ChangeEvent,
+  type ReactNode,
+  type Ref,
+} from "react"
 import { EmailEditor, type EmailEditorRef } from "@react-email/editor"
 import {
   EDITOR_THEMES,
@@ -37,6 +47,10 @@ import type {
   MailReviewRequest,
 } from "@/types/email"
 
+export interface ComposeEmailHandle {
+  requestReview(): void
+}
+
 interface ComposeEmailProps {
   fromAddress: string | null
   onFromAddressChange: (value: string | null) => void
@@ -46,6 +60,8 @@ interface ComposeEmailProps {
   initialCc?: string
   initialBody?: string
   onReview?: (request: MailReviewRequest) => void
+  isReviewing?: boolean
+  ref?: Ref<ComposeEmailHandle>
 }
 
 interface PendingInlineImage extends ComposeInlineImage {
@@ -329,6 +345,8 @@ export function ComposeEmail({
   initialCc,
   initialBody,
   onReview,
+  isReviewing = false,
+  ref,
 }: ComposeEmailProps) {
   const navigate = useNavigate()
   const editorRef = useRef<EmailEditorRef>(null)
@@ -387,6 +405,8 @@ export function ComposeEmail({
     isFromAddressPending ||
     !selectedFromAddress ||
     !isEditorReady
+  const cannotReview =
+    sendMailMutation.isPending || isPreparingSend || isDraftStreaming || isFromAddressPending || !isEditorReady
   const isDraftSubjectEmpty = !subject.trim() || (!!initialSubjectValue && subject === initialSubjectValue)
   const isDraftContentEmpty = isDraftSubjectEmpty && isEditorEmpty
   const draftPromptText = draftPrompt.trim()
@@ -747,13 +767,15 @@ export function ComposeEmail({
         attachmentNames: attachments.map((f) => f.name),
       })
     } catch (error) {
-      toast.error(m.compose_error_preview_failed(), {
+      toast.error(m.compose_review_error(), {
         description: getErrorMessage(error, m.common_try_again_later()),
       })
     } finally {
       setIsPreparingReview(false)
     }
   }
+
+  useImperativeHandle(ref, () => ({ requestReview: () => void handleAiReview() }))
 
   const handleClose = () => {
     if (isDraftStreaming) {
@@ -967,7 +989,13 @@ export function ComposeEmail({
             {m.compose_send()}
           </Button>
           {onReview && (
-            <Button type="button" variant="outline" size="lg" onClick={handleAiReview} disabled={cannotSend}>
+            <Button
+              type="button"
+              variant="outline"
+              size="lg"
+              onClick={handleAiReview}
+              disabled={cannotReview || isReviewing}
+            >
               {isPreparingReview ? <Loader2 className="size-4 animate-spin" /> : <Sparkles className="size-4" />}
               {m.compose_review()}
             </Button>

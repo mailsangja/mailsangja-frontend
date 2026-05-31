@@ -324,6 +324,7 @@
   "compose_review": "AI 검토",
   "compose_review_start": "AI 검토 시작",
   "compose_review_retry": "재검토",
+  "compose_review_quota_exceeded": "AI 검토 횟수를 모두 사용했습니다.",
   "compose_send_error": "메일 발송에 실패했습니다",
   "compose_send_preview_frame_title": "최종 발송 본문 미리보기",
   "compose_send_preview_title": "메일 미리보기",

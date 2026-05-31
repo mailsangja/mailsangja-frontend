@@ -2,12 +2,13 @@ import { createFileRoute, useLocation } from "@tanstack/react-router"
 import { useRef, useState } from "react"
 import { toast } from "sonner"
 
-import { ComposeEmail } from "@/components/compose/compose-email"
+import { ComposeEmail, type ComposeEmailHandle } from "@/components/compose/compose-email"
 import { ComposeReferenceThreadPanel } from "@/components/compose/compose-reference-thread-panel"
 import { ComposeReviewPanel } from "@/components/compose/compose-review-panel"
 import { Separator } from "@/components/ui/separator"
 import { Sheet, SheetContent } from "@/components/ui/sheet"
 import { useIsMobile } from "@/hooks/use-mobile"
+import { getHttpStatus } from "@/lib/http-error"
 import { formatMailAddressList } from "@/lib/mail-address"
 import { useReviewMail } from "@/mutations/emails"
 import { m } from "@/paraglide/messages"
@@ -76,7 +77,7 @@ function ComposePage() {
   const navigate = Route.useNavigate()
   const reviewMutation = useReviewMail()
   const [isReviewPanelOpen, setIsReviewPanelOpen] = useState(false)
-  const lastReviewRequest = useRef<MailReviewRequest | null>(null)
+  const composeEmailRef = useRef<ComposeEmailHandle>(null)
 
   const handleFromAddressChange = (nextFrom: string | null) => {
     navigate({
@@ -92,20 +93,26 @@ function ComposePage() {
 
   const fireReview = (request: MailReviewRequest) => {
     const toastId = toast.loading(m.compose_review_loading())
-    reviewMutation.mutate(request, { onSettled: () => toast.dismiss(toastId) })
+    reviewMutation.mutate(request, {
+      onSettled: () => toast.dismiss(toastId),
+      onError: (error) => {
+        if (getHttpStatus(error) === 429) {
+          toast.error(m.compose_review_quota_exceeded())
+        }
+      },
+    })
   }
 
   const handleReview = (request: MailReviewRequest) => {
-    lastReviewRequest.current = request
     setIsReviewPanelOpen(true)
-    if (!reviewMutation.isPending) {
+    if (!reviewMutation.isPending && (!isMobile || !reviewMutation.data)) {
       fireReview(request)
     }
   }
 
   const handleReReview = () => {
-    if (!lastReviewRequest.current || reviewMutation.isPending) return
-    fireReview(lastReviewRequest.current)
+    if (reviewMutation.isPending) return
+    composeEmailRef.current?.requestReview()
   }
 
   const handleCloseReviewPanel = () => {
@@ -124,6 +131,8 @@ function ComposePage() {
           initialCc={loaderData?.replyCc}
           initialBody={initialBody}
           onReview={handleReview}
+          isReviewing={reviewMutation.isPending}
+          ref={composeEmailRef}
         />
         <Sheet
           open={isReviewPanelOpen}
@@ -154,7 +163,6 @@ function ComposePage() {
             reviewResult={reviewMutation.data ?? null}
             reviewError={reviewMutation.isError}
             onClose={handleCloseReviewPanel}
-            onReReview={handleReReview}
           />
         ) : (
           <ComposeReferenceThreadPanel threadId={thread ?? null} messageId={message ?? null} />
@@ -171,6 +179,8 @@ function ComposePage() {
           initialCc={loaderData?.replyCc}
           initialBody={initialBody}
           onReview={handleReview}
+          isReviewing={reviewMutation.isPending}
+          ref={composeEmailRef}
         />
       </div>
     </div>

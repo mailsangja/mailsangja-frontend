@@ -14,6 +14,7 @@ import {
 } from "@/api/emails"
 import { queryClient } from "@/lib/query-client"
 import { m } from "@/paraglide/messages"
+import { aiKeys } from "@/queries/ai"
 import { emailKeys } from "@/queries/emails"
 import { labelKeys } from "@/queries/labels"
 
@@ -79,6 +80,9 @@ export function useSendMail() {
 export function useReviewMail() {
   return useMutation({
     mutationFn: (request: MailReviewRequest) => reviewMail(request),
+    onSuccess: () => {
+      void queryClient.invalidateQueries({ queryKey: aiKeys.all() })
+    },
   })
 }
 
