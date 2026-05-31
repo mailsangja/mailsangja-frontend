@@ -324,6 +324,7 @@
   "compose_review": "AI Review",
   "compose_review_start": "Start AI Review",
   "compose_review_retry": "Re-review",
+  "compose_review_regenerate": "Regenerate AI Review",
   "compose_review_quota_exceeded": "You have used all available AI review requests.",
   "compose_send_error": "Failed to send email",
   "compose_send_preview_frame_title": "Final send body preview",

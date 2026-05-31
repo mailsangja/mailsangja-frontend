@@ -59,28 +59,15 @@ export function ComposeReviewPanel({
           <Sparkles className="size-4" />
           {m.compose_review_result_title()}
         </div>
-        <div className="flex items-center gap-1">
-          {!isReviewing && onReReview && (
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              onClick={onReReview}
-              aria-label={m.compose_review_retry()}
-              title={m.compose_review_retry()}
-            >
-              <RefreshCw className="size-4" />
-            </Button>
-          )}
-          <Button
-            variant="ghost"
-            size="icon-sm"
-            onClick={onClose}
-            className="-mr-2"
-            aria-label={m.compose_review_close()}
-          >
-            <X className="size-4" />
-          </Button>
-        </div>
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          onClick={onClose}
+          className="-mr-2"
+          aria-label={m.compose_review_close()}
+        >
+          <X className="size-4" />
+        </Button>
       </div>
 
       <div className="flex-1 overflow-y-auto text-sm">
@@ -124,6 +111,15 @@ export function ComposeReviewPanel({
           </ul>
         )}
       </div>
+
+      {!isReviewing && onReReview && (
+        <div className="shrink-0 border-t p-3">
+          <Button variant="outline" className="w-full" onClick={onReReview}>
+            <RefreshCw className="size-4" />
+            {m.compose_review_regenerate()}
+          </Button>
+        </div>
+      )}
     </div>
   )
 }

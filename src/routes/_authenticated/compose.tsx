@@ -78,6 +78,7 @@ function ComposePage() {
   const reviewMutation = useReviewMail()
   const [isReviewPanelOpen, setIsReviewPanelOpen] = useState(false)
   const composeEmailRef = useRef<ComposeEmailHandle>(null)
+  const forceReviewRef = useRef(false)
 
   const handleFromAddressChange = (nextFrom: string | null) => {
     navigate({
@@ -105,13 +106,16 @@ function ComposePage() {
 
   const handleReview = (request: MailReviewRequest) => {
     setIsReviewPanelOpen(true)
-    if (!reviewMutation.isPending && (!isMobile || !reviewMutation.data)) {
+    const force = forceReviewRef.current
+    forceReviewRef.current = false
+    if (!reviewMutation.isPending && (force || !isMobile || !reviewMutation.data)) {
       fireReview(request)
     }
   }
 
   const handleReReview = () => {
     if (reviewMutation.isPending) return
+    forceReviewRef.current = true
     composeEmailRef.current?.requestReview()
   }
 
