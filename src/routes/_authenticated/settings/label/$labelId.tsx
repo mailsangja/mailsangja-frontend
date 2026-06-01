@@ -141,11 +141,12 @@ function LabelDetailContent({ labelId, label }: { labelId: string; label: LabelD
   const [isEditingInfo, setIsEditingInfo] = useState(false)
   const [isEditingRules, setIsEditingRules] = useState(false)
 
-  // Label info edit state
-  const [name, setName] = useState(label.name)
-  const [selectedColor, setSelectedColor] = useState(label.colorCode)
-  const [notificationPolicy, setNotificationPolicy] = useState<NotificationPolicy>(label.notificationPolicy)
-  const [isSensitive, setIsSensitive] = useState(label.isSensitive)
+  const [editInfo, setEditInfo] = useState({
+    name: label.name,
+    selectedColor: label.colorCode,
+    notificationPolicy: label.notificationPolicy,
+    isSensitive: label.isSensitive,
+  })
 
   // Rule edit state
   const [localGroups, setLocalGroups] = useState<EditableCondition[][]>(() =>
@@ -159,21 +160,23 @@ function LabelDetailContent({ labelId, label }: { labelId: string; label: LabelD
   const rulesChanged = JSON.stringify(localGroups) !== originalGroupsJson
 
   function handleCancelInfo() {
-    setName(label.name)
-    setSelectedColor(label.colorCode)
-    setNotificationPolicy(label.notificationPolicy)
-    setIsSensitive(label.isSensitive)
+    setEditInfo({
+      name: label.name,
+      selectedColor: label.colorCode,
+      notificationPolicy: label.notificationPolicy,
+      isSensitive: label.isSensitive,
+    })
     setIsEditingInfo(false)
   }
 
   function handleSaveInfo() {
-    const trimmed = name.trim()
+    const trimmed = editInfo.name.trim()
     if (!trimmed) return
     const data: UpdateLabelPayload = {}
     if (trimmed !== label.name) data.name = trimmed
-    if (selectedColor !== label.colorCode) data.colorCode = selectedColor
-    if (notificationPolicy !== label.notificationPolicy) data.notificationPolicy = notificationPolicy
-    if (isSensitive !== label.isSensitive) data.isSensitive = isSensitive
+    if (editInfo.selectedColor !== label.colorCode) data.colorCode = editInfo.selectedColor
+    if (editInfo.notificationPolicy !== label.notificationPolicy) data.notificationPolicy = editInfo.notificationPolicy
+    if (editInfo.isSensitive !== label.isSensitive) data.isSensitive = editInfo.isSensitive
     if (Object.keys(data).length === 0) {
       setIsEditingInfo(false)
       return
@@ -283,7 +286,7 @@ function LabelDetailContent({ labelId, label }: { labelId: string; label: LabelD
                       <button
                         type="button"
                         className="size-5 shrink-0 cursor-pointer rounded-full ring-2 ring-border ring-offset-2 focus-visible:outline-none"
-                        style={{ backgroundColor: selectedColor }}
+                        style={{ backgroundColor: editInfo.selectedColor }}
                         aria-label="색상 선택"
                       />
                     }
@@ -297,11 +300,12 @@ function LabelDetailContent({ labelId, label }: { labelId: string; label: LabelD
                           className="size-6 cursor-pointer rounded-full transition-transform hover:scale-110 focus-visible:outline-none"
                           style={{
                             backgroundColor: color,
-                            boxShadow: selectedColor === color ? `0 0 0 2px white, 0 0 0 4px ${color}` : undefined,
+                            boxShadow:
+                              editInfo.selectedColor === color ? `0 0 0 2px white, 0 0 0 4px ${color}` : undefined,
                           }}
-                          onClick={() => setSelectedColor(color)}
+                          onClick={() => setEditInfo((prev) => ({ ...prev, selectedColor: color }))}
                           aria-label={color}
-                          aria-pressed={selectedColor === color}
+                          aria-pressed={editInfo.selectedColor === color}
                         />
                       ))}
                     </div>
@@ -310,8 +314,8 @@ function LabelDetailContent({ labelId, label }: { labelId: string; label: LabelD
 
                 {/* Name */}
                 <Input
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
+                  value={editInfo.name}
+                  onChange={(e) => setEditInfo((prev) => ({ ...prev, name: e.target.value }))}
                   onKeyDown={(e) => e.key === "Enter" && handleSaveInfo()}
                   placeholder="라벨 이름"
                   className="h-8 w-40 text-sm"
@@ -324,10 +328,10 @@ function LabelDetailContent({ labelId, label }: { labelId: string; label: LabelD
                       <button
                         key={value}
                         type="button"
-                        onClick={() => setNotificationPolicy(value)}
+                        onClick={() => setEditInfo((prev) => ({ ...prev, notificationPolicy: value }))}
                         className={cn(
                           "flex items-center gap-1.5 border-r px-3 py-1.5 text-xs transition-colors last:border-r-0",
-                          notificationPolicy === value
+                          editInfo.notificationPolicy === value
                             ? "bg-primary/10 font-medium text-primary"
                             : "text-muted-foreground hover:bg-muted"
                         )}
@@ -340,7 +344,7 @@ function LabelDetailContent({ labelId, label }: { labelId: string; label: LabelD
                   <Button variant="outline" size="sm" onClick={handleCancelInfo}>
                     {m.common_cancel()}
                   </Button>
-                  <Button size="sm" onClick={handleSaveInfo} disabled={!name.trim() || updateLabel.isPending}>
+                  <Button size="sm" onClick={handleSaveInfo} disabled={!editInfo.name.trim() || updateLabel.isPending}>
                     {m.common_save()}
                   </Button>
                 </div>
@@ -354,7 +358,10 @@ function LabelDetailContent({ labelId, label }: { labelId: string; label: LabelD
                     이 라벨의 메일은 AI 초안 생성, 검토 등에 사용되지 않습니다.
                   </p>
                 </div>
-                <Switch checked={isSensitive} onCheckedChange={setIsSensitive} />
+                <Switch
+                  checked={editInfo.isSensitive}
+                  onCheckedChange={(checked) => setEditInfo((prev) => ({ ...prev, isSensitive: checked }))}
+                />
               </div>
             </div>
           ) : (
