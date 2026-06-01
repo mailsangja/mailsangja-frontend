@@ -2,7 +2,7 @@ import { m } from "@/paraglide/messages"
 
 import type { ThreadLabel } from "./label"
 
-export const PRIMARY_MAILBOX_IDS = ["inbox", "sent", "spam", "trash"] as const
+export const PRIMARY_MAILBOX_IDS = ["inbox", "sent", "starred", "trash"] as const
 export const SUPPORTED_MAILBOX_IDS = ["inbox", "sent"] as const
 
 export type PrimaryMailboxId = (typeof PRIMARY_MAILBOX_IDS)[number]
@@ -15,8 +15,8 @@ export function getMailboxLabel(mailboxId: PrimaryMailboxId): string {
       return m.mailbox_inbox()
     case "sent":
       return m.mailbox_sent()
-    case "spam":
-      return m.mailbox_spam()
+    case "starred":
+      return m.mailbox_starred()
     case "trash":
       return m.mailbox_trash()
   }
@@ -58,6 +58,7 @@ export interface InboxMessage {
   cc: MailAddress[]
   snippet: string
   isRead: boolean
+  isStar: boolean
   sentAt: string
   bodyText: string
   bodyHtml: string
@@ -72,6 +73,7 @@ export interface InboxThreadSummary {
   participant: MailAddress
   snippet: string
   isRead: boolean
+  star: boolean
   lastMessageAt: string
   attachments: Attachment[]
   messageCount: number
@@ -84,6 +86,7 @@ export interface InboxThreadDetail {
   accountId: string
   latestSubject: string
   isRead: boolean
+  star: boolean
   lastMessageAt: string
   labels: ThreadLabel[]
   messages: InboxMessage[]
@@ -104,6 +107,8 @@ export interface ListThreadsParams {
   read?: boolean
   q?: string
 }
+
+export type StarredThreadsParams = Pick<ListThreadsParams, "marker" | "size">
 
 export interface UnreadCountResponse {
   unreadCount: number

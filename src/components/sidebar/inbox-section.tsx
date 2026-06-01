@@ -1,4 +1,4 @@
-import { Inbox, Send, AlertTriangle, Trash2 } from "lucide-react"
+import { Inbox, Send, Star, Trash2 } from "lucide-react"
 
 import {
   SidebarGroup,
@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/sidebar"
 import { formatNumber } from "@/lib/date"
 import { m } from "@/paraglide/messages"
-import { useMailboxThreads } from "@/queries/emails"
+import { useMailboxThreads, useStarredThreads } from "@/queries/emails"
 import { useTrashThreads } from "@/queries/trash"
 import { getMailboxLabel, PRIMARY_MAILBOX_IDS } from "@/types/email"
 import type { PrimaryMailboxId } from "@/types/email"
@@ -18,7 +18,7 @@ import type { PrimaryMailboxId } from "@/types/email"
 const folderIcons: Record<PrimaryMailboxId, React.ReactNode> = {
   inbox: <Inbox />,
   sent: <Send />,
-  spam: <AlertTriangle />,
+  starred: <Star />,
   trash: <Trash2 />,
 }
 
@@ -34,11 +34,13 @@ function formatUnreadCount(count: number) {
 export function SidebarInboxSection({ mailbox, onMailboxChange }: SidebarInboxSectionProps) {
   const { data: inboxData } = useMailboxThreads("inbox", { size: 1 })
   const { data: sentData } = useMailboxThreads("sent", { size: 1 })
+  const { data: starredData } = useStarredThreads({ size: 1 })
   const { data: trashData } = useTrashThreads({ size: 1 })
 
   const unreadCounts: Partial<Record<PrimaryMailboxId, number | undefined>> = {
     inbox: inboxData?.pages[0]?.unreadCount,
     sent: sentData?.pages[0]?.unreadCount,
+    starred: starredData?.pages[0]?.unreadCount,
     trash: trashData?.pages[0]?.unreadCount,
   }
 

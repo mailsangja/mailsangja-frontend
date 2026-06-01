@@ -10,6 +10,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { formatRelativeDate } from "@/lib/date"
 import { getMailAddressFullLabel, getMailAddressLabel } from "@/lib/mail-address"
+import { cn } from "@/lib/utils"
 import { m } from "@/paraglide/messages"
 import type { InboxMessage } from "@/types/email"
 
@@ -42,9 +43,19 @@ interface MessageCardProps {
   onToggle: () => void
   accountEmail?: string
   menuActions?: React.ReactNode
+  onToggleStar?: () => void
+  isTogglingStar?: boolean
 }
 
-export function MessageCard({ message, isExpanded, onToggle, accountEmail, menuActions }: MessageCardProps) {
+export function MessageCard({
+  message,
+  isExpanded,
+  onToggle,
+  accountEmail,
+  menuActions,
+  onToggleStar,
+  isTogglingStar = false,
+}: MessageCardProps) {
   const senderName = getMailAddressLabel(message.from)
   const fullSenderLabel = getMailAddressFullLabel(message.from)
   const recipientSummary = getRecipientSummary(message, accountEmail)
@@ -110,11 +121,13 @@ export function MessageCard({ message, isExpanded, onToggle, accountEmail, menuA
             <Button
               variant="ghost"
               size="icon-sm"
-              disabled
-              title={m.message_star_disabled()}
-              aria-label={m.message_star()}
+              onClick={onToggleStar}
+              disabled={!onToggleStar || isTogglingStar}
+              title={message.isStar ? m.message_unstar() : m.message_star()}
+              aria-label={message.isStar ? m.message_unstar() : m.message_star()}
+              className={cn(message.isStar && "text-primary")}
             >
-              <Star />
+              <Star className={cn(message.isStar && "fill-current")} />
             </Button>
             {menuActions ? (
               <DropdownMenu>

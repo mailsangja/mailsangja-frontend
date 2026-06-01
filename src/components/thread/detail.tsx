@@ -22,6 +22,7 @@ import {
   useMarkMessageAsUnread,
   useMarkThreadAsRead,
   useMarkThreadAsUnread,
+  useToggleMessageStar,
 } from "@/mutations/emails"
 import { useDeleteMessage, useDeleteThread, useRestoreTrashMessage, useRestoreTrashThread } from "@/mutations/trash"
 import { m } from "@/paraglide/messages"
@@ -221,6 +222,11 @@ export function ThreadDetail({ threadId, messageId = null, onClose }: ThreadDeta
   const { mutate: markThreadUnread, isPending: isMarkingThreadUnread } = useMarkThreadAsUnread()
   const { mutate: markMessageRead } = useMarkMessageAsRead()
   const { mutate: markMessageUnread } = useMarkMessageAsUnread()
+  const {
+    mutate: toggleMessageStar,
+    variables: togglingStarMessageId,
+    isPending: isTogglingMessageStar,
+  } = useToggleMessageStar()
   const { expandedIds, toggleExpanded } = useThreadMessageExpansion({
     threadId,
     messages: thread?.messages ?? [],
@@ -285,6 +291,10 @@ export function ThreadDetail({ threadId, messageId = null, onClose }: ThreadDeta
     }
   }
 
+  const handleToggleMessageStar = (message: InboxMessage) => {
+    toggleMessageStar(message.id)
+  }
+
   const handleDeleteThread = () => {
     if (!threadId) return
     deleteThread(threadId, {
@@ -345,6 +355,8 @@ export function ThreadDetail({ threadId, messageId = null, onClose }: ThreadDeta
         expandedIds={expandedIds}
         onToggle={toggleExpanded}
         accountEmail={account?.emailAddress}
+        onToggleMessageStar={handleToggleMessageStar}
+        togglingStarMessageId={isTogglingMessageStar ? togglingStarMessageId : null}
         renderMenuActions={(message) => (
           <>
             <DropdownMenuItem onClick={() => handleReply(message)}>
