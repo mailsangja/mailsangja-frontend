@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button"
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { Input } from "@/components/ui/input"
 import { ScrollArea } from "@/components/ui/scroll-area"
+import { Switch } from "@/components/ui/switch"
 import { cn } from "@/lib/utils"
 import { LABEL_COLORS } from "@/lib/label-colors"
 import { LabelRuleGroupList } from "@/components/label/label-condition-list"
@@ -21,6 +22,7 @@ export interface LabelFormData {
   name: string
   colorCode: string
   notificationPolicy: NotificationPolicy
+  isSensitive: boolean
 }
 
 interface LabelFormDialogProps {
@@ -30,6 +32,7 @@ interface LabelFormDialogProps {
   defaultName?: string
   defaultColor?: string
   defaultNotificationPolicy?: NotificationPolicy
+  defaultIsSensitive?: boolean
   groups?: LabelConditionGroup[]
   onSubmit: (data: LabelFormData) => void
   isPending?: boolean
@@ -41,6 +44,7 @@ interface LabelFormContentProps {
   defaultName: string
   defaultColor: string
   defaultNotificationPolicy: NotificationPolicy
+  defaultIsSensitive: boolean
   groups?: LabelConditionGroup[]
   onSubmit: (data: LabelFormData) => void
   isPending?: boolean
@@ -53,6 +57,7 @@ function LabelFormContent({
   defaultName,
   defaultColor,
   defaultNotificationPolicy,
+  defaultIsSensitive,
   groups,
   onSubmit,
   isPending,
@@ -63,12 +68,13 @@ function LabelFormContent({
   const [name, setName] = useState(defaultName)
   const [selectedColor, setSelectedColor] = useState(defaultColor)
   const [notificationPolicy, setNotificationPolicy] = useState<NotificationPolicy>(defaultNotificationPolicy)
+  const [isSensitive, setIsSensitive] = useState(defaultIsSensitive)
 
   function handleSubmit() {
     if (isPending || submitDisabled) return
     const trimmed = name.trim()
     if (!trimmed) return
-    onSubmit({ name: trimmed, colorCode: selectedColor, notificationPolicy })
+    onSubmit({ name: trimmed, colorCode: selectedColor, notificationPolicy, isSensitive })
   }
 
   return (
@@ -122,6 +128,15 @@ function LabelFormContent({
               ))}
             </div>
           </div>
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium">AI 기능에서 제외</p>
+              <p className="text-xs text-muted-foreground">
+                이 라벨의 메일은 AI 초안 생성, 검토 등에 사용되지 않습니다.
+              </p>
+            </div>
+            <Switch checked={isSensitive} onCheckedChange={setIsSensitive} />
+          </div>
           {groups && groups.length > 0 && (
             <div className="flex flex-col gap-3">
               <p className="text-xs text-muted-foreground">{m.label_rules_title()}</p>
@@ -149,6 +164,7 @@ export function LabelFormDialog({
   defaultName = "",
   defaultColor = LABEL_COLORS[0],
   defaultNotificationPolicy = "INHERIT",
+  defaultIsSensitive = false,
   groups,
   onSubmit,
   isPending,
@@ -166,6 +182,7 @@ export function LabelFormDialog({
             defaultName={defaultName}
             defaultColor={defaultColor}
             defaultNotificationPolicy={defaultNotificationPolicy}
+            defaultIsSensitive={defaultIsSensitive}
             groups={groups}
             onSubmit={onSubmit}
             isPending={isPending}

@@ -5,6 +5,7 @@ import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Switch } from "@/components/ui/switch"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -144,6 +145,7 @@ function LabelDetailContent({ labelId, label }: { labelId: string; label: LabelD
   const [name, setName] = useState(label.name)
   const [selectedColor, setSelectedColor] = useState(label.colorCode)
   const [notificationPolicy, setNotificationPolicy] = useState<NotificationPolicy>(label.notificationPolicy)
+  const [isSensitive, setIsSensitive] = useState(label.isSensitive)
 
   // Rule edit state
   const [localGroups, setLocalGroups] = useState<EditableCondition[][]>(() =>
@@ -160,6 +162,7 @@ function LabelDetailContent({ labelId, label }: { labelId: string; label: LabelD
     setName(label.name)
     setSelectedColor(label.colorCode)
     setNotificationPolicy(label.notificationPolicy)
+    setIsSensitive(label.isSensitive)
     setIsEditingInfo(false)
   }
 
@@ -170,6 +173,7 @@ function LabelDetailContent({ labelId, label }: { labelId: string; label: LabelD
     if (trimmed !== label.name) data.name = trimmed
     if (selectedColor !== label.colorCode) data.colorCode = selectedColor
     if (notificationPolicy !== label.notificationPolicy) data.notificationPolicy = notificationPolicy
+    if (isSensitive !== label.isSensitive) data.isSensitive = isSensitive
     if (Object.keys(data).length === 0) {
       setIsEditingInfo(false)
       return
@@ -270,89 +274,107 @@ function LabelDetailContent({ labelId, label }: { labelId: string; label: LabelD
         </CardHeader>
         <CardContent>
           {isEditingInfo ? (
-            <div className="flex flex-wrap items-center gap-3">
-              {/* Color picker */}
-              <DropdownMenu>
-                <DropdownMenuTrigger
-                  render={
-                    <button
-                      type="button"
-                      className="size-5 shrink-0 cursor-pointer rounded-full ring-2 ring-border ring-offset-2 focus-visible:outline-none"
-                      style={{ backgroundColor: selectedColor }}
-                      aria-label="색상 선택"
-                    />
-                  }
-                />
-                <DropdownMenuContent className="w-auto p-2">
-                  <div className="grid grid-cols-5 gap-1.5">
-                    {LABEL_COLORS.map((color) => (
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-wrap items-center gap-3">
+                {/* Color picker */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger
+                    render={
                       <button
-                        key={color}
                         type="button"
-                        className="size-6 cursor-pointer rounded-full transition-transform hover:scale-110 focus-visible:outline-none"
-                        style={{
-                          backgroundColor: color,
-                          boxShadow: selectedColor === color ? `0 0 0 2px white, 0 0 0 4px ${color}` : undefined,
-                        }}
-                        onClick={() => setSelectedColor(color)}
-                        aria-label={color}
-                        aria-pressed={selectedColor === color}
+                        className="size-5 shrink-0 cursor-pointer rounded-full ring-2 ring-border ring-offset-2 focus-visible:outline-none"
+                        style={{ backgroundColor: selectedColor }}
+                        aria-label="색상 선택"
                       />
+                    }
+                  />
+                  <DropdownMenuContent className="w-auto p-2">
+                    <div className="grid grid-cols-5 gap-1.5">
+                      {LABEL_COLORS.map((color) => (
+                        <button
+                          key={color}
+                          type="button"
+                          className="size-6 cursor-pointer rounded-full transition-transform hover:scale-110 focus-visible:outline-none"
+                          style={{
+                            backgroundColor: color,
+                            boxShadow: selectedColor === color ? `0 0 0 2px white, 0 0 0 4px ${color}` : undefined,
+                          }}
+                          onClick={() => setSelectedColor(color)}
+                          aria-label={color}
+                          aria-pressed={selectedColor === color}
+                        />
+                      ))}
+                    </div>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                {/* Name */}
+                <Input
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  onKeyDown={(e) => e.key === "Enter" && handleSaveInfo()}
+                  placeholder="라벨 이름"
+                  className="h-8 w-40 text-sm"
+                />
+
+                {/* Notification toggles + actions on right */}
+                <div className="ml-auto flex items-center gap-3">
+                  <div className="flex overflow-hidden rounded-md border">
+                    {NOTIFICATION_OPTIONS.map(({ value, icon: Icon }) => (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() => setNotificationPolicy(value)}
+                        className={cn(
+                          "flex items-center gap-1.5 border-r px-3 py-1.5 text-xs transition-colors last:border-r-0",
+                          notificationPolicy === value
+                            ? "bg-primary/10 font-medium text-primary"
+                            : "text-muted-foreground hover:bg-muted"
+                        )}
+                      >
+                        <Icon className="size-3.5" />
+                        {getNotificationPolicyLabel(value)}
+                      </button>
                     ))}
                   </div>
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-              {/* Name */}
-              <Input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSaveInfo()}
-                placeholder="라벨 이름"
-                className="h-8 w-40 text-sm"
-              />
-
-              {/* Notification toggles + actions on right */}
-              <div className="ml-auto flex items-center gap-3">
-                <div className="flex overflow-hidden rounded-md border">
-                  {NOTIFICATION_OPTIONS.map(({ value, icon: Icon }) => (
-                    <button
-                      key={value}
-                      type="button"
-                      onClick={() => setNotificationPolicy(value)}
-                      className={cn(
-                        "flex items-center gap-1.5 border-r px-3 py-1.5 text-xs transition-colors last:border-r-0",
-                        notificationPolicy === value
-                          ? "bg-primary/10 font-medium text-primary"
-                          : "text-muted-foreground hover:bg-muted"
-                      )}
-                    >
-                      <Icon className="size-3.5" />
-                      {getNotificationPolicyLabel(value)}
-                    </button>
-                  ))}
+                  <Button variant="outline" size="sm" onClick={handleCancelInfo}>
+                    {m.common_cancel()}
+                  </Button>
+                  <Button size="sm" onClick={handleSaveInfo} disabled={!name.trim() || updateLabel.isPending}>
+                    {m.common_save()}
+                  </Button>
                 </div>
-                <Button variant="outline" size="sm" onClick={handleCancelInfo}>
-                  {m.common_cancel()}
-                </Button>
-                <Button size="sm" onClick={handleSaveInfo} disabled={!name.trim() || updateLabel.isPending}>
-                  {m.common_save()}
-                </Button>
+              </div>
+
+              {/* isSensitive toggle */}
+              <div className="flex items-center justify-between rounded-md border px-3 py-2.5">
+                <div>
+                  <p className="text-sm font-medium">AI 기능에서 제외</p>
+                  <p className="text-xs text-muted-foreground">
+                    이 라벨의 메일은 AI 초안 생성, 검토 등에 사용되지 않습니다.
+                  </p>
+                </div>
+                <Switch checked={isSensitive} onCheckedChange={setIsSensitive} />
               </div>
             </div>
           ) : (
-            <div className="flex items-center gap-3">
-              <span className="size-4 shrink-0 rounded-full" style={{ backgroundColor: label.colorCode }} />
-              <span className="text-sm font-medium">{label.name}</span>
-              <div className="ml-auto flex items-center gap-3">
-                <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                  <NotifIcon className="size-4" />
-                  {getNotificationPolicyLabel(label.notificationPolicy)}
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center gap-3">
+                <span className="size-4 shrink-0 rounded-full" style={{ backgroundColor: label.colorCode }} />
+                <span className="text-sm font-medium">{label.name}</span>
+                <div className="ml-auto flex items-center gap-3">
+                  <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                    <NotifIcon className="size-4" />
+                    {getNotificationPolicyLabel(label.notificationPolicy)}
+                  </div>
+                  {label.isSensitive && (
+                    <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">AI 제외</span>
+                  )}
+                  <Button variant="outline" size="sm" onClick={() => setIsEditingInfo(true)}>
+                    <Pencil className="size-3.5" />
+                    {m.common_edit()}
+                  </Button>
                 </div>
-                <Button variant="outline" size="sm" onClick={() => setIsEditingInfo(true)}>
-                  <Pencil className="size-3.5" />
-                  {m.common_edit()}
-                </Button>
               </div>
             </div>
           )}

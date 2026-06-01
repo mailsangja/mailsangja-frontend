@@ -33,10 +33,13 @@ export function LabelSuggestionItem({ suggestion }: LabelSuggestionItemProps) {
     })
   }
 
-  function handleApprove({ name, colorCode, notificationPolicy }: LabelFormData) {
+  function handleApprove({ name, colorCode, notificationPolicy, isSensitive }: LabelFormData) {
     const rule = groups.length > 0 ? { groups } : undefined
     approveLabelSuggestion.mutate(
-      { suggestionId: suggestion.id, data: { name, colorCode, notificationPolicy, order: suggestion.order, rule } },
+      {
+        suggestionId: suggestion.id,
+        data: { name, colorCode, notificationPolicy, isSensitive, order: suggestion.order, rule },
+      },
       {
         onSuccess: (label) => {
           trackEvent("ai_label_suggestion_approve", {
