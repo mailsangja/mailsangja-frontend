@@ -6,11 +6,20 @@ import { AddAccountDialog } from "@/components/add-account-dialog"
 import { MailAccountIcon } from "@/components/mail-account-icon"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { m } from "@/paraglide/messages"
-import { useActivateMailAccount, useDeactivateMailAccount } from "@/mutations/mail-accounts"
+import { useActivateMailAccount, useDeactivateMailAccount, useDeleteMailAccount } from "@/mutations/mail-accounts"
 import { useUpdateDefaultAccount } from "@/mutations/user"
 import { useMailAccounts } from "@/queries/mail-accounts"
 import { useUser } from "@/queries/user"
@@ -24,10 +33,12 @@ function SettingsAccountPage() {
   const { data: mailAccounts, isPending: isAccountsPending, isError: isAccountsError } = useMailAccounts()
   const [defaultAccount, setDefaultAccount] = useState<string | null>(null)
   const [pendingAccountId, setPendingAccountId] = useState<string | null>(null)
+  const [deletingAccountId, setDeletingAccountId] = useState<string | null>(null)
   const updateDefaultAccountMutation = useUpdateDefaultAccount()
   const { mutate: mutateDefaultAccount } = updateDefaultAccountMutation
   const { mutate: activate } = useActivateMailAccount()
   const { mutate: deactivate } = useDeactivateMailAccount()
+  const { mutate: deleteAccount, isPending: isDeleting } = useDeleteMailAccount()
 
   const accounts = useMemo(() => mailAccounts ?? [], [mailAccounts])
 
@@ -71,8 +82,35 @@ function SettingsAccountPage() {
     }
   }
 
+  const handleConfirmDelete = () => {
+    if (!deletingAccountId) return
+    deleteAccount(deletingAccountId, {
+      onSettled: () => setDeletingAccountId(null),
+    })
+  }
+
   return (
     <>
+      <Dialog
+        open={deletingAccountId !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeletingAccountId(null)
+        }}
+      >
+        <DialogContent showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>{m.settings_mail_accounts_delete_title()}</DialogTitle>
+            <DialogDescription>{m.settings_mail_accounts_delete_description()}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <DialogClose render={<Button variant="outline" disabled={isDeleting} />}>{m.common_cancel()}</DialogClose>
+            <Button variant="destructive" onClick={handleConfirmDelete} disabled={isDeleting}>
+              {m.common_delete()}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Card>
         <CardHeader>
           <CardTitle>{m.settings_default_mail_account_title()}</CardTitle>
@@ -184,7 +222,7 @@ function SettingsAccountPage() {
                   </TableCell>
                   <TableCell className="text-center">
                     <div className="flex justify-center">
-                      <Button variant="ghost" size="icon-sm" disabled>
+                      <Button variant="ghost" size="icon-sm" onClick={() => setDeletingAccountId(mailAccount.id)}>
                         <Trash2 data-icon="inline-start" className="text-muted-foreground" />
                       </Button>
                     </div>

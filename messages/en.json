@@ -536,6 +536,8 @@
   "settings_mail_accounts_icon_column": "Icon",
   "settings_mail_accounts_loading": "Loading account list.",
   "settings_mail_accounts_loading_short": "Loading account list...",
+  "settings_mail_accounts_delete_description": "Are you sure you want to disconnect this mail account?",
+  "settings_mail_accounts_delete_title": "Delete Mail Account",
   "settings_mail_accounts_title": "Manage mail accounts",
   "settings_mail_preview_description": "Preview content when hovering over a mail item.",
   "settings_mail_preview_title": "Enable mail preview",

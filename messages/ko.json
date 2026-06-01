@@ -536,6 +536,8 @@
   "settings_mail_accounts_icon_column": "아이콘",
   "settings_mail_accounts_loading": "계정 목록을 불러오는 중입니다.",
   "settings_mail_accounts_loading_short": "계정 목록을 불러오는 중...",
+  "settings_mail_accounts_delete_description": "이 메일 계정의 연결을 해제하시겠습니까?",
+  "settings_mail_accounts_delete_title": "메일 계정 삭제",
   "settings_mail_accounts_title": "메일 계정 관리",
   "settings_mail_preview_description": "메일 위에 마우스를 올리면 내용을 미리 확인할 수 있습니다.",
   "settings_mail_preview_title": "메일 미리보기 활성화",
