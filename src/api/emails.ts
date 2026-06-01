@@ -16,6 +16,7 @@ import type {
   MarkerSliceResponse,
   ReplyDraftSuggestion,
   ReplyDraftSuggestionListResponse,
+  StarredThreadsParams,
   SupportedMailboxId,
   UnreadCountResponse,
 } from "@/types/email"
@@ -188,6 +189,19 @@ export async function getMailboxThreads(
   }
 }
 
+export async function getStarredThreads(
+  params: StarredThreadsParams = {}
+): Promise<MarkerSliceResponse<InboxThreadSummary>> {
+  const response = await apiClient.get<MarkerSliceResponse<InboxThreadSummary>>("/api/v1/threads/starred", {
+    params: params as Record<string, string | number | null | undefined>,
+  })
+
+  return {
+    ...response,
+    content: response.content.map(normalizeThreadSummary),
+  }
+}
+
 export async function getThreadDetail(threadId: string): Promise<InboxThreadDetail> {
   const response = await apiClient.get<InboxThreadDetail>(`/api/v1/threads/${threadId}`)
 
@@ -208,6 +222,10 @@ export async function markMessageAsRead(messageId: string): Promise<void> {
 
 export async function markMessageAsUnread(messageId: string): Promise<void> {
   return apiClient.post<void>(`/api/v1/messages/${messageId}/unread`)
+}
+
+export async function toggleMessageStar(messageId: string): Promise<void> {
+  return apiClient.post<void>(`/api/v1/messages/${messageId}/star`)
 }
 
 export async function getUnreadCount(): Promise<UnreadCountResponse> {

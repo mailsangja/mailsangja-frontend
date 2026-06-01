@@ -11,6 +11,7 @@ import {
   reviewMail,
   selectReplyDraftSuggestion,
   sendMail,
+  toggleMessageStar,
 } from "@/api/emails"
 import { queryClient } from "@/lib/query-client"
 import { m } from "@/paraglide/messages"
@@ -69,6 +70,16 @@ export function useMarkMessageAsUnread() {
     onSuccess: invalidateEmailAndLabelQueries,
     onError: () => {
       toast.error(m.mail_mark_unread_error())
+    },
+  })
+}
+
+export function useToggleMessageStar() {
+  return useMutation({
+    mutationFn: (messageId: string) => toggleMessageStar(messageId),
+    onSuccess: invalidateEmailAndLabelQueries,
+    onError: () => {
+      toast.error(m.mail_star_error())
     },
   })
 }

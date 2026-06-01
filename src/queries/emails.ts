@@ -1,12 +1,13 @@
 import { queryOptions, useInfiniteQuery, useQuery } from "@tanstack/react-query"
 
-import { getMailboxThreads, getReplyDraftSuggestions, getThreadDetail } from "@/api/emails"
-import type { ListThreadsParams, SupportedMailboxId } from "@/types/email"
+import { getMailboxThreads, getReplyDraftSuggestions, getStarredThreads, getThreadDetail } from "@/api/emails"
+import type { ListThreadsParams, StarredThreadsParams, SupportedMailboxId } from "@/types/email"
 
 export const emailKeys = {
   all: () => ["emails"] as const,
   mailbox: (mailbox: SupportedMailboxId | null, params: Omit<ListThreadsParams, "marker">) =>
     [...emailKeys.all(), "mailbox", mailbox, params] as const,
+  starred: (params: Omit<StarredThreadsParams, "marker">) => [...emailKeys.all(), "starred", params] as const,
   thread: (id: string) => [...emailKeys.all(), "thread", id] as const,
   replyDraftSuggestions: (messageId: string) => [...emailKeys.all(), "reply-draft-suggestions", messageId] as const,
 }
@@ -50,6 +51,19 @@ export function useMailboxThreads(mailbox: SupportedMailboxId | null, options: O
     },
     getNextPageParam: (lastPage) => lastPage.nextMarker ?? undefined,
     enabled: mailbox != null,
+  })
+}
+
+export function useStarredThreads(options: Omit<StarredThreadsParams, "marker"> = {}, enabled = true) {
+  const size = options.size ?? 50
+  const params = { size }
+
+  return useInfiniteQuery({
+    queryKey: emailKeys.starred(params),
+    initialPageParam: undefined as string | undefined,
+    queryFn: ({ pageParam }) => getStarredThreads({ ...params, marker: pageParam }),
+    getNextPageParam: (lastPage) => lastPage.nextMarker ?? undefined,
+    enabled,
   })
 }
 

@@ -11,6 +11,7 @@ export interface TrashThreadSummary {
   participant: MailAddress
   snippet: string
   isRead: boolean
+  star: boolean
   lastMessageAt: string
   attachments: Attachment[]
   messageCount: number
@@ -23,6 +24,7 @@ export interface TrashThreadDetail {
   accountId: string
   latestSubject: string
   isRead: boolean
+  star: boolean
   lastMessageAt: string
   labels: ThreadLabel[]
   messages: InboxMessage[]
