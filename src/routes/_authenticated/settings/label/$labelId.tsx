@@ -287,7 +287,7 @@ function LabelDetailContent({ labelId, label }: { labelId: string; label: LabelD
                         type="button"
                         className="size-5 shrink-0 cursor-pointer rounded-full ring-2 ring-border ring-offset-2 focus-visible:outline-none"
                         style={{ backgroundColor: editInfo.selectedColor }}
-                        aria-label="색상 선택"
+                        aria-label={m.label_color_select()}
                       />
                     }
                   />
@@ -312,16 +312,14 @@ function LabelDetailContent({ labelId, label }: { labelId: string; label: LabelD
                   </DropdownMenuContent>
                 </DropdownMenu>
 
-                {/* Name */}
                 <Input
                   value={editInfo.name}
                   onChange={(e) => setEditInfo((prev) => ({ ...prev, name: e.target.value }))}
                   onKeyDown={(e) => e.key === "Enter" && handleSaveInfo()}
-                  placeholder="라벨 이름"
+                  placeholder={m.label_name_placeholder()}
                   className="h-8 w-40 text-sm"
                 />
 
-                {/* Notification toggles + actions on right */}
                 <div className="ml-auto flex items-center gap-3">
                   <div className="flex overflow-hidden rounded-md border">
                     {NOTIFICATION_OPTIONS.map(({ value, icon: Icon }) => (
@@ -350,15 +348,16 @@ function LabelDetailContent({ labelId, label }: { labelId: string; label: LabelD
                 </div>
               </div>
 
-              {/* isSensitive toggle */}
               <div className="flex items-center justify-between rounded-md border px-3 py-2.5">
                 <div>
-                  <p className="text-sm font-medium">AI 기능에서 제외</p>
-                  <p className="text-xs text-muted-foreground">
-                    이 라벨의 메일은 AI 초안 생성, 검토 등에 사용되지 않습니다.
+                  <p id="label-sensitive-toggle-label" className="text-sm font-medium">
+                    {m.label_sensitive_title()}
                   </p>
+                  <p className="text-xs text-muted-foreground">{m.label_sensitive_description()}</p>
                 </div>
                 <Switch
+                  id="label-sensitive-toggle"
+                  aria-labelledby="label-sensitive-toggle-label"
                   checked={editInfo.isSensitive}
                   onCheckedChange={(checked) => setEditInfo((prev) => ({ ...prev, isSensitive: checked }))}
                 />
@@ -375,7 +374,9 @@ function LabelDetailContent({ labelId, label }: { labelId: string; label: LabelD
                     {getNotificationPolicyLabel(label.notificationPolicy)}
                   </div>
                   {label.isSensitive && (
-                    <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">AI 제외</span>
+                    <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                      {m.label_sensitive_badge()}
+                    </span>
                   )}
                   <Button variant="outline" size="sm" onClick={() => setIsEditingInfo(true)}>
                     <Pencil className="size-3.5" />
@@ -388,7 +389,6 @@ function LabelDetailContent({ labelId, label }: { labelId: string; label: LabelD
         </CardContent>
       </Card>
 
-      {/* Label rules */}
       <Card>
         <CardHeader>
           <CardTitle>라벨 규칙</CardTitle>
@@ -410,7 +410,6 @@ function LabelDetailContent({ labelId, label }: { labelId: string; label: LabelD
                           {condIndex > 0 && <LabelRuleJoiner label="AND" className="pb-2" />}
 
                           <div className="flex flex-wrap items-center gap-2">
-                            {/* Field */}
                             <DropdownMenu>
                               <DropdownMenuTrigger className="flex h-8 w-32 shrink-0 items-center justify-between gap-1 rounded-md border border-input bg-background px-2.5 text-sm disabled:cursor-not-allowed disabled:opacity-50">
                                 <span className="truncate">
@@ -463,7 +462,6 @@ function LabelDetailContent({ labelId, label }: { labelId: string; label: LabelD
                               </DropdownMenu>
                             ) : (
                               <>
-                                {/* Operator */}
                                 <DropdownMenu>
                                   <DropdownMenuTrigger
                                     disabled={!entry.field}
@@ -497,7 +495,6 @@ function LabelDetailContent({ labelId, label }: { labelId: string; label: LabelD
                                   </DropdownMenuContent>
                                 </DropdownMenu>
 
-                                {/* Value */}
                                 <Input
                                   value={entry.value}
                                   onChange={(e) => updateCondition(groupIndex, condIndex, { value: e.target.value })}
@@ -564,7 +561,6 @@ function LabelDetailContent({ labelId, label }: { labelId: string; label: LabelD
         </CardContent>
       </Card>
 
-      {/* Danger zone */}
       <Card>
         <CardHeader>
           <CardTitle className="text-destructive">{m.label_delete_title()}</CardTitle>
