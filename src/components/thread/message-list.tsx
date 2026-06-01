@@ -8,6 +8,8 @@ interface ThreadMessageListProps {
   onToggle: (id: string) => void
   accountEmail?: string
   renderMenuActions?: (message: InboxMessage) => React.ReactNode
+  onToggleMessageStar?: (message: InboxMessage) => void
+  togglingStarMessageId?: string | null
 }
 
 export function ThreadMessageList({
@@ -16,6 +18,8 @@ export function ThreadMessageList({
   onToggle,
   accountEmail,
   renderMenuActions,
+  onToggleMessageStar,
+  togglingStarMessageId = null,
 }: ThreadMessageListProps) {
   return (
     <ScrollArea className="min-h-0 flex-1">
@@ -29,6 +33,8 @@ export function ThreadMessageList({
               onToggle={() => onToggle(message.id)}
               accountEmail={accountEmail}
               menuActions={renderMenuActions?.(message)}
+              onToggleStar={onToggleMessageStar ? () => onToggleMessageStar(message) : undefined}
+              isTogglingStar={togglingStarMessageId === message.id}
             />
           ))}
         </div>

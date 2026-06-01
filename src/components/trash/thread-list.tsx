@@ -25,6 +25,7 @@ function toInboxSummary(thread: TrashThreadSummary): InboxThreadSummary {
     participant: thread.participant,
     snippet: thread.snippet,
     isRead: thread.isRead,
+    star: thread.star,
     lastMessageAt: thread.lastMessageAt,
     attachments: thread.attachments,
     messageCount: thread.messageCount,

@@ -1,5 +1,5 @@
 import { useEffect, useRef } from "react"
-import { Paperclip } from "lucide-react"
+import { Paperclip, Star } from "lucide-react"
 
 import { LabelChipList, type LabelChipMap } from "@/components/label/label-chip"
 import { MailAccountIcon } from "@/components/mail-account-icon"
@@ -89,7 +89,7 @@ function ThreadListItemContent({
 
   return (
     <>
-      <div className="flex min-w-0 items-center gap-2.5 md:w-48 md:shrink-0">
+      <div className="flex w-full min-w-0 items-center gap-2.5 md:w-48 md:shrink-0">
         <div
           className={cn("mr-0.5", isSelectionMode ? "flex" : "hidden", "md:flex")}
           onClick={(event) => event.stopPropagation()}
@@ -101,6 +101,7 @@ function ThreadListItemContent({
         <span
           className={cn(
             "flex min-w-0 items-center gap-2 text-sm font-medium",
+            "flex-1",
             isUnread ? "text-foreground" : "text-muted-foreground"
           )}
         >
@@ -130,7 +131,7 @@ function ThreadListItemContent({
       </div>
 
       <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <div className="flex min-w-0 items-center gap-2">
+        <div className="flex w-full min-w-0 items-center gap-2">
           <span
             className={cn(
               "min-w-0 flex-1 truncate text-sm",
@@ -140,42 +141,61 @@ function ThreadListItemContent({
             {thread.latestSubject || m.message_no_subject()}
           </span>
 
+          {thread.star ? (
+            <Star
+              className="hidden size-4 shrink-0 fill-primary text-primary md:block"
+              aria-label={m.message_starred()}
+            />
+          ) : null}
+
           {renderTime("hidden md:flex")}
         </div>
 
         <div className="flex min-w-0 flex-col gap-2 md:flex-row md:items-center">
           <span className="line-clamp-1 min-w-0 text-sm text-muted-foreground md:flex-1">{thread.snippet}</span>
 
-          {hasLabels || hasAttachments ? (
-            <span className="flex min-w-0 items-center justify-between gap-1.5 md:shrink-0 md:justify-end">
-              {hasAttachments ? (
-                <Tooltip>
-                  <TooltipTrigger render={<span className="flex shrink-0 items-center" />}>
-                    <Paperclip className="mx-auto size-4 text-muted-foreground" />
-                  </TooltipTrigger>
-                  <TooltipContent side="bottom" align="end" className="max-w-72 items-start">
-                    <span className="flex min-w-0 flex-col items-start gap-1">
-                      <span>{m.thread_attachment_count({ count: thread.attachments.length })}</span>
-                      {thread.attachments.slice(0, 3).map((attachment) => (
-                        <span key={attachment.id} className="max-w-64 truncate text-background/80">
-                          {attachment.filename}
+          {thread.star || hasLabels || hasAttachments ? (
+            <span className="flex w-full min-w-0 items-center gap-1.5 md:w-auto md:shrink-0 md:justify-end">
+              {hasLabels || hasAttachments ? (
+                <span className="flex min-w-0 flex-1 items-center justify-start gap-1.5 md:flex-none md:justify-end">
+                  {hasAttachments ? (
+                    <Tooltip>
+                      <TooltipTrigger render={<span className="flex shrink-0 items-center" />}>
+                        <Paperclip className="mx-auto size-4 text-muted-foreground" />
+                      </TooltipTrigger>
+                      <TooltipContent side="bottom" align="end" className="max-w-72 items-start">
+                        <span className="flex min-w-0 flex-col items-start gap-1">
+                          <span>{m.thread_attachment_count({ count: thread.attachments.length })}</span>
+                          {thread.attachments.slice(0, 3).map((attachment) => (
+                            <span key={attachment.id} className="max-w-64 truncate text-background/80">
+                              {attachment.filename}
+                            </span>
+                          ))}
+                          {thread.attachments.length > 3 ? (
+                            <span className="text-background/70">
+                              {m.thread_attachment_more_count({ count: thread.attachments.length - 3 })}
+                            </span>
+                          ) : null}
                         </span>
-                      ))}
-                      {thread.attachments.length > 3 ? (
-                        <span className="text-background/70">
-                          {m.thread_attachment_more_count({ count: thread.attachments.length - 3 })}
-                        </span>
-                      ) : null}
-                    </span>
-                  </TooltipContent>
-                </Tooltip>
+                      </TooltipContent>
+                    </Tooltip>
+                  ) : null}
+                  <LabelChipList
+                    labels={thread.labels}
+                    labelsColorMap={labelsColorMap}
+                    hideMissingLabels
+                    className="max-w-48 shrink-0 truncate"
+                  />
+                </span>
+              ) : (
+                <span className="min-w-0 flex-1 md:hidden" />
+              )}
+              {thread.star ? (
+                <Star
+                  className="ml-auto size-4 shrink-0 fill-primary text-primary md:hidden"
+                  aria-label={m.message_starred()}
+                />
               ) : null}
-              <LabelChipList
-                labels={thread.labels}
-                labelsColorMap={labelsColorMap}
-                hideMissingLabels
-                className="max-w-48 shrink-0 truncate"
-              />
             </span>
           ) : null}
         </div>
