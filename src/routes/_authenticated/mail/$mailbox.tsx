@@ -14,10 +14,16 @@ import { cn } from "@/lib/utils"
 import { useMarkThreadAsRead } from "@/mutations/emails"
 import { m } from "@/paraglide/messages"
 import { useMailAccounts, mailAccountQueries } from "@/queries/mail-accounts"
-import { emailKeys, useMailboxThreads } from "@/queries/emails"
+import { emailKeys, useMailboxThreads, useStarredThreads } from "@/queries/emails"
 import { useLabels, labelQueries, useLabelGroups, labelGroupQueries } from "@/queries/labels"
 import { useTrashThreads } from "@/queries/trash"
-import { getMailboxLabel, isSupportedMailboxId, parseMailboxId, type PrimaryMailboxId } from "@/types/email"
+import {
+  getMailboxLabel,
+  isSupportedMailboxId,
+  parseMailboxId,
+  type InboxThreadSummary,
+  type PrimaryMailboxId,
+} from "@/types/email"
 
 export const Route = createFileRoute("/_authenticated/mail/$mailbox")({
   params: {
@@ -88,6 +94,44 @@ function getMailboxThreadsErrorCopy(error: unknown) {
   }
 }
 
+function includesSearchValue(value: string | undefined, normalizedQuery: string) {
+  return value?.toLocaleLowerCase().includes(normalizedQuery) ?? false
+}
+
+function matchesLocalThreadFilters(
+  thread: InboxThreadSummary,
+  options: {
+    query: string
+    unreadOnly: boolean
+    labelIds?: string[]
+  }
+) {
+  if (options.unreadOnly && thread.isRead) {
+    return false
+  }
+
+  if (options.labelIds?.length) {
+    const threadLabelIds = new Set(thread.labels.map((label) => label.labelId))
+
+    if (!options.labelIds.some((labelId) => threadLabelIds.has(labelId))) {
+      return false
+    }
+  }
+
+  const normalizedQuery = options.query.trim().toLocaleLowerCase()
+
+  if (!normalizedQuery) {
+    return true
+  }
+
+  return (
+    includesSearchValue(thread.latestSubject, normalizedQuery) ||
+    includesSearchValue(thread.snippet, normalizedQuery) ||
+    includesSearchValue(thread.participant.name, normalizedQuery) ||
+    includesSearchValue(thread.participant.email, normalizedQuery)
+  )
+}
+
 function MailboxPage() {
   const { mailbox } = Route.useParams()
 
@@ -116,10 +160,18 @@ function MailboxView({ mailbox }: { mailbox: PrimaryMailboxId }) {
   const { data: groups } = useLabelGroups()
   const { mutate: markAsRead } = useMarkThreadAsRead()
   const supportedMailbox = isSupportedMailboxId(mailbox) ? mailbox : null
+  const isStarredMailbox = mailbox === "starred"
+  const isThreadListMailbox = supportedMailbox != null || isStarredMailbox
   const selectedLabel = labelId ? (labels?.find((label) => label.id === labelId) ?? null) : null
   const selectedGroup = labelGroupId ? (groups?.find((g) => g.id === labelGroupId) ?? null) : null
   const effectiveLabelIds = selectedGroup ? selectedGroup.labelIds : labelId ? [labelId] : undefined
   const hasSearchQuery = Boolean(query.trim())
+  const mailboxThreadsQuery = useMailboxThreads(supportedMailbox, {
+    read: filter === "unread" ? false : undefined,
+    labelId: effectiveLabelIds,
+    q: hasSearchQuery ? query : undefined,
+  })
+  const starredThreadsQuery = useStarredThreads({ size: 50 }, isStarredMailbox)
   const {
     data,
     isLoading,
@@ -131,21 +183,33 @@ function MailboxView({ mailbox }: { mailbox: PrimaryMailboxId }) {
     hasNextPage,
     isFetchingNextPage,
     isFetchNextPageError,
-  } = useMailboxThreads(supportedMailbox, {
-    read: filter === "unread" ? false : undefined,
-    labelId: effectiveLabelIds,
-    q: hasSearchQuery ? query : undefined,
-  })
+  } = isStarredMailbox ? starredThreadsQuery : mailboxThreadsQuery
 
   const loadedThreads = data?.pages.flatMap((page) => page.content) ?? []
-  const totalThreadCount = data?.pages[0]?.totalCount ?? 0
+  const baseTotalThreadCount = data?.pages[0]?.totalCount ?? 0
   const selectedAccount = accountId ? (accounts?.find((account) => account.id === accountId) ?? null) : null
 
-  const threads = supportedMailbox
+  const threads = isThreadListMailbox
     ? loadedThreads.filter((thread) => {
-        return !selectedAccount || thread.accountId === selectedAccount.id
+        if (selectedAccount && thread.accountId !== selectedAccount.id) {
+          return false
+        }
+
+        if (isStarredMailbox) {
+          return matchesLocalThreadFilters(thread, {
+            query,
+            unreadOnly: filter === "unread",
+            labelIds: effectiveLabelIds,
+          })
+        }
+
+        return true
       })
     : []
+  const totalThreadCount =
+    isStarredMailbox && (hasSearchQuery || filter === "unread" || selectedAccount || effectiveLabelIds)
+      ? threads.length
+      : baseTotalThreadCount
   const mailboxErrorCopy = isError ? getMailboxThreadsErrorCopy(error) : null
   const loadMoreErrorCopy = isFetchNextPageError ? getMailboxThreadsErrorCopy(error) : null
 
@@ -154,10 +218,10 @@ function MailboxView({ mailbox }: { mailbox: PrimaryMailboxId }) {
   }
 
   const refreshMailbox = () => {
-    if (!supportedMailbox) return
+    if (!isThreadListMailbox) return
 
     void queryClient.invalidateQueries({
-      queryKey: [...emailKeys.all(), "mailbox", supportedMailbox],
+      queryKey: isStarredMailbox ? [...emailKeys.all(), "starred"] : [...emailKeys.all(), "mailbox", supportedMailbox],
     })
   }
 
@@ -169,7 +233,7 @@ function MailboxView({ mailbox }: { mailbox: PrimaryMailboxId }) {
   let emptyTitle = m.mail_empty_title()
   let emptyDescription: string | undefined
 
-  if (!supportedMailbox) {
+  if (!isThreadListMailbox) {
     emptyTitle = m.mail_unsupported_title()
     emptyDescription = m.mail_unsupported_description()
   } else if (hasSearchQuery) {
@@ -196,7 +260,7 @@ function MailboxView({ mailbox }: { mailbox: PrimaryMailboxId }) {
       mailboxName={getMailboxLabel(mailbox)}
       threads={threads}
       totalCount={totalThreadCount}
-      isLoading={supportedMailbox != null && isLoading}
+      isLoading={isThreadListMailbox && isLoading}
       isFetchingNextPage={isFetchingNextPage}
       hasNextPage={!!hasNextPage}
       isRefreshing={isRefetching}
@@ -226,17 +290,19 @@ function MailboxView({ mailbox }: { mailbox: PrimaryMailboxId }) {
         })
       }}
       onLoadMore={() => {
-        if (supportedMailbox && hasNextPage && !isFetchingNextPage) {
+        if (isThreadListMailbox && hasNextPage && !isFetchingNextPage) {
           void fetchNextPage()
         }
       }}
-      onRefresh={supportedMailbox ? refreshMailbox : undefined}
+      onRefresh={isThreadListMailbox ? refreshMailbox : undefined}
       getAccount={getAccount}
       emptyTitle={emptyTitle}
       emptyDescription={emptyDescription}
-      errorTitle={supportedMailbox && isError && threads.length === 0 ? mailboxErrorCopy?.title : undefined}
-      errorDescription={supportedMailbox && isError && threads.length === 0 ? mailboxErrorCopy?.description : undefined}
-      onRetry={supportedMailbox && isError ? () => void refetch() : undefined}
+      errorTitle={isThreadListMailbox && isError && threads.length === 0 ? mailboxErrorCopy?.title : undefined}
+      errorDescription={
+        isThreadListMailbox && isError && threads.length === 0 ? mailboxErrorCopy?.description : undefined
+      }
+      onRetry={isThreadListMailbox && isError ? () => void refetch() : undefined}
       loadMoreErrorTitle={threads.length > 0 ? loadMoreErrorCopy?.title : undefined}
       loadMoreErrorDescription={threads.length > 0 ? loadMoreErrorCopy?.description : undefined}
       onRetryLoadMore={threads.length > 0 && isFetchNextPageError ? () => void fetchNextPage() : undefined}
