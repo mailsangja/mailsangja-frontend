@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react"
 import { createFileRoute } from "@tanstack/react-router"
-import { Plus, Trash2 } from "lucide-react"
+import { Pencil, Plus, Trash2 } from "lucide-react"
 
 import { AddAccountDialog } from "@/components/add-account-dialog"
 import { MailAccountIcon } from "@/components/mail-account-icon"
@@ -19,10 +19,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { m } from "@/paraglide/messages"
-import { useActivateMailAccount, useDeactivateMailAccount, useDeleteMailAccount } from "@/mutations/mail-accounts"
+import {
+  useActivateMailAccount,
+  useDeactivateMailAccount,
+  useDeleteMailAccount,
+  useUpdateMailAccountAppearance,
+} from "@/mutations/mail-accounts"
 import { useUpdateDefaultAccount } from "@/mutations/user"
 import { useMailAccounts } from "@/queries/mail-accounts"
 import { useUser } from "@/queries/user"
+import type { MailAccount } from "@/types/mail-account"
+import type { AccountIconName } from "@/lib/icon-entries"
 
 export const Route = createFileRoute("/_authenticated/settings/account")({
   component: SettingsAccountPage,
@@ -34,11 +41,13 @@ function SettingsAccountPage() {
   const [defaultAccount, setDefaultAccount] = useState<string | null>(null)
   const [pendingAccountId, setPendingAccountId] = useState<string | null>(null)
   const [deletingAccountId, setDeletingAccountId] = useState<string | null>(null)
+  const [editingAccount, setEditingAccount] = useState<MailAccount | null>(null)
   const updateDefaultAccountMutation = useUpdateDefaultAccount()
   const { mutate: mutateDefaultAccount } = updateDefaultAccountMutation
   const { mutate: activate } = useActivateMailAccount()
   const { mutate: deactivate } = useDeactivateMailAccount()
   const { mutate: deleteAccount, isPending: isDeleting } = useDeleteMailAccount()
+  const { mutate: updateAppearance, isPending: isUpdating } = useUpdateMailAccountAppearance()
 
   const accounts = useMemo(() => mailAccounts ?? [], [mailAccounts])
 
@@ -91,6 +100,31 @@ function SettingsAccountPage() {
 
   return (
     <>
+      <AddAccountDialog
+        key={editingAccount?.id}
+        open={editingAccount !== null}
+        onOpenChange={(open) => {
+          if (!open) setEditingAccount(null)
+        }}
+        initialValues={
+          editingAccount
+            ? {
+                icon: editingAccount.icon as AccountIconName,
+                color: editingAccount.color,
+                alias: editingAccount.alias,
+              }
+            : undefined
+        }
+        onSave={(values) => {
+          if (!editingAccount) return
+          updateAppearance(
+            { mailAccountId: editingAccount.id, data: values },
+            { onSuccess: () => setEditingAccount(null) }
+          )
+        }}
+        isSaving={isUpdating}
+      />
+
       <Dialog
         open={deletingAccountId !== null}
         onOpenChange={(open) => {
@@ -166,27 +200,28 @@ function SettingsAccountPage() {
                 <TableHead className="w-12 text-center">{m.settings_mail_accounts_icon_column()}</TableHead>
                 <TableHead className="w-full">{m.settings_mail_accounts_email_column()}</TableHead>
                 <TableHead className="text-center">{m.settings_mail_accounts_active_column()}</TableHead>
+                <TableHead className="text-center">{m.common_edit()}</TableHead>
                 <TableHead className="text-center">{m.common_delete()}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isAccountsPending && (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center text-sm text-muted-foreground">
+                  <TableCell colSpan={5} className="text-center text-sm text-muted-foreground">
                     {m.settings_mail_accounts_loading()}
                   </TableCell>
                 </TableRow>
               )}
               {isAccountsError && (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center text-sm text-destructive">
+                  <TableCell colSpan={5} className="text-center text-sm text-destructive">
                     {m.settings_mail_accounts_error()}
                   </TableCell>
                 </TableRow>
               )}
               {!isAccountsPending && !isAccountsError && accounts.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center text-sm text-muted-foreground">
+                  <TableCell colSpan={5} className="text-center text-sm text-muted-foreground">
                     {m.settings_mail_accounts_empty()}
                   </TableCell>
                 </TableRow>
@@ -218,6 +253,13 @@ function SettingsAccountPage() {
                         disabled={pendingAccountId === mailAccount.id}
                         onCheckedChange={() => handleToggleActive(mailAccount.id, mailAccount.isActive)}
                       />
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <div className="flex justify-center">
+                      <Button variant="ghost" size="icon-sm" onClick={() => setEditingAccount(mailAccount)}>
+                        <Pencil data-icon="inline-start" className="text-muted-foreground" />
+                      </Button>
                     </div>
                   </TableCell>
                   <TableCell className="text-center">

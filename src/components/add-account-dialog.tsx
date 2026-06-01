@@ -33,21 +33,56 @@ function getAccountIconLabel(name: AccountIconName) {
   }
 }
 
-export function AddAccountDialog({ children }: { children: React.ReactNode }) {
-  const [open, setOpen] = useState(false)
+interface AddAccountDialogProps {
+  children?: React.ReactNode
+  open?: boolean
+  onOpenChange?: (open: boolean) => void
+  initialValues?: {
+    icon: AccountIconName
+    color: string
+    alias: string
+  }
+  onSave?: (values: { icon: AccountIconName; color: string; alias: string }) => void
+  isSaving?: boolean
+}
+
+export function AddAccountDialog({
+  children,
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
+  initialValues,
+  onSave,
+  isSaving = false,
+}: AddAccountDialogProps) {
+  const isEditMode = !!onSave
+  const [internalOpen, setInternalOpen] = useState(false)
   const [step, setStep] = useState<"logo" | "login">("logo")
-  const [selectedIcon, setSelectedIcon] = useState<AccountIconName>(ICON_ENTRIES[0].name)
-  const [selectedColor, setSelectedColor] = useState(COLORS[0])
-  const [alias, setAlias] = useState("")
+  const [selectedIcon, setSelectedIcon] = useState<AccountIconName>(initialValues?.icon ?? ICON_ENTRIES[0].name)
+  const [selectedColor, setSelectedColor] = useState(initialValues?.color ?? COLORS[0])
+  const [alias, setAlias] = useState(initialValues?.alias ?? "")
   const [isLoading, setIsLoading] = useState(false)
 
+  const open = controlledOpen !== undefined ? controlledOpen : internalOpen
+
+  const hasChanged =
+    !initialValues ||
+    selectedIcon !== initialValues.icon ||
+    selectedColor !== initialValues.color ||
+    alias !== initialValues.alias
+
   const handleOpenChange = (value: boolean) => {
-    setOpen(value)
+    if (controlledOnOpenChange) {
+      controlledOnOpenChange(value)
+    } else {
+      setInternalOpen(value)
+    }
     if (!value) {
       setStep("logo")
-      setSelectedIcon(ICON_ENTRIES[0].name)
-      setSelectedColor(COLORS[0])
-      setAlias("")
+      if (!isEditMode) {
+        setSelectedIcon(ICON_ENTRIES[0].name)
+        setSelectedColor(COLORS[0])
+        setAlias("")
+      }
       setIsLoading(false)
     }
   }
@@ -73,12 +108,12 @@ export function AddAccountDialog({ children }: { children: React.ReactNode }) {
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogTrigger asChild>{children}</DialogTrigger>
+      {!isEditMode && <DialogTrigger asChild>{children}</DialogTrigger>}
       <DialogContent className="sm:max-w-md">
         {step === "logo" ? (
           <>
             <DialogHeader>
-              <DialogTitle>{m.add_account_icon_title()}</DialogTitle>
+              <DialogTitle>{isEditMode ? m.add_account_edit_title() : m.add_account_icon_title()}</DialogTitle>
             </DialogHeader>
 
             <div className="flex flex-col items-center gap-6 py-4">
@@ -131,9 +166,18 @@ export function AddAccountDialog({ children }: { children: React.ReactNode }) {
             </div>
 
             <div className="flex justify-end">
-              <Button onClick={() => setStep("login")} className="cursor-pointer hover:bg-primary/80">
-                {m.add_account_next()}
-              </Button>
+              {isEditMode ? (
+                <Button
+                  onClick={() => onSave({ icon: selectedIcon, color: selectedColor, alias })}
+                  disabled={isSaving || !hasChanged}
+                >
+                  {isSaving ? "저장 중..." : m.common_save()}
+                </Button>
+              ) : (
+                <Button onClick={() => setStep("login")} className="cursor-pointer hover:bg-primary/80">
+                  {m.add_account_next()}
+                </Button>
+              )}
             </div>
           </>
         ) : (
@@ -143,7 +187,6 @@ export function AddAccountDialog({ children }: { children: React.ReactNode }) {
             </DialogHeader>
 
             <div className="flex flex-col items-center gap-6 py-4">
-              {/* Icon preview */}
               <MailAccountIcon icon={selectedIcon} color={selectedColor} size="lg" />
 
               <p className="text-sm text-muted-foreground">{m.add_account_google_connect_description()}</p>
