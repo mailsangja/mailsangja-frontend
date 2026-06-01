@@ -31,10 +31,10 @@ export function SidebarLabelsSection({ activeLabelId, onLabelToggle, className }
   const { orderedLabels, sensors, handleDragEnd } = useLabelOrder(serverLabels)
   const [open, setOpen] = useState(false)
 
-  function handleCreate({ name, colorCode, notificationPolicy, isSensitive }: LabelFormData) {
+  function handleCreate({ name, colorCode, notificationPolicy }: LabelFormData) {
     const maxOrder = serverLabels.length > 0 ? Math.max(...serverLabels.map((l) => l.order)) : 0
     createLabel.mutate(
-      { name, colorCode, notificationPolicy, isSensitive, order: maxOrder + 1 },
+      { name, colorCode, notificationPolicy, order: maxOrder + 1 },
       {
         onSuccess: () => {
           trackEvent("label_create", { notification_policy: notificationPolicy })

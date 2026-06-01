@@ -178,9 +178,9 @@ function SettingsLabelPage() {
   const createLabel = useCreateLabel()
   const { data: labelGroups = [], isPending: isGroupsPending, isError: isGroupsError } = useLabelGroups()
 
-  function handleCreate({ name, colorCode, notificationPolicy, isSensitive }: LabelFormData) {
+  function handleCreate({ name, colorCode, notificationPolicy }: LabelFormData) {
     createLabel.mutate(
-      { name, colorCode, notificationPolicy, isSensitive, order: 0 },
+      { name, colorCode, notificationPolicy, order: 0 },
       {
         onSuccess: () => setCreateOpen(false),
         onError: (e) => toast.error(getErrorMessage(e, m.sidebar_label_create_error())),
