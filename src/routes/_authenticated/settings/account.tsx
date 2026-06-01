@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react"
 import { createFileRoute } from "@tanstack/react-router"
 import { Pencil, Plus, Trash2 } from "lucide-react"
 
-import { AddAccountDialog } from "@/components/add-account-dialog"
+import { AddAccountDialog, EditAccountDialog } from "@/components/add-account-dialog"
 import { MailAccountIcon } from "@/components/mail-account-icon"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
@@ -100,30 +100,27 @@ function SettingsAccountPage() {
 
   return (
     <>
-      <AddAccountDialog
-        key={editingAccount?.id}
-        open={editingAccount !== null}
-        onOpenChange={(open) => {
-          if (!open) setEditingAccount(null)
-        }}
-        initialValues={
-          editingAccount
-            ? {
-                icon: editingAccount.icon as AccountIconName,
-                color: editingAccount.color,
-                alias: editingAccount.alias,
-              }
-            : undefined
-        }
-        onSave={(values) => {
-          if (!editingAccount) return
-          updateAppearance(
-            { mailAccountId: editingAccount.id, data: values },
-            { onSuccess: () => setEditingAccount(null) }
-          )
-        }}
-        isSaving={isUpdating}
-      />
+      {editingAccount && (
+        <EditAccountDialog
+          key={editingAccount.id}
+          open={true}
+          onOpenChange={(open) => {
+            if (!open) setEditingAccount(null)
+          }}
+          initialValues={{
+            icon: editingAccount.icon as AccountIconName,
+            color: editingAccount.color,
+            alias: editingAccount.alias,
+          }}
+          onSave={(values) => {
+            updateAppearance(
+              { mailAccountId: editingAccount.id, data: values },
+              { onSuccess: () => setEditingAccount(null) }
+            )
+          }}
+          isSaving={isUpdating}
+        />
+      )}
 
       <Dialog
         open={deletingAccountId !== null}
