@@ -13,3 +13,9 @@ export interface MailAccount {
 export interface MailAccountAuthorizeResponse {
   authorizationUrl: string
 }
+
+export interface UpdateMailAccountAppearancePayload {
+  alias?: string
+  icon?: string
+  color?: string
+}
