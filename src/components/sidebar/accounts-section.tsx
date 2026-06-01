@@ -9,7 +9,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { MailAccountLabel } from "@/components/mail-account-label"
 import { cn } from "@/lib/utils"
 import { m } from "@/paraglide/messages"
-import { useMailAccounts } from "@/queries/mail-accounts"
+import { useActiveMailAccounts } from "@/queries/mail-accounts"
 
 interface SidebarAccountsSectionProps {
   activeAccountId?: string
@@ -18,7 +18,7 @@ interface SidebarAccountsSectionProps {
 }
 
 export function SidebarAccountsSection({ activeAccountId, onAccountToggle, className }: SidebarAccountsSectionProps) {
-  const { data: accounts } = useMailAccounts()
+  const { data: accounts } = useActiveMailAccounts()
 
   if (!accounts?.length) return null
 

@@ -10,6 +10,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Switch } from "@/components/ui/switch"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { m } from "@/paraglide/messages"
+import { useActivateMailAccount, useDeactivateMailAccount } from "@/mutations/mail-accounts"
 import { useUpdateDefaultAccount } from "@/mutations/user"
 import { useMailAccounts } from "@/queries/mail-accounts"
 import { useUser } from "@/queries/user"
@@ -21,18 +22,14 @@ export const Route = createFileRoute("/_authenticated/settings/account")({
 function SettingsAccountPage() {
   const { data: user, isPending: isUserPending } = useUser()
   const { data: mailAccounts, isPending: isAccountsPending, isError: isAccountsError } = useMailAccounts()
-  const [toggledIds, setToggledIds] = useState<Set<string>>(new Set())
   const [defaultAccount, setDefaultAccount] = useState<string | null>(null)
+  const [pendingAccountId, setPendingAccountId] = useState<string | null>(null)
   const updateDefaultAccountMutation = useUpdateDefaultAccount()
   const { mutate: mutateDefaultAccount } = updateDefaultAccountMutation
+  const { mutate: activate } = useActivateMailAccount()
+  const { mutate: deactivate } = useDeactivateMailAccount()
 
-  // TODO: Replace the local toggle overlay once the API supports active-state updates.
-  const accounts = useMemo(() => {
-    if (!mailAccounts) return []
-    return mailAccounts.map((mailAccount) =>
-      toggledIds.has(mailAccount.id) ? { ...mailAccount, isActive: !mailAccount.isActive } : mailAccount
-    )
-  }, [mailAccounts, toggledIds])
+  const accounts = useMemo(() => mailAccounts ?? [], [mailAccounts])
 
   const defaultAccountItems = useMemo(
     () =>
@@ -64,16 +61,14 @@ function SettingsAccountPage() {
     updateDefaultAccountMutation.mutate({ mailAccountId: selectedDefaultAccount })
   }
 
-  const handleToggleActive = (id: string) => {
-    setToggledIds((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) {
-        next.delete(id)
-      } else {
-        next.add(id)
-      }
-      return next
-    })
+  const handleToggleActive = (id: string, isActive: boolean) => {
+    setPendingAccountId(id)
+    const onSettled = () => setPendingAccountId(null)
+    if (isActive) {
+      deactivate(id, { onSettled })
+    } else {
+      activate(id, { onSettled })
+    }
   }
 
   return (
@@ -182,7 +177,8 @@ function SettingsAccountPage() {
                     <div className="flex justify-center">
                       <Switch
                         checked={mailAccount.isActive}
-                        onCheckedChange={() => handleToggleActive(mailAccount.id)}
+                        disabled={pendingAccountId === mailAccount.id}
+                        onCheckedChange={() => handleToggleActive(mailAccount.id, mailAccount.isActive)}
                       />
                     </div>
                   </TableCell>
