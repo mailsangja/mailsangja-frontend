@@ -117,11 +117,13 @@ export function getLabelAttachmentValueLabel(value: string): string | undefined 
 
 export interface LabelListItem extends Label {
   order: number
+  isSensitive: boolean
   unreadThreadCount: number
 }
 
 export interface LabelDetail extends Label {
   order: number
+  isSensitive: boolean
   notificationPolicy: NotificationPolicy
   rule: LabelRule | null
 }
@@ -131,6 +133,7 @@ export interface CreateLabelPayload {
   colorCode: string
   notificationPolicy?: NotificationPolicy
   order?: number
+  isSensitive?: boolean
   rule?: LabelRule
 }
 
@@ -139,6 +142,7 @@ export interface UpdateLabelPayload {
   colorCode?: string
   notificationPolicy?: NotificationPolicy
   order?: number
+  isSensitive?: boolean
 }
 
 export type UpdateLabelRulePayload = LabelRule

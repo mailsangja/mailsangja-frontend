@@ -5,6 +5,7 @@ import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Switch } from "@/components/ui/switch"
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -140,10 +141,12 @@ function LabelDetailContent({ labelId, label }: { labelId: string; label: LabelD
   const [isEditingInfo, setIsEditingInfo] = useState(false)
   const [isEditingRules, setIsEditingRules] = useState(false)
 
-  // Label info edit state
-  const [name, setName] = useState(label.name)
-  const [selectedColor, setSelectedColor] = useState(label.colorCode)
-  const [notificationPolicy, setNotificationPolicy] = useState<NotificationPolicy>(label.notificationPolicy)
+  const [editInfo, setEditInfo] = useState({
+    name: label.name,
+    selectedColor: label.colorCode,
+    notificationPolicy: label.notificationPolicy,
+    isSensitive: label.isSensitive,
+  })
 
   // Rule edit state
   const [localGroups, setLocalGroups] = useState<EditableCondition[][]>(() =>
@@ -157,19 +160,23 @@ function LabelDetailContent({ labelId, label }: { labelId: string; label: LabelD
   const rulesChanged = JSON.stringify(localGroups) !== originalGroupsJson
 
   function handleCancelInfo() {
-    setName(label.name)
-    setSelectedColor(label.colorCode)
-    setNotificationPolicy(label.notificationPolicy)
+    setEditInfo({
+      name: label.name,
+      selectedColor: label.colorCode,
+      notificationPolicy: label.notificationPolicy,
+      isSensitive: label.isSensitive,
+    })
     setIsEditingInfo(false)
   }
 
   function handleSaveInfo() {
-    const trimmed = name.trim()
+    const trimmed = editInfo.name.trim()
     if (!trimmed) return
     const data: UpdateLabelPayload = {}
     if (trimmed !== label.name) data.name = trimmed
-    if (selectedColor !== label.colorCode) data.colorCode = selectedColor
-    if (notificationPolicy !== label.notificationPolicy) data.notificationPolicy = notificationPolicy
+    if (editInfo.selectedColor !== label.colorCode) data.colorCode = editInfo.selectedColor
+    if (editInfo.notificationPolicy !== label.notificationPolicy) data.notificationPolicy = editInfo.notificationPolicy
+    if (editInfo.isSensitive !== label.isSensitive) data.isSensitive = editInfo.isSensitive
     if (Object.keys(data).length === 0) {
       setIsEditingInfo(false)
       return
@@ -270,96 +277,118 @@ function LabelDetailContent({ labelId, label }: { labelId: string; label: LabelD
         </CardHeader>
         <CardContent>
           {isEditingInfo ? (
-            <div className="flex flex-wrap items-center gap-3">
-              {/* Color picker */}
-              <DropdownMenu>
-                <DropdownMenuTrigger
-                  render={
-                    <button
-                      type="button"
-                      className="size-5 shrink-0 cursor-pointer rounded-full ring-2 ring-border ring-offset-2 focus-visible:outline-none"
-                      style={{ backgroundColor: selectedColor }}
-                      aria-label="색상 선택"
-                    />
-                  }
-                />
-                <DropdownMenuContent className="w-auto p-2">
-                  <div className="grid grid-cols-5 gap-1.5">
-                    {LABEL_COLORS.map((color) => (
+            <div className="flex flex-col gap-4">
+              <div className="flex flex-wrap items-center gap-3">
+                {/* Color picker */}
+                <DropdownMenu>
+                  <DropdownMenuTrigger
+                    render={
                       <button
-                        key={color}
                         type="button"
-                        className="size-6 cursor-pointer rounded-full transition-transform hover:scale-110 focus-visible:outline-none"
-                        style={{
-                          backgroundColor: color,
-                          boxShadow: selectedColor === color ? `0 0 0 2px white, 0 0 0 4px ${color}` : undefined,
-                        }}
-                        onClick={() => setSelectedColor(color)}
-                        aria-label={color}
-                        aria-pressed={selectedColor === color}
+                        className="size-5 shrink-0 cursor-pointer rounded-full ring-2 ring-border ring-offset-2 focus-visible:outline-none"
+                        style={{ backgroundColor: editInfo.selectedColor }}
+                        aria-label={m.label_color_select()}
                       />
+                    }
+                  />
+                  <DropdownMenuContent className="w-auto p-2">
+                    <div className="grid grid-cols-5 gap-1.5">
+                      {LABEL_COLORS.map((color) => (
+                        <button
+                          key={color}
+                          type="button"
+                          className="size-6 cursor-pointer rounded-full transition-transform hover:scale-110 focus-visible:outline-none"
+                          style={{
+                            backgroundColor: color,
+                            boxShadow:
+                              editInfo.selectedColor === color ? `0 0 0 2px white, 0 0 0 4px ${color}` : undefined,
+                          }}
+                          onClick={() => setEditInfo((prev) => ({ ...prev, selectedColor: color }))}
+                          aria-label={color}
+                          aria-pressed={editInfo.selectedColor === color}
+                        />
+                      ))}
+                    </div>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+
+                <Input
+                  value={editInfo.name}
+                  onChange={(e) => setEditInfo((prev) => ({ ...prev, name: e.target.value }))}
+                  onKeyDown={(e) => e.key === "Enter" && handleSaveInfo()}
+                  placeholder={m.label_name_placeholder()}
+                  className="h-8 w-40 text-sm"
+                />
+
+                <div className="ml-auto flex items-center gap-3">
+                  <div className="flex overflow-hidden rounded-md border">
+                    {NOTIFICATION_OPTIONS.map(({ value, icon: Icon }) => (
+                      <button
+                        key={value}
+                        type="button"
+                        onClick={() => setEditInfo((prev) => ({ ...prev, notificationPolicy: value }))}
+                        className={cn(
+                          "flex items-center gap-1.5 border-r px-3 py-1.5 text-xs transition-colors last:border-r-0",
+                          editInfo.notificationPolicy === value
+                            ? "bg-primary/10 font-medium text-primary"
+                            : "text-muted-foreground hover:bg-muted"
+                        )}
+                      >
+                        <Icon className="size-3.5" />
+                        {getNotificationPolicyLabel(value)}
+                      </button>
                     ))}
                   </div>
-                </DropdownMenuContent>
-              </DropdownMenu>
-
-              {/* Name */}
-              <Input
-                value={name}
-                onChange={(e) => setName(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSaveInfo()}
-                placeholder="라벨 이름"
-                className="h-8 w-40 text-sm"
-              />
-
-              {/* Notification toggles + actions on right */}
-              <div className="ml-auto flex items-center gap-3">
-                <div className="flex overflow-hidden rounded-md border">
-                  {NOTIFICATION_OPTIONS.map(({ value, icon: Icon }) => (
-                    <button
-                      key={value}
-                      type="button"
-                      onClick={() => setNotificationPolicy(value)}
-                      className={cn(
-                        "flex items-center gap-1.5 border-r px-3 py-1.5 text-xs transition-colors last:border-r-0",
-                        notificationPolicy === value
-                          ? "bg-primary/10 font-medium text-primary"
-                          : "text-muted-foreground hover:bg-muted"
-                      )}
-                    >
-                      <Icon className="size-3.5" />
-                      {getNotificationPolicyLabel(value)}
-                    </button>
-                  ))}
+                  <Button variant="outline" size="sm" onClick={handleCancelInfo}>
+                    {m.common_cancel()}
+                  </Button>
+                  <Button size="sm" onClick={handleSaveInfo} disabled={!editInfo.name.trim() || updateLabel.isPending}>
+                    {m.common_save()}
+                  </Button>
                 </div>
-                <Button variant="outline" size="sm" onClick={handleCancelInfo}>
-                  {m.common_cancel()}
-                </Button>
-                <Button size="sm" onClick={handleSaveInfo} disabled={!name.trim() || updateLabel.isPending}>
-                  {m.common_save()}
-                </Button>
+              </div>
+
+              <div className="flex items-center justify-between rounded-md border px-3 py-2.5">
+                <div>
+                  <p id="label-sensitive-toggle-label" className="text-sm font-medium">
+                    {m.label_sensitive_title()}
+                  </p>
+                  <p className="text-xs text-muted-foreground">{m.label_sensitive_description()}</p>
+                </div>
+                <Switch
+                  id="label-sensitive-toggle"
+                  aria-labelledby="label-sensitive-toggle-label"
+                  checked={editInfo.isSensitive}
+                  onCheckedChange={(checked) => setEditInfo((prev) => ({ ...prev, isSensitive: checked }))}
+                />
               </div>
             </div>
           ) : (
-            <div className="flex items-center gap-3">
-              <span className="size-4 shrink-0 rounded-full" style={{ backgroundColor: label.colorCode }} />
-              <span className="text-sm font-medium">{label.name}</span>
-              <div className="ml-auto flex items-center gap-3">
-                <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
-                  <NotifIcon className="size-4" />
-                  {getNotificationPolicyLabel(label.notificationPolicy)}
+            <div className="flex flex-col gap-3">
+              <div className="flex items-center gap-3">
+                <span className="size-4 shrink-0 rounded-full" style={{ backgroundColor: label.colorCode }} />
+                <span className="text-sm font-medium">{label.name}</span>
+                <div className="ml-auto flex items-center gap-3">
+                  <div className="flex items-center gap-1.5 text-sm text-muted-foreground">
+                    <NotifIcon className="size-4" />
+                    {getNotificationPolicyLabel(label.notificationPolicy)}
+                  </div>
+                  {label.isSensitive && (
+                    <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+                      {m.label_sensitive_badge()}
+                    </span>
+                  )}
+                  <Button variant="outline" size="sm" onClick={() => setIsEditingInfo(true)}>
+                    <Pencil className="size-3.5" />
+                    {m.common_edit()}
+                  </Button>
                 </div>
-                <Button variant="outline" size="sm" onClick={() => setIsEditingInfo(true)}>
-                  <Pencil className="size-3.5" />
-                  {m.common_edit()}
-                </Button>
               </div>
             </div>
           )}
         </CardContent>
       </Card>
 
-      {/* Label rules */}
       <Card>
         <CardHeader>
           <CardTitle>라벨 규칙</CardTitle>
@@ -381,7 +410,6 @@ function LabelDetailContent({ labelId, label }: { labelId: string; label: LabelD
                           {condIndex > 0 && <LabelRuleJoiner label="AND" className="pb-2" />}
 
                           <div className="flex flex-wrap items-center gap-2">
-                            {/* Field */}
                             <DropdownMenu>
                               <DropdownMenuTrigger className="flex h-8 w-32 shrink-0 items-center justify-between gap-1 rounded-md border border-input bg-background px-2.5 text-sm disabled:cursor-not-allowed disabled:opacity-50">
                                 <span className="truncate">
@@ -434,7 +462,6 @@ function LabelDetailContent({ labelId, label }: { labelId: string; label: LabelD
                               </DropdownMenu>
                             ) : (
                               <>
-                                {/* Operator */}
                                 <DropdownMenu>
                                   <DropdownMenuTrigger
                                     disabled={!entry.field}
@@ -468,7 +495,6 @@ function LabelDetailContent({ labelId, label }: { labelId: string; label: LabelD
                                   </DropdownMenuContent>
                                 </DropdownMenu>
 
-                                {/* Value */}
                                 <Input
                                   value={entry.value}
                                   onChange={(e) => updateCondition(groupIndex, condIndex, { value: e.target.value })}
@@ -535,7 +561,6 @@ function LabelDetailContent({ labelId, label }: { labelId: string; label: LabelD
         </CardContent>
       </Card>
 
-      {/* Danger zone */}
       <Card>
         <CardHeader>
           <CardTitle className="text-destructive">{m.label_delete_title()}</CardTitle>
