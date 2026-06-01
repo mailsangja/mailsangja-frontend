@@ -22,3 +22,13 @@ export interface AiUsageItem {
 export interface AiUsageListResponse {
   usages: AiUsageItem[]
 }
+
+export interface AiModel {
+  id: string
+  defaultModel: boolean
+}
+
+export interface AiModelListResponse {
+  defaultModel: string
+  models: AiModel[]
+}

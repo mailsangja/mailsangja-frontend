@@ -3,10 +3,11 @@ import { ArrowUp, Loader2, Sparkles, Square, WandSparkles, X } from "lucide-reac
 
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Select, SelectContent, SelectGroup, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { formatNumber } from "@/lib/date"
 import { cn } from "@/lib/utils"
 import { m } from "@/paraglide/messages"
+import { useAiModels } from "@/queries/ai"
 import type { MailDraftStreamPhase, MailDraftUsage } from "@/types/email"
 
 interface ComposeAiDraftPanelProps {
@@ -16,11 +17,11 @@ interface ComposeAiDraftPanelProps {
   isStreaming: boolean
   phase: MailDraftStreamPhase
   usage: MailDraftUsage | null
-  onGenerate: () => void
+  onGenerate: (model: string | null) => void
   onStop: () => void
 }
 
-const MODEL_OPTIONS = ["Auto"] as const
+const AUTO_MODEL_VALUE = "__auto__"
 
 function getPhaseLabel(phase: MailDraftStreamPhase) {
   if (phase === "subject") return m.compose_ai_phase_subject()
@@ -38,6 +39,16 @@ function formatUsage(usage: MailDraftUsage | null) {
   return `${formatNumber(usage.totalTokens)} tokens`
 }
 
+function formatModelLabel(modelId: string) {
+  return modelId
+    .split("/")
+    .at(-1)!
+    .split("-")
+    .filter(Boolean)
+    .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+    .join(" ")
+}
+
 export function ComposeAiDraftPanel({
   prompt,
   onPromptChange,
@@ -49,7 +60,8 @@ export function ComposeAiDraftPanel({
   onStop,
 }: ComposeAiDraftPanelProps) {
   const [isOpen, setIsOpen] = useState(false)
-  const [model, setModel] = useState<string>("Auto")
+  const [model, setModel] = useState<string>(AUTO_MODEL_VALUE)
+  const aiModels = useAiModels()
   const inputRef = useRef<HTMLInputElement>(null)
   const wasDraftContentEmptyRef = useRef(isDraftContentEmpty)
   const wasStreamingRef = useRef(false)
@@ -72,6 +84,11 @@ export function ComposeAiDraftPanel({
     wasStreamingRef.current = isStreaming
   }, [isDraftContentEmpty, isStreaming, phase])
 
+  const selectedModel = model === AUTO_MODEL_VALUE ? null : model
+  const modelItems = [
+    { value: AUTO_MODEL_VALUE, label: "Auto" },
+    ...(aiModels.data?.models.map((model) => ({ value: model.id, label: formatModelLabel(model.id) })) ?? []),
+  ]
   const promptText = prompt.trim()
   const usageText = formatUsage(usage)
   const isPanelVisible = isOpen || isStreaming
@@ -101,7 +118,7 @@ export function ComposeAiDraftPanel({
       return
     }
 
-    onGenerate()
+    onGenerate(selectedModel)
   }
 
   return (
@@ -171,21 +188,28 @@ export function ComposeAiDraftPanel({
                 isStreaming ? "pointer-events-none -translate-y-1 opacity-0" : "translate-y-0 opacity-100"
               )}
             >
-              <Select value={model} onValueChange={(value) => setModel(value ?? "Auto")} disabled={isStreaming}>
+              <Select
+                value={model}
+                onValueChange={(value) => setModel(value ?? AUTO_MODEL_VALUE)}
+                items={modelItems}
+                disabled={isStreaming}
+              >
                 <SelectTrigger
                   size="sm"
-                  className="-ml-2 h-8 gap-1.5 border-transparent bg-transparent text-muted-foreground hover:bg-foreground/5 hover:text-foreground focus-visible:ring-0 dark:bg-transparent"
+                  className="-ml-2 h-8 min-w-30 gap-1.5 border-transparent bg-transparent text-muted-foreground hover:bg-foreground/5 hover:text-foreground focus-visible:ring-0 dark:bg-transparent"
                   aria-label={m.compose_ai_model_select()}
                 >
                   <Sparkles className="size-4 text-primary" />
                   <SelectValue />
                 </SelectTrigger>
-                <SelectContent align="start">
-                  {MODEL_OPTIONS.map((option) => (
-                    <SelectItem key={option} value={option}>
-                      {option}
-                    </SelectItem>
-                  ))}
+                <SelectContent align="start" className="min-w-40">
+                  <SelectGroup>
+                    {modelItems.map((option) => (
+                      <SelectItem key={option.value} value={option.value} className="max-w-64">
+                        <span className="block max-w-full truncate">{option.label}</span>
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
                 </SelectContent>
               </Select>
             </div>
@@ -215,7 +239,7 @@ export function ComposeAiDraftPanel({
             onKeyDown={(event) => {
               if (event.key === "Enter" && !event.nativeEvent.isComposing && promptText) {
                 event.preventDefault()
-                onGenerate()
+                onGenerate(selectedModel)
               }
             }}
             placeholder={m.compose_ai_prompt_placeholder()}
