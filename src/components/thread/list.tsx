@@ -4,6 +4,8 @@ import { toast } from "sonner"
 
 import { MailErrorState } from "@/components/mail-error-state"
 import { ThreadListItem } from "@/components/thread/list-item"
+import { useInboxView } from "@/hooks/use-inbox-view"
+import { useIsMobile } from "@/hooks/use-mobile"
 import { ThreadListSkeletonRows } from "@/components/thread/list-skeleton-rows"
 import { ThreadListToolbar } from "@/components/thread/list-toolbar"
 import { useMarkThreadAsRead, useMarkThreadAsUnread } from "@/mutations/emails"
@@ -76,6 +78,9 @@ export function ThreadList({
     [labelsList]
   )
   const isSelectionMode = selectedIds.size > 0
+  const { view: storedView } = useInboxView()
+  const isMobile = useIsMobile()
+  const inboxView = isMobile ? "double" : storedView
 
   const toggleSelected = (id: string) => {
     setSelectedIds((prev) => {
@@ -156,7 +161,7 @@ export function ThreadList({
       <ScrollArea className="min-h-0 flex-1">
         {isLoading ? (
           <div role="list" aria-label={m.mail_list_label({ mailbox: mailboxName })} className="min-w-0">
-            <ThreadListSkeletonRows />
+            <ThreadListSkeletonRows view={inboxView} />
           </div>
         ) : errorTitle && errorDescription ? (
           <MailErrorState title={errorTitle} description={errorDescription} onRetry={onRetry} />
@@ -173,12 +178,13 @@ export function ThreadList({
                     isSelectionMode={isSelectionMode}
                     account={getAccount(thread.accountId)}
                     labelsColorMap={labelsColorMap}
+                    view={inboxView}
                     onSelect={() => onSelectThread(thread.threadId)}
                     onToggleCheck={() => toggleSelected(thread.threadId)}
                   />
                 )
               })}
-              {isFetchingNextPage ? <ThreadListSkeletonRows /> : null}
+              {isFetchingNextPage ? <ThreadListSkeletonRows view={inboxView} /> : null}
             </div>
             {loadMoreErrorTitle && loadMoreErrorDescription ? (
               <div className="border-t px-4 py-3">

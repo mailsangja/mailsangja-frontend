@@ -22,6 +22,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
 import { m } from "@/paraglide/messages"
+import { useInboxView } from "@/hooks/use-inbox-view"
 import { useAiUsages } from "@/queries/ai"
 import { useUser } from "@/queries/user"
 import { getAiUsageTypeLabel } from "@/types/ai"
@@ -40,8 +41,7 @@ function SettingsPage() {
     refetch: refetchAiUsages,
   } = useAiUsages()
   const { theme, setTheme } = useTheme()
-  // TODO: 실제 설정 저장/불러오기 기능은 추후 구현 예정
-  const [inboxView, setInboxView] = useState<"single" | "double">("double")
+  const { view: inboxView, setView: setInboxView } = useInboxView()
   const [hoverAction, setHoverAction] = useState<"enabled" | "disabled">("enabled")
 
   return (
