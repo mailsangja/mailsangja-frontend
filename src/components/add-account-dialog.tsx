@@ -249,7 +249,7 @@ export function EditAccountDialog({
             onClick={() => onSave({ icon: selectedIcon, color: selectedColor, alias })}
             disabled={isSaving || !hasChanged}
           >
-            {isSaving ? "저장 중..." : m.common_save()}
+            {isSaving ? m.common_saving() : m.common_save()}
           </Button>
         </div>
       </DialogContent>

@@ -1,6 +1,8 @@
 import { useMutation } from "@tanstack/react-query"
 import { toast } from "sonner"
 
+import * as m from "@/paraglide/messages"
+
 import {
   activateMailAccount,
   deactivateMailAccount,
@@ -37,7 +39,7 @@ export function useUpdateMailAccountAppearance() {
       updateMailAccountAppearance(mailAccountId, data),
     onSuccess: invalidateMailAccounts,
     onError: (error) => {
-      toast.error(getErrorMessage(error, "메일 계정 정보 변경에 실패했습니다."))
+      toast.error(getErrorMessage(error, m.settings_mail_accounts_update_error()))
     },
   })
 }
@@ -47,7 +49,7 @@ export function useDeleteMailAccount() {
     mutationFn: (mailAccountId: string) => deleteMailAccount(mailAccountId),
     onSuccess: invalidateMailAccountsAndUser,
     onError: (error) => {
-      toast.error(getErrorMessage(error, "메일 계정 삭제에 실패했습니다."))
+      toast.error(getErrorMessage(error, m.settings_mail_accounts_delete_error()))
     },
   })
 }
@@ -69,7 +71,7 @@ export function useActivateMailAccount() {
     },
     onError: (error, _id, context) => {
       if (context?.previous) queryClient.setQueryData(mailAccountKeys.list(), context.previous)
-      toast.error(getErrorMessage(error, "메일 계정 활성화에 실패했습니다."))
+      toast.error(getErrorMessage(error, m.settings_mail_accounts_activate_error()))
     },
     onSettled: () => {
       invalidateMailAccounts()
@@ -89,7 +91,7 @@ export function useDeactivateMailAccount() {
     },
     onError: (error, _id, context) => {
       if (context?.previous) queryClient.setQueryData(mailAccountKeys.list(), context.previous)
-      toast.error(getErrorMessage(error, "메일 계정 비활성화에 실패했습니다."))
+      toast.error(getErrorMessage(error, m.settings_mail_accounts_deactivate_error()))
     },
     onSettled: () => {
       invalidateMailAccounts()
