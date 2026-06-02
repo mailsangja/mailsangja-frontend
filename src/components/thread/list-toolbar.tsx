@@ -1,6 +1,7 @@
-import { RefreshCw, Tag, Trash2, SquareMinus } from "lucide-react"
+import { Mail, MailOpen, RefreshCw, Tag, Trash2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Toggle } from "@/components/ui/toggle"
 import { formatNumber } from "@/lib/date"
 import { cn } from "@/lib/utils"
@@ -21,31 +22,68 @@ interface ThreadListToolbarProps {
   isRefreshing?: boolean
   onRefresh?: () => void
   selectedCount: number
+  onSelectAll: () => void
   onClearSelection: () => void
   onDeleteSelected: () => void
   onLabelSelected: () => void
+  onMarkSelectedAsRead: () => void
+  onMarkSelectedAsUnread: () => void
 }
 
 export function ThreadListToolbar({
   mailboxName,
+  currentCount,
   totalCount,
   filter,
   onFilterChange,
   isRefreshing = false,
   onRefresh,
   selectedCount,
+  onSelectAll,
   onClearSelection,
   onDeleteSelected,
   onLabelSelected,
+  onMarkSelectedAsRead,
+  onMarkSelectedAsUnread,
 }: ThreadListToolbarProps) {
+  const isAllSelected = selectedCount > 0 && selectedCount === currentCount
+  const isIndeterminate = selectedCount > 0 && selectedCount < currentCount
+
   if (selectedCount > 0) {
     return (
       <div className="flex h-11 shrink-0 items-center gap-2 border-b bg-accent/40 px-3">
-        <Button variant="ghost" size="icon-sm" onClick={onClearSelection} aria-label={m.mail_clear_selection()}>
-          <SquareMinus />
-        </Button>
+        <Checkbox
+          checked={isAllSelected}
+          indeterminate={isIndeterminate}
+          onCheckedChange={(checked) => {
+            if (checked) {
+              onSelectAll()
+            } else {
+              onClearSelection()
+            }
+          }}
+          aria-label={m.mail_clear_selection()}
+        />
         <span className="text-sm font-medium">{m.mail_selected_count({ count: formatNumber(selectedCount) })}</span>
         <div className="ml-auto flex shrink-0 items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={onMarkSelectedAsRead}
+            aria-label={m.thread_mark_read_aria()}
+            title={m.thread_mark_read()}
+          >
+            <MailOpen />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={onMarkSelectedAsUnread}
+            aria-label={m.thread_mark_unread_aria()}
+            title={m.thread_mark_unread()}
+          >
+            <Mail />
+          </Button>
           <Button variant="ghost" size="icon-sm" onClick={onDeleteSelected} aria-label={m.mail_delete_selected()}>
             <Trash2 data-icon="inline-start" />
           </Button>
@@ -58,7 +96,8 @@ export function ThreadListToolbar({
   }
 
   return (
-    <div className="flex h-11 shrink-0 items-center gap-3 border-b px-4">
+    <div className="flex h-11 shrink-0 items-center gap-3 border-b px-3">
+      <Checkbox checked={false} onCheckedChange={() => onSelectAll()} aria-label={m.mail_clear_selection()} />
       <h2 className="min-w-0 truncate text-sm font-medium">{mailboxName}</h2>
       <span className="hidden rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground sm:inline-flex">
         {m.mail_total_count({ count: formatNumber(totalCount) })}

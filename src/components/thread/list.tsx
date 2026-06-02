@@ -6,6 +6,7 @@ import { MailErrorState } from "@/components/mail-error-state"
 import { ThreadListItem } from "@/components/thread/list-item"
 import { ThreadListSkeletonRows } from "@/components/thread/list-skeleton-rows"
 import { ThreadListToolbar } from "@/components/thread/list-toolbar"
+import { useMarkThreadAsRead, useMarkThreadAsUnread } from "@/mutations/emails"
 import { useDeleteThread, useRestoreTrashThread } from "@/mutations/trash"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { useSuspenseLabels } from "@/queries/labels"
@@ -67,6 +68,8 @@ export function ThreadList({
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const { mutate: deleteThread } = useDeleteThread()
   const { mutate: restoreThread } = useRestoreTrashThread()
+  const { mutate: markAsRead } = useMarkThreadAsRead()
+  const { mutate: markAsUnread } = useMarkThreadAsUnread()
   const { data: labelsList } = useSuspenseLabels()
   const labelsColorMap = useMemo(
     () => new Map(labelsList.map((l) => [l.id, { colorCode: l.colorCode, name: l.name }])),
@@ -118,6 +121,7 @@ export function ThreadList({
         isRefreshing={isRefreshing}
         onRefresh={onRefresh}
         selectedCount={selectedIds.size}
+        onSelectAll={() => setSelectedIds(new Set(threads?.map((t) => t.threadId) ?? []))}
         onClearSelection={() => setSelectedIds(new Set())}
         onDeleteSelected={() => {
           const ids = Array.from(selectedIds)
@@ -136,6 +140,16 @@ export function ThreadList({
         }}
         onLabelSelected={() => {
           toast.info(m.mail_label_feature_pending())
+        }}
+        onMarkSelectedAsRead={() => {
+          const ids = Array.from(selectedIds)
+          setSelectedIds(new Set())
+          ids.forEach((id) => markAsRead(id))
+        }}
+        onMarkSelectedAsUnread={() => {
+          const ids = Array.from(selectedIds)
+          setSelectedIds(new Set())
+          ids.forEach((id) => markAsUnread(id))
         }}
       />
 
