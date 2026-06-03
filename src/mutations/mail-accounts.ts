@@ -47,7 +47,10 @@ export function useUpdateMailAccountAppearance() {
 export function useDeleteMailAccount() {
   return useMutation({
     mutationFn: (mailAccountId: string) => deleteMailAccount(mailAccountId),
-    onSuccess: invalidateMailAccountsAndUser,
+    onSuccess: () => {
+      invalidateMailAccountsAndUser()
+      invalidateMailboxes()
+    },
     onError: (error) => {
       toast.error(getErrorMessage(error, m.settings_mail_accounts_delete_error()))
     },
