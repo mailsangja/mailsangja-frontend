@@ -1,18 +1,35 @@
 import { useEffect, useMemo, useState } from "react"
 import { createFileRoute } from "@tanstack/react-router"
-import { Plus, Trash2 } from "lucide-react"
+import { Pencil, Plus, Trash2 } from "lucide-react"
 
-import { AddAccountDialog } from "@/components/add-account-dialog"
+import { AddAccountDialog, EditAccountDialog } from "@/components/add-account-dialog"
 import { MailAccountIcon } from "@/components/mail-account-icon"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import {
+  Dialog,
+  DialogClose,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { m } from "@/paraglide/messages"
+import {
+  useActivateMailAccount,
+  useDeactivateMailAccount,
+  useDeleteMailAccount,
+  useUpdateMailAccountAppearance,
+} from "@/mutations/mail-accounts"
 import { useUpdateDefaultAccount } from "@/mutations/user"
 import { useMailAccounts } from "@/queries/mail-accounts"
 import { useUser } from "@/queries/user"
+import type { MailAccount } from "@/types/mail-account"
+import type { AccountIconName } from "@/lib/icon-entries"
 
 export const Route = createFileRoute("/_authenticated/settings/account")({
   component: SettingsAccountPage,
@@ -21,18 +38,18 @@ export const Route = createFileRoute("/_authenticated/settings/account")({
 function SettingsAccountPage() {
   const { data: user, isPending: isUserPending } = useUser()
   const { data: mailAccounts, isPending: isAccountsPending, isError: isAccountsError } = useMailAccounts()
-  const [toggledIds, setToggledIds] = useState<Set<string>>(new Set())
   const [defaultAccount, setDefaultAccount] = useState<string | null>(null)
+  const [pendingAccountId, setPendingAccountId] = useState<string | null>(null)
+  const [deletingAccountId, setDeletingAccountId] = useState<string | null>(null)
+  const [editingAccount, setEditingAccount] = useState<MailAccount | null>(null)
   const updateDefaultAccountMutation = useUpdateDefaultAccount()
   const { mutate: mutateDefaultAccount } = updateDefaultAccountMutation
+  const { mutate: activate } = useActivateMailAccount()
+  const { mutate: deactivate } = useDeactivateMailAccount()
+  const { mutate: deleteAccount, isPending: isDeleting } = useDeleteMailAccount()
+  const { mutate: updateAppearance, isPending: isUpdating } = useUpdateMailAccountAppearance()
 
-  // TODO: Replace the local toggle overlay once the API supports active-state updates.
-  const accounts = useMemo(() => {
-    if (!mailAccounts) return []
-    return mailAccounts.map((mailAccount) =>
-      toggledIds.has(mailAccount.id) ? { ...mailAccount, isActive: !mailAccount.isActive } : mailAccount
-    )
-  }, [mailAccounts, toggledIds])
+  const accounts = useMemo(() => mailAccounts ?? [], [mailAccounts])
 
   const defaultAccountItems = useMemo(
     () =>
@@ -64,20 +81,67 @@ function SettingsAccountPage() {
     updateDefaultAccountMutation.mutate({ mailAccountId: selectedDefaultAccount })
   }
 
-  const handleToggleActive = (id: string) => {
-    setToggledIds((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) {
-        next.delete(id)
-      } else {
-        next.add(id)
-      }
-      return next
+  const handleToggleActive = (id: string, isActive: boolean) => {
+    setPendingAccountId(id)
+    const onSettled = () => setPendingAccountId(null)
+    if (isActive) {
+      deactivate(id, { onSettled })
+    } else {
+      activate(id, { onSettled })
+    }
+  }
+
+  const handleConfirmDelete = () => {
+    if (!deletingAccountId) return
+    deleteAccount(deletingAccountId, {
+      onSettled: () => setDeletingAccountId(null),
     })
   }
 
   return (
     <>
+      {editingAccount && (
+        <EditAccountDialog
+          key={editingAccount.id}
+          open={true}
+          onOpenChange={(open) => {
+            if (!open) setEditingAccount(null)
+          }}
+          initialValues={{
+            icon: editingAccount.icon as AccountIconName,
+            color: editingAccount.color,
+            alias: editingAccount.alias,
+          }}
+          onSave={(values) => {
+            updateAppearance(
+              { mailAccountId: editingAccount.id, data: values },
+              { onSuccess: () => setEditingAccount(null) }
+            )
+          }}
+          isSaving={isUpdating}
+        />
+      )}
+
+      <Dialog
+        open={deletingAccountId !== null}
+        onOpenChange={(open) => {
+          if (!open) setDeletingAccountId(null)
+        }}
+      >
+        <DialogContent showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>{m.settings_mail_accounts_delete_title()}</DialogTitle>
+            <DialogDescription>{m.settings_mail_accounts_delete_description()}</DialogDescription>
+          </DialogHeader>
+          <DialogFooter>
+            <DialogClose render={<Button variant="outline" disabled={isDeleting} />}>{m.common_cancel()}</DialogClose>
+            <Button variant="destructive" onClick={handleConfirmDelete} disabled={isDeleting}>
+              {m.common_delete()}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       <Card>
         <CardHeader>
           <CardTitle>{m.settings_default_mail_account_title()}</CardTitle>
@@ -133,27 +197,28 @@ function SettingsAccountPage() {
                 <TableHead className="w-12 text-center">{m.settings_mail_accounts_icon_column()}</TableHead>
                 <TableHead className="w-full">{m.settings_mail_accounts_email_column()}</TableHead>
                 <TableHead className="text-center">{m.settings_mail_accounts_active_column()}</TableHead>
+                <TableHead className="text-center">{m.common_edit()}</TableHead>
                 <TableHead className="text-center">{m.common_delete()}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {isAccountsPending && (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center text-sm text-muted-foreground">
+                  <TableCell colSpan={5} className="text-center text-sm text-muted-foreground">
                     {m.settings_mail_accounts_loading()}
                   </TableCell>
                 </TableRow>
               )}
               {isAccountsError && (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center text-sm text-destructive">
+                  <TableCell colSpan={5} className="text-center text-sm text-destructive">
                     {m.settings_mail_accounts_error()}
                   </TableCell>
                 </TableRow>
               )}
               {!isAccountsPending && !isAccountsError && accounts.length === 0 && (
                 <TableRow>
-                  <TableCell colSpan={4} className="text-center text-sm text-muted-foreground">
+                  <TableCell colSpan={5} className="text-center text-sm text-muted-foreground">
                     {m.settings_mail_accounts_empty()}
                   </TableCell>
                 </TableRow>
@@ -182,13 +247,21 @@ function SettingsAccountPage() {
                     <div className="flex justify-center">
                       <Switch
                         checked={mailAccount.isActive}
-                        onCheckedChange={() => handleToggleActive(mailAccount.id)}
+                        disabled={pendingAccountId === mailAccount.id}
+                        onCheckedChange={() => handleToggleActive(mailAccount.id, mailAccount.isActive)}
                       />
                     </div>
                   </TableCell>
                   <TableCell className="text-center">
                     <div className="flex justify-center">
-                      <Button variant="ghost" size="icon-sm" disabled>
+                      <Button variant="ghost" size="icon-sm" onClick={() => setEditingAccount(mailAccount)}>
+                        <Pencil data-icon="inline-start" className="text-muted-foreground" />
+                      </Button>
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-center">
+                    <div className="flex justify-center">
+                      <Button variant="ghost" size="icon-sm" onClick={() => setDeletingAccountId(mailAccount.id)}>
                         <Trash2 data-icon="inline-start" className="text-muted-foreground" />
                       </Button>
                     </div>

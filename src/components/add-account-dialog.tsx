@@ -33,6 +33,75 @@ function getAccountIconLabel(name: AccountIconName) {
   }
 }
 
+interface AccountAppearanceFormProps {
+  selectedIcon: AccountIconName
+  onIconChange: (icon: AccountIconName) => void
+  selectedColor: string
+  onColorChange: (color: string) => void
+  alias: string
+  onAliasChange: (alias: string) => void
+}
+
+function AccountAppearanceForm({
+  selectedIcon,
+  onIconChange,
+  selectedColor,
+  onColorChange,
+  alias,
+  onAliasChange,
+}: AccountAppearanceFormProps) {
+  return (
+    <div className="flex flex-col items-center gap-6 py-4">
+      <MailAccountIcon icon={selectedIcon} color={selectedColor} size="lg" />
+
+      <input
+        type="text"
+        placeholder={m.add_account_alias_placeholder()}
+        value={alias}
+        onChange={(e) => onAliasChange(e.target.value)}
+        className="h-9 w-full max-w-xs rounded-md border border-border bg-background px-3 text-sm outline-none placeholder:text-muted-foreground focus:ring-1 focus:ring-ring"
+      />
+
+      <div className="space-y-2">
+        <p className="text-sm font-medium">{m.add_account_icon_section()}</p>
+        <div className="flex flex-wrap gap-2">
+          {ICON_ENTRIES.map(({ name, Icon }) => (
+            <button
+              key={name}
+              type="button"
+              title={getAccountIconLabel(name)}
+              onClick={() => onIconChange(name)}
+              className={cn(
+                "flex size-10 items-center justify-center rounded-lg border transition-colors",
+                selectedIcon === name ? "border-primary bg-primary/10" : "border-border hover:bg-accent"
+              )}
+            >
+              <Icon className="size-5" />
+            </button>
+          ))}
+        </div>
+      </div>
+
+      <div className="space-y-2">
+        <p className="text-sm font-medium">{m.add_account_color_section()}</p>
+        <div className="flex flex-wrap gap-2">
+          {COLORS.map((color) => (
+            <button
+              key={color}
+              type="button"
+              onClick={() => onColorChange(color)}
+              className="flex size-10 items-center justify-center rounded-full border border-border transition-transform hover:scale-110"
+              style={{ backgroundColor: color }}
+            >
+              {selectedColor === color && <Check className="size-5 text-white" />}
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export function AddAccountDialog({ children }: { children: React.ReactNode }) {
   const [open, setOpen] = useState(false)
   const [step, setStep] = useState<"logo" | "login">("logo")
@@ -81,54 +150,14 @@ export function AddAccountDialog({ children }: { children: React.ReactNode }) {
               <DialogTitle>{m.add_account_icon_title()}</DialogTitle>
             </DialogHeader>
 
-            <div className="flex flex-col items-center gap-6 py-4">
-              <MailAccountIcon icon={selectedIcon} color={selectedColor} size="lg" />
-
-              <input
-                type="text"
-                placeholder={m.add_account_alias_placeholder()}
-                value={alias}
-                onChange={(e) => setAlias(e.target.value)}
-                className="h-9 w-full max-w-xs rounded-md border border-border bg-background px-3 text-sm outline-none placeholder:text-muted-foreground focus:ring-1 focus:ring-ring"
-              />
-
-              <div className="space-y-2">
-                <p className="text-sm font-medium">{m.add_account_icon_section()}</p>
-                <div className="flex flex-wrap gap-2">
-                  {ICON_ENTRIES.map(({ name, Icon }) => (
-                    <button
-                      key={name}
-                      type="button"
-                      title={getAccountIconLabel(name)}
-                      onClick={() => setSelectedIcon(name)}
-                      className={cn(
-                        "flex size-10 items-center justify-center rounded-lg border transition-colors",
-                        selectedIcon === name ? "border-primary bg-primary/10" : "border-border hover:bg-accent"
-                      )}
-                    >
-                      <Icon className="size-5" />
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <p className="text-sm font-medium">{m.add_account_color_section()}</p>
-                <div className="flex flex-wrap gap-2">
-                  {COLORS.map((color) => (
-                    <button
-                      key={color}
-                      type="button"
-                      onClick={() => setSelectedColor(color)}
-                      className="flex size-10 items-center justify-center rounded-full border border-border transition-transform hover:scale-110"
-                      style={{ backgroundColor: color }}
-                    >
-                      {selectedColor === color && <Check className="size-5 text-white" />}
-                    </button>
-                  ))}
-                </div>
-              </div>
-            </div>
+            <AccountAppearanceForm
+              selectedIcon={selectedIcon}
+              onIconChange={setSelectedIcon}
+              selectedColor={selectedColor}
+              onColorChange={setSelectedColor}
+              alias={alias}
+              onAliasChange={setAlias}
+            />
 
             <div className="flex justify-end">
               <Button onClick={() => setStep("login")} className="cursor-pointer hover:bg-primary/80">
@@ -143,7 +172,6 @@ export function AddAccountDialog({ children }: { children: React.ReactNode }) {
             </DialogHeader>
 
             <div className="flex flex-col items-center gap-6 py-4">
-              {/* Icon preview */}
               <MailAccountIcon icon={selectedIcon} color={selectedColor} size="lg" />
 
               <p className="text-sm text-muted-foreground">{m.add_account_google_connect_description()}</p>
@@ -160,6 +188,70 @@ export function AddAccountDialog({ children }: { children: React.ReactNode }) {
             </div>
           </>
         )}
+      </DialogContent>
+    </Dialog>
+  )
+}
+
+interface EditAccountDialogProps {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  initialValues: {
+    icon: AccountIconName
+    color: string
+    alias: string
+  }
+  onSave: (values: { icon: AccountIconName; color: string; alias: string }) => void
+  isSaving?: boolean
+}
+
+export function EditAccountDialog({
+  open,
+  onOpenChange,
+  initialValues,
+  onSave,
+  isSaving = false,
+}: EditAccountDialogProps) {
+  const [selectedIcon, setSelectedIcon] = useState<AccountIconName>(initialValues.icon)
+  const [selectedColor, setSelectedColor] = useState(initialValues.color)
+  const [alias, setAlias] = useState(initialValues.alias)
+
+  const hasChanged =
+    selectedIcon !== initialValues.icon || selectedColor !== initialValues.color || alias !== initialValues.alias
+
+  const handleOpenChange = (value: boolean) => {
+    onOpenChange(value)
+    if (!value) {
+      setSelectedIcon(initialValues.icon)
+      setSelectedColor(initialValues.color)
+      setAlias(initialValues.alias)
+    }
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>{m.add_account_edit_title()}</DialogTitle>
+        </DialogHeader>
+
+        <AccountAppearanceForm
+          selectedIcon={selectedIcon}
+          onIconChange={setSelectedIcon}
+          selectedColor={selectedColor}
+          onColorChange={setSelectedColor}
+          alias={alias}
+          onAliasChange={setAlias}
+        />
+
+        <div className="flex justify-end">
+          <Button
+            onClick={() => onSave({ icon: selectedIcon, color: selectedColor, alias })}
+            disabled={isSaving || !hasChanged}
+          >
+            {isSaving ? m.common_saving() : m.common_save()}
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   )
