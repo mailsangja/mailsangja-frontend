@@ -1,10 +1,12 @@
 import { useEffect, useRef, useState } from "react"
 import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router"
 import { toast } from "sonner"
-import { ArrowLeft, Check, Loader2 } from "lucide-react"
+import { ArrowLeft, Check, CreditCard, Loader2, ShieldCheck, Sparkles, Wallet } from "lucide-react"
 
 import { PaymentDialog } from "@/components/payment/payment-dialog"
+import { Badge } from "@/components/ui/badge"
 import { Button, buttonVariants } from "@/components/ui/button"
+import { Separator } from "@/components/ui/separator"
 import { getErrorMessage } from "@/lib/http-error"
 import { useCompletePayment } from "@/mutations/payments"
 import { m } from "@/paraglide/messages"
@@ -58,6 +60,15 @@ const pricingPlans = [
   },
 ]
 
+const freePlan = pricingPlans.find((plan) => plan.plan === "FREE")
+const proPlan = pricingPlans.find((plan) => plan.plan === "PRO")
+
+const trustSignals = [
+  { label: m.upgrade_checkout_secure_payment(), icon: ShieldCheck },
+  { label: m.payment_dialog_method_kakaopay(), icon: Wallet },
+  { label: m.upgrade_checkout_activation(), icon: Sparkles },
+]
+
 function RouteComponent() {
   const router = useRouter()
   const navigate = useNavigate({ from: "/upgrade" })
@@ -91,7 +102,7 @@ function RouteComponent() {
   }, [completeRedirectPayment, navigate, search.paymentId])
 
   return (
-    <div className="min-h-svh animate-in overflow-x-hidden bg-background duration-200 fade-in slide-in-from-right-2">
+    <div className="min-h-svh animate-in overflow-x-hidden bg-muted/20 duration-200 fade-in slide-in-from-right-2">
       <button
         className={buttonVariants({ variant: "ghost", size: "icon", className: "absolute top-4 left-4" })}
         onClick={() => router.history.back()}
@@ -99,46 +110,133 @@ function RouteComponent() {
       >
         <ArrowLeft className="size-4" />
       </button>
-      <main className="mx-auto h-screen max-w-3xl px-6 py-14">
-        <div className="mb-10 space-y-3 text-center">
-          <h1 className="text-3xl font-bold">{m.pricing_title()}</h1>
-          <p className="text-muted-foreground">{m.pricing_subtitle()}</p>
-        </div>
+      <main className="mx-auto flex min-h-svh w-full max-w-6xl flex-col gap-8 px-5 py-16 sm:px-8 lg:px-10">
+        <section className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_360px] lg:items-start">
+          <div className="flex flex-col gap-6">
+            <div className="flex flex-col gap-4">
+              <div className="flex max-w-2xl flex-col gap-3">
+                <h1 className="text-3xl leading-tight font-semibold tracking-normal sm:text-4xl">
+                  {m.upgrade_checkout_title()}
+                </h1>
+                <p className="text-base text-muted-foreground">{m.upgrade_checkout_subtitle()}</p>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                {trustSignals.map((signal) => {
+                  const Icon = signal.icon
 
-        <div className="grid gap-4 sm:grid-cols-2">
-          {pricingPlans.map((plan) => (
-            <div
-              key={plan.name}
-              className={`relative flex flex-col space-y-6 rounded-2xl border p-8 text-left ${plan.featured ? "pricing-card-featured" : "bg-background shadow-sm"}`}
-            >
-              {plan.comingSoon && (
-                <span className="absolute top-4 right-4 rounded-full bg-muted px-2.5 py-0.5 text-[11px] font-medium text-muted-foreground">
-                  {m.pricing_coming_soon()}
-                </span>
-              )}
-              <div className="space-y-1">
-                <p className={`text-sm font-medium ${plan.featured ? "text-primary" : "text-muted-foreground"}`}>
-                  {plan.name}
-                </p>
-                <div className="space-y-1">
-                  {"originalPrice" in plan && plan.originalPrice && (
-                    <p className="text-sm text-muted-foreground line-through">{plan.originalPrice}</p>
-                  )}
-                  <div className="flex items-end gap-1">
-                    <span className="text-4xl font-bold">{plan.price}</span>
-                    <span className="mb-1 text-sm text-muted-foreground">{plan.period}</span>
+                  return (
+                    <div
+                      key={signal.label}
+                      className="inline-flex items-center gap-2 rounded-lg border bg-background px-3 py-2 text-sm text-muted-foreground"
+                    >
+                      <Icon className="size-4 text-primary" />
+                      <span>{signal.label}</span>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+
+            {proPlan ? (
+              <section className="rounded-xl border bg-background p-5 shadow-sm sm:p-6">
+                <div className="flex flex-col gap-5">
+                  <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
+                    <div className="flex flex-col gap-2">
+                      <div className="flex flex-wrap items-center gap-2">
+                        <h2 className="text-xl font-semibold">{proPlan.name}</h2>
+                        <Badge>{m.upgrade_checkout_discount_label()}</Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">{m.upgrade_checkout_included_title()}</p>
+                    </div>
+                    <div className="flex flex-col gap-1 sm:items-end">
+                      {"originalPrice" in proPlan && proPlan.originalPrice ? (
+                        <span className="text-sm text-muted-foreground line-through">{proPlan.originalPrice}</span>
+                      ) : null}
+                      <div className="flex items-end gap-1">
+                        <span className="text-4xl font-semibold">{proPlan.price}</span>
+                        <span className="pb-1 text-sm text-muted-foreground">{proPlan.period}</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    {proPlan.items.map((item) => (
+                      <div
+                        key={item}
+                        className="flex items-center gap-3 rounded-lg border bg-muted/30 px-3 py-2 text-sm"
+                      >
+                        <Check className="size-4 shrink-0 text-primary" />
+                        <span>{item}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
-              </div>
-              <ul className="flex-1 space-y-3">
-                {plan.items.map((item) => (
-                  <li key={item} className="flex items-center gap-3">
-                    <Check className="size-4 shrink-0 text-primary" />
-                    <span className="text-sm">{item}</span>
-                  </li>
-                ))}
-              </ul>
-              {plan.plan === "PRO" ? (
+              </section>
+            ) : null}
+
+            {freePlan ? (
+              <section className="rounded-xl border bg-muted/20 p-4">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="flex flex-col gap-1">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-medium">{freePlan.name}</span>
+                      <span className="text-sm text-muted-foreground">
+                        {freePlan.price}
+                        {freePlan.period}
+                      </span>
+                    </div>
+                    <p className="text-sm text-muted-foreground">{m.upgrade_checkout_free_summary()}</p>
+                  </div>
+                  <Link
+                    to="/mail/$mailbox"
+                    params={{ mailbox: "inbox" }}
+                    className={buttonVariants({ size: "lg", variant: "outline", className: "w-full sm:w-auto" })}
+                  >
+                    {freePlan.cta}
+                  </Link>
+                </div>
+              </section>
+            ) : null}
+          </div>
+
+          {proPlan ? (
+            <aside className="rounded-xl border bg-background p-5 shadow-sm lg:sticky lg:top-8">
+              <div className="flex flex-col gap-5">
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <h2 className="font-semibold">{m.upgrade_checkout_order_title()}</h2>
+                    <p className="text-sm text-muted-foreground">{proPlan.name}</p>
+                  </div>
+                  <CreditCard className="size-5 text-primary" />
+                </div>
+
+                <div className="flex flex-col gap-3 text-sm">
+                  <div className="flex items-center justify-between gap-4">
+                    <span className="text-muted-foreground">{m.upgrade_checkout_subtotal_label()}</span>
+                    <span className="font-medium">
+                      {"originalPrice" in proPlan && proPlan.originalPrice ? proPlan.originalPrice : proPlan.price}
+                    </span>
+                  </div>
+                  <div className="flex items-center justify-between gap-4">
+                    <span className="text-muted-foreground">{m.upgrade_checkout_discount_label()}</span>
+                    <span className="font-medium text-primary">{proPlan.price}</span>
+                  </div>
+                  <div className="flex items-center justify-between gap-4">
+                    <span className="text-muted-foreground">{m.payment_dialog_method_label()}</span>
+                    <span className="font-medium">{m.payment_dialog_method_kakaopay()}</span>
+                  </div>
+                </div>
+
+                <Separator />
+
+                <div className="flex items-end justify-between gap-4">
+                  <span className="text-sm text-muted-foreground">{m.upgrade_checkout_total_label()}</span>
+                  <div className="flex flex-row items-baseline gap-1 text-right">
+                    <div className="text-2xl font-semibold">{proPlan.price}</div>
+                    <div className="text-xs text-muted-foreground">{proPlan.period}</div>
+                  </div>
+                </div>
+
                 <Button
                   type="button"
                   size="lg"
@@ -146,28 +244,19 @@ function RouteComponent() {
                   disabled={isUserPending || !user || user.plan === "PRO"}
                   onClick={() => setPaymentDialogOpen(true)}
                 >
-                  {isUserPending && <Loader2 className="size-4 animate-spin" />}
-                  {user?.plan === "PRO" ? m.upgrade_pricing_current_plan_cta() : plan.cta}
+                  {isUserPending ? (
+                    <Loader2 data-icon="inline-start" className="animate-spin" />
+                  ) : (
+                    <Wallet data-icon="inline-start" />
+                  )}
+                  {user?.plan === "PRO" ? m.upgrade_pricing_current_plan_cta() : proPlan.cta}
                 </Button>
-              ) : (
-                <Link
-                  to="/mail/$mailbox"
-                  params={{ mailbox: "inbox" }}
-                  className={buttonVariants({
-                    size: "lg",
-                    variant: "outline",
-                    className: "w-full",
-                  })}
-                >
-                  {plan.cta}
-                </Link>
-              )}
-            </div>
-          ))}
-        </div>
-        <div className="mt-12 space-y-3 text-center">
-          <p className="text-sm text-muted-foreground">{m.upgrade_pricing_notice()}</p>
-        </div>
+
+                <p className="text-xs leading-relaxed text-muted-foreground">{m.upgrade_pricing_notice()}</p>
+              </div>
+            </aside>
+          ) : null}
+        </section>
       </main>
       {user ? <PaymentDialog open={paymentDialogOpen} user={user} onOpenChange={setPaymentDialogOpen} /> : null}
     </div>

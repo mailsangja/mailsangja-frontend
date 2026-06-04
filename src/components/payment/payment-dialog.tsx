@@ -1,10 +1,11 @@
 import { useState } from "react"
 import { Link } from "@tanstack/react-router"
-import { AlertCircle, CheckCircle2, Loader2 } from "lucide-react"
+import { AlertCircle, Check, CheckCircle2, Loader2, Wallet } from "lucide-react"
 
 import type { CreateOrderResponse } from "@/types/payment"
 import type { User } from "@/types/user"
 
+import { Badge } from "@/components/ui/badge"
 import { Button, buttonVariants } from "@/components/ui/button"
 import {
   Dialog,
@@ -14,6 +15,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog"
+import { Separator } from "@/components/ui/separator"
 import { getErrorMessage } from "@/lib/http-error"
 import { PortOnePaymentError, requestKakaoPayPayment } from "@/lib/portone"
 import { cn } from "@/lib/utils"
@@ -47,6 +49,18 @@ function isMissingPortOneEnvError(error: unknown) {
   return error instanceof PortOnePaymentError && error.message.includes("Missing VITE_PORTONE")
 }
 
+const paymentSteps = [
+  { id: "order", label: m.payment_dialog_step_order() },
+  { id: "kakaopay", label: m.payment_dialog_step_kakaopay() },
+  { id: "activation", label: m.payment_dialog_step_activation() },
+] as const
+
+function getActiveStepIndex(step: PaymentStep) {
+  if (step === "requesting-payment") return 1
+  if (step === "completing" || step === "success") return 2
+  return 0
+}
+
 export function PaymentDialog({ open, user, onOpenChange }: PaymentDialogProps) {
   const createOrder = useCreatePaymentOrder()
   const completePayment = useCompletePayment()
@@ -58,6 +72,7 @@ export function PaymentDialog({ open, user, onOpenChange }: PaymentDialogProps) 
   const isBusy = step === "creating-order" || step === "requesting-payment" || step === "completing"
   const isPayDisabled = isBusy || isMailAccountsPending
   const stepLabel = getStepLabel(step)
+  const activeStepIndex = getActiveStepIndex(step)
 
   function reset() {
     setStep("idle")
@@ -120,36 +135,70 @@ export function PaymentDialog({ open, user, onOpenChange }: PaymentDialogProps) 
     }
   }
 
+  function renderStepIndicator() {
+    return (
+      <div className="grid grid-cols-3 gap-2">
+        {paymentSteps.map((paymentStep, index) => {
+          const isActive = index <= activeStepIndex
+
+          return (
+            <div key={paymentStep.id} className="flex min-w-0 flex-col gap-2">
+              <div className={cn("h-1 rounded-full bg-muted", isActive && "bg-primary")} />
+              <span className={cn("truncate text-xs text-muted-foreground", isActive && "text-foreground")}>
+                {paymentStep.label}
+              </span>
+            </div>
+          )
+        })}
+      </div>
+    )
+  }
+
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent>
+      <DialogContent className="gap-5 sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{m.payment_dialog_title()}</DialogTitle>
-          <DialogDescription>{m.payment_dialog_description()}</DialogDescription>
+          <div className="flex flex-col gap-2 pr-8">
+            <Badge variant="secondary" className="w-fit">
+              {m.payment_dialog_method_kakaopay()}
+            </Badge>
+            <DialogTitle>{m.payment_dialog_title()}</DialogTitle>
+            <DialogDescription>{m.payment_dialog_description()}</DialogDescription>
+          </div>
         </DialogHeader>
 
+        {renderStepIndicator()}
+
         {step === "success" ? (
-          <div className="flex flex-col items-center gap-3 py-6 text-center">
+          <div className="flex flex-col items-center gap-3 rounded-xl border bg-muted/20 px-4 py-8 text-center">
             <CheckCircle2 className="size-10 text-primary" />
-            <div className="space-y-1">
+            <div className="flex flex-col gap-1">
               <p className="font-medium">{m.payment_dialog_success_title()}</p>
               <p className="text-sm text-muted-foreground">{m.payment_dialog_success_description()}</p>
             </div>
           </div>
         ) : step === "failed" ? (
-          <div className="flex flex-col gap-3 rounded-md border border-destructive/30 bg-destructive/5 p-4 text-sm">
+          <div className="flex flex-col gap-3 rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm">
             <div className="flex items-center gap-2 font-medium text-destructive">
               <AlertCircle className="size-4" />
               {m.payment_dialog_failure_title()}
             </div>
-            <p className="text-muted-foreground">{errorMessage}</p>
+            <p className="leading-relaxed text-muted-foreground">{errorMessage}</p>
           </div>
         ) : (
-          <div className="space-y-4">
-            <dl className="grid gap-3 rounded-md border p-4 text-sm">
+          <div className="rounded-xl border bg-background p-4">
+            <div className="flex items-center justify-between gap-4">
+              <div className="flex flex-col gap-1">
+                <p className="font-medium">{m.payment_dialog_summary_title()}</p>
+                <p className="text-sm text-muted-foreground">{m.payment_dialog_notice()}</p>
+              </div>
+              <Wallet className="size-5 shrink-0 text-primary" />
+            </div>
+            <Separator className="my-4" />
+            <dl className="grid gap-3 text-sm">
               <div className="flex items-center justify-between gap-4">
                 <dt className="text-muted-foreground">{m.payment_dialog_plan_label()}</dt>
-                <dd className="font-medium">PRO Plan</dd>
+                <dd className="font-medium">{m.pricing_plan_pro_name()}</dd>
               </div>
               <div className="flex items-center justify-between gap-4">
                 <dt className="text-muted-foreground">{m.payment_dialog_amount_label()}</dt>
@@ -159,17 +208,20 @@ export function PaymentDialog({ open, user, onOpenChange }: PaymentDialogProps) 
                 <dt className="text-muted-foreground">{m.payment_dialog_method_label()}</dt>
                 <dd className="font-medium">{m.payment_dialog_method_kakaopay()}</dd>
               </div>
+              <div className="flex items-center justify-between gap-4">
+                <dt className="text-muted-foreground">{m.payment_dialog_activation_label()}</dt>
+                <dd className="font-medium">{m.payment_dialog_activation_value()}</dd>
+              </div>
             </dl>
-            <p className="text-xs text-muted-foreground">{m.payment_dialog_notice()}</p>
           </div>
         )}
 
-        {stepLabel && (
-          <div className="flex items-center gap-2 text-sm text-muted-foreground">
+        {stepLabel ? (
+          <div className="flex items-center gap-2 rounded-lg bg-muted/40 px-3 py-2 text-sm text-muted-foreground">
             <Loader2 className="size-4 animate-spin" />
             {stepLabel}
           </div>
-        )}
+        ) : null}
 
         <DialogFooter>
           {step === "success" ? (
@@ -195,7 +247,11 @@ export function PaymentDialog({ open, user, onOpenChange }: PaymentDialogProps) 
                 {m.payment_dialog_close()}
               </Button>
               <Button type="button" onClick={() => void startPayment()} disabled={isPayDisabled}>
-                {isBusy && <Loader2 className="size-4 animate-spin" />}
+                {isBusy ? (
+                  <Loader2 data-icon="inline-start" className="animate-spin" />
+                ) : (
+                  <Check data-icon="inline-start" />
+                )}
                 {m.payment_dialog_pay()}
               </Button>
             </>

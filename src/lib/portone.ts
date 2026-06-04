@@ -59,7 +59,7 @@ export async function requestKakaoPayPayment(
     storeId,
     channelKey,
     paymentId: order.paymentId,
-    orderName: "MailSangja PRO Plan",
+    orderName: "메일상자 PRO",
     totalAmount: order.amount,
     currency: "KRW",
     payMethod: "EASY_PAY",
