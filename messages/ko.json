@@ -121,6 +121,7 @@
   "notification_blocked_by_browser": "브라우저에서 차단됨",
   "mail_unread_count": "{mailbox} 안읽음 {count}개",
   "mail_selected_count": "{count}개 선택됨",
+  "mail_select_all": "전체 선택",
   "mail_total_count": "{count}개",
   "mail_filter_all": "전체",
   "mail_filter_unread": "안읽음",

@@ -121,6 +121,7 @@
   "notification_blocked_by_browser": "Blocked by browser",
   "mail_unread_count": "{mailbox} unread {count}",
   "mail_selected_count": "{count} selected",
+  "mail_select_all": "Select all",
   "mail_total_count": "{count}",
   "mail_filter_all": "All",
   "mail_filter_unread": "Unread",

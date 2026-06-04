@@ -62,7 +62,7 @@ export function ThreadListToolbar({
               onClearSelection()
             }
           }}
-          aria-label={m.mail_clear_selection()}
+          aria-label={isAllSelected ? m.mail_clear_selection() : m.mail_select_all()}
         />
         <span className="text-sm font-medium">{m.mail_selected_count({ count: formatNumber(selectedCount) })}</span>
         <div className="ml-auto flex shrink-0 items-center gap-2">
@@ -97,7 +97,7 @@ export function ThreadListToolbar({
 
   return (
     <div className="flex h-11 shrink-0 items-center gap-3 border-b px-3">
-      <Checkbox checked={false} onCheckedChange={() => onSelectAll()} aria-label={m.mail_clear_selection()} />
+      <Checkbox checked={false} onCheckedChange={() => onSelectAll()} aria-label={m.mail_select_all()} />
       <h2 className="min-w-0 truncate text-sm font-medium">{mailboxName}</h2>
       <span className="hidden rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground sm:inline-flex">
         {m.mail_total_count({ count: formatNumber(totalCount) })}
