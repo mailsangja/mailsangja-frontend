@@ -31,7 +31,7 @@ import { useUser } from "@/queries/user"
 import type { MailAccount } from "@/types/mail-account"
 import type { AccountIconName } from "@/lib/icon-entries"
 
-export const Route = createFileRoute("/_authenticated/settings/account")({
+export const Route = createFileRoute("/_authenticated/_app/settings/account")({
   component: SettingsAccountPage,
 })
 

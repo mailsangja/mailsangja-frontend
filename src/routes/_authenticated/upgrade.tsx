@@ -14,7 +14,7 @@ interface UpgradeSearch {
   paymentId?: string
 }
 
-export const Route = createFileRoute("/upgrade")({
+export const Route = createFileRoute("/_authenticated/upgrade")({
   validateSearch: (search: Record<string, unknown>): UpgradeSearch => {
     const paymentId = typeof search.paymentId === "string" ? search.paymentId.trim() : ""
     return paymentId ? { paymentId } : {}
@@ -147,11 +147,7 @@ function RouteComponent() {
                   onClick={() => setPaymentDialogOpen(true)}
                 >
                   {isUserPending && <Loader2 className="size-4 animate-spin" />}
-                  {!user
-                    ? m.upgrade_pricing_payment_login_required()
-                    : user.plan === "PRO"
-                      ? m.upgrade_pricing_current_plan_cta()
-                      : plan.cta}
+                  {user?.plan === "PRO" ? m.upgrade_pricing_current_plan_cta() : plan.cta}
                 </Button>
               ) : (
                 <Link

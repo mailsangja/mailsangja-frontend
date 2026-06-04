@@ -14,7 +14,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { m } from "@/paraglide/messages"
 import { useLabels } from "@/queries/labels"
 
-export const Route = createFileRoute("/_authenticated/settings")({
+export const Route = createFileRoute("/_authenticated/_app/settings")({
   component: SettingsLayout,
 })
 
@@ -33,7 +33,7 @@ function SettingsLayout() {
       ? "label"
       : "general"
 
-  const labelDetailMatch = useMatch({ from: "/_authenticated/settings/label/$labelId", shouldThrow: false })
+  const labelDetailMatch = useMatch({ from: "/_authenticated/_app/settings/label/$labelId", shouldThrow: false })
   const labelId = labelDetailMatch?.params.labelId
 
   const { data: labels } = useLabels()

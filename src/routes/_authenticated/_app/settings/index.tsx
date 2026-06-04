@@ -26,7 +26,7 @@ import { useAiUsages } from "@/queries/ai"
 import { useUser } from "@/queries/user"
 import { getAiUsageTypeLabel } from "@/types/ai"
 
-export const Route = createFileRoute("/_authenticated/settings/")({
+export const Route = createFileRoute("/_authenticated/_app/settings/")({
   component: SettingsPage,
 })
 

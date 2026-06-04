@@ -22,7 +22,7 @@ interface ComposeRouteSearch {
   message?: string
 }
 
-export const Route = createFileRoute("/_authenticated/compose")({
+export const Route = createFileRoute("/_authenticated/_app/compose")({
   validateSearch: (search: Record<string, unknown>): ComposeRouteSearch => {
     const from = typeof search.from === "string" ? search.from.trim() : ""
     const thread = typeof search.thread === "string" ? search.thread.trim() : ""

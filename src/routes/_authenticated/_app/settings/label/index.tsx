@@ -25,7 +25,7 @@ import { CreateLabelGroupDialog, EditLabelGroupDialog } from "@/components/label
 import { m } from "@/paraglide/messages"
 import type { LabelGroupItem, LabelListItem } from "@/types/label"
 
-export const Route = createFileRoute("/_authenticated/settings/label/")({
+export const Route = createFileRoute("/_authenticated/_app/settings/label/")({
   component: SettingsLabelPage,
 })
 

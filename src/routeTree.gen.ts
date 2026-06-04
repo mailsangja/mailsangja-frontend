@@ -9,7 +9,6 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as UpgradeRouteImport } from './routes/upgrade'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as GuestRouteImport } from './routes/_guest'
@@ -17,21 +16,18 @@ import { Route as AuthenticatedRouteImport } from './routes/_authenticated'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as GuestSignupRouteImport } from './routes/_guest/signup'
 import { Route as GuestLoginRouteImport } from './routes/_guest/login'
-import { Route as AuthenticatedSettingsRouteImport } from './routes/_authenticated/settings'
-import { Route as AuthenticatedMailRouteImport } from './routes/_authenticated/mail'
-import { Route as AuthenticatedComposeRouteImport } from './routes/_authenticated/compose'
-import { Route as AuthenticatedSettingsIndexRouteImport } from './routes/_authenticated/settings/index'
-import { Route as AuthenticatedMailIndexRouteImport } from './routes/_authenticated/mail/index'
-import { Route as AuthenticatedSettingsAccountRouteImport } from './routes/_authenticated/settings/account'
-import { Route as AuthenticatedMailMailboxRouteImport } from './routes/_authenticated/mail/$mailbox'
-import { Route as AuthenticatedSettingsLabelIndexRouteImport } from './routes/_authenticated/settings/label/index'
-import { Route as AuthenticatedSettingsLabelLabelIdRouteImport } from './routes/_authenticated/settings/label/$labelId'
+import { Route as AuthenticatedUpgradeRouteImport } from './routes/_authenticated/upgrade'
+import { Route as AuthenticatedAppRouteImport } from './routes/_authenticated/_app'
+import { Route as AuthenticatedAppSettingsRouteImport } from './routes/_authenticated/_app/settings'
+import { Route as AuthenticatedAppMailRouteImport } from './routes/_authenticated/_app/mail'
+import { Route as AuthenticatedAppComposeRouteImport } from './routes/_authenticated/_app/compose'
+import { Route as AuthenticatedAppSettingsIndexRouteImport } from './routes/_authenticated/_app/settings/index'
+import { Route as AuthenticatedAppMailIndexRouteImport } from './routes/_authenticated/_app/mail/index'
+import { Route as AuthenticatedAppSettingsAccountRouteImport } from './routes/_authenticated/_app/settings/account'
+import { Route as AuthenticatedAppMailMailboxRouteImport } from './routes/_authenticated/_app/mail/$mailbox'
+import { Route as AuthenticatedAppSettingsLabelIndexRouteImport } from './routes/_authenticated/_app/settings/label/index'
+import { Route as AuthenticatedAppSettingsLabelLabelIdRouteImport } from './routes/_authenticated/_app/settings/label/$labelId'
 
-const UpgradeRoute = UpgradeRouteImport.update({
-  id: '/upgrade',
-  path: '/upgrade',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
   path: '/terms',
@@ -65,88 +61,99 @@ const GuestLoginRoute = GuestLoginRouteImport.update({
   path: '/login',
   getParentRoute: () => GuestRoute,
 } as any)
-const AuthenticatedSettingsRoute = AuthenticatedSettingsRouteImport.update({
-  id: '/settings',
-  path: '/settings',
+const AuthenticatedUpgradeRoute = AuthenticatedUpgradeRouteImport.update({
+  id: '/upgrade',
+  path: '/upgrade',
   getParentRoute: () => AuthenticatedRoute,
 } as any)
-const AuthenticatedMailRoute = AuthenticatedMailRouteImport.update({
+const AuthenticatedAppRoute = AuthenticatedAppRouteImport.update({
+  id: '/_app',
+  getParentRoute: () => AuthenticatedRoute,
+} as any)
+const AuthenticatedAppSettingsRoute =
+  AuthenticatedAppSettingsRouteImport.update({
+    id: '/settings',
+    path: '/settings',
+    getParentRoute: () => AuthenticatedAppRoute,
+  } as any)
+const AuthenticatedAppMailRoute = AuthenticatedAppMailRouteImport.update({
   id: '/mail',
   path: '/mail',
-  getParentRoute: () => AuthenticatedRoute,
+  getParentRoute: () => AuthenticatedAppRoute,
 } as any)
-const AuthenticatedComposeRoute = AuthenticatedComposeRouteImport.update({
+const AuthenticatedAppComposeRoute = AuthenticatedAppComposeRouteImport.update({
   id: '/compose',
   path: '/compose',
-  getParentRoute: () => AuthenticatedRoute,
+  getParentRoute: () => AuthenticatedAppRoute,
 } as any)
-const AuthenticatedSettingsIndexRoute =
-  AuthenticatedSettingsIndexRouteImport.update({
+const AuthenticatedAppSettingsIndexRoute =
+  AuthenticatedAppSettingsIndexRouteImport.update({
     id: '/',
     path: '/',
-    getParentRoute: () => AuthenticatedSettingsRoute,
+    getParentRoute: () => AuthenticatedAppSettingsRoute,
   } as any)
-const AuthenticatedMailIndexRoute = AuthenticatedMailIndexRouteImport.update({
-  id: '/',
-  path: '/',
-  getParentRoute: () => AuthenticatedMailRoute,
-} as any)
-const AuthenticatedSettingsAccountRoute =
-  AuthenticatedSettingsAccountRouteImport.update({
+const AuthenticatedAppMailIndexRoute =
+  AuthenticatedAppMailIndexRouteImport.update({
+    id: '/',
+    path: '/',
+    getParentRoute: () => AuthenticatedAppMailRoute,
+  } as any)
+const AuthenticatedAppSettingsAccountRoute =
+  AuthenticatedAppSettingsAccountRouteImport.update({
     id: '/account',
     path: '/account',
-    getParentRoute: () => AuthenticatedSettingsRoute,
+    getParentRoute: () => AuthenticatedAppSettingsRoute,
   } as any)
-const AuthenticatedMailMailboxRoute =
-  AuthenticatedMailMailboxRouteImport.update({
+const AuthenticatedAppMailMailboxRoute =
+  AuthenticatedAppMailMailboxRouteImport.update({
     id: '/$mailbox',
     path: '/$mailbox',
-    getParentRoute: () => AuthenticatedMailRoute,
+    getParentRoute: () => AuthenticatedAppMailRoute,
   } as any)
-const AuthenticatedSettingsLabelIndexRoute =
-  AuthenticatedSettingsLabelIndexRouteImport.update({
+const AuthenticatedAppSettingsLabelIndexRoute =
+  AuthenticatedAppSettingsLabelIndexRouteImport.update({
     id: '/label/',
     path: '/label/',
-    getParentRoute: () => AuthenticatedSettingsRoute,
+    getParentRoute: () => AuthenticatedAppSettingsRoute,
   } as any)
-const AuthenticatedSettingsLabelLabelIdRoute =
-  AuthenticatedSettingsLabelLabelIdRouteImport.update({
+const AuthenticatedAppSettingsLabelLabelIdRoute =
+  AuthenticatedAppSettingsLabelLabelIdRouteImport.update({
     id: '/label/$labelId',
     path: '/label/$labelId',
-    getParentRoute: () => AuthenticatedSettingsRoute,
+    getParentRoute: () => AuthenticatedAppSettingsRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/privacy': typeof PrivacyRoute
   '/terms': typeof TermsRoute
-  '/upgrade': typeof UpgradeRoute
-  '/compose': typeof AuthenticatedComposeRoute
-  '/mail': typeof AuthenticatedMailRouteWithChildren
-  '/settings': typeof AuthenticatedSettingsRouteWithChildren
+  '/upgrade': typeof AuthenticatedUpgradeRoute
   '/login': typeof GuestLoginRoute
   '/signup': typeof GuestSignupRoute
-  '/mail/$mailbox': typeof AuthenticatedMailMailboxRoute
-  '/settings/account': typeof AuthenticatedSettingsAccountRoute
-  '/mail/': typeof AuthenticatedMailIndexRoute
-  '/settings/': typeof AuthenticatedSettingsIndexRoute
-  '/settings/label/$labelId': typeof AuthenticatedSettingsLabelLabelIdRoute
-  '/settings/label/': typeof AuthenticatedSettingsLabelIndexRoute
+  '/compose': typeof AuthenticatedAppComposeRoute
+  '/mail': typeof AuthenticatedAppMailRouteWithChildren
+  '/settings': typeof AuthenticatedAppSettingsRouteWithChildren
+  '/mail/$mailbox': typeof AuthenticatedAppMailMailboxRoute
+  '/settings/account': typeof AuthenticatedAppSettingsAccountRoute
+  '/mail/': typeof AuthenticatedAppMailIndexRoute
+  '/settings/': typeof AuthenticatedAppSettingsIndexRoute
+  '/settings/label/$labelId': typeof AuthenticatedAppSettingsLabelLabelIdRoute
+  '/settings/label/': typeof AuthenticatedAppSettingsLabelIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/privacy': typeof PrivacyRoute
   '/terms': typeof TermsRoute
-  '/upgrade': typeof UpgradeRoute
-  '/compose': typeof AuthenticatedComposeRoute
+  '/upgrade': typeof AuthenticatedUpgradeRoute
   '/login': typeof GuestLoginRoute
   '/signup': typeof GuestSignupRoute
-  '/mail/$mailbox': typeof AuthenticatedMailMailboxRoute
-  '/settings/account': typeof AuthenticatedSettingsAccountRoute
-  '/mail': typeof AuthenticatedMailIndexRoute
-  '/settings': typeof AuthenticatedSettingsIndexRoute
-  '/settings/label/$labelId': typeof AuthenticatedSettingsLabelLabelIdRoute
-  '/settings/label': typeof AuthenticatedSettingsLabelIndexRoute
+  '/compose': typeof AuthenticatedAppComposeRoute
+  '/mail/$mailbox': typeof AuthenticatedAppMailMailboxRoute
+  '/settings/account': typeof AuthenticatedAppSettingsAccountRoute
+  '/mail': typeof AuthenticatedAppMailIndexRoute
+  '/settings': typeof AuthenticatedAppSettingsIndexRoute
+  '/settings/label/$labelId': typeof AuthenticatedAppSettingsLabelLabelIdRoute
+  '/settings/label': typeof AuthenticatedAppSettingsLabelIndexRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -155,18 +162,19 @@ export interface FileRoutesById {
   '/_guest': typeof GuestRouteWithChildren
   '/privacy': typeof PrivacyRoute
   '/terms': typeof TermsRoute
-  '/upgrade': typeof UpgradeRoute
-  '/_authenticated/compose': typeof AuthenticatedComposeRoute
-  '/_authenticated/mail': typeof AuthenticatedMailRouteWithChildren
-  '/_authenticated/settings': typeof AuthenticatedSettingsRouteWithChildren
+  '/_authenticated/_app': typeof AuthenticatedAppRouteWithChildren
+  '/_authenticated/upgrade': typeof AuthenticatedUpgradeRoute
   '/_guest/login': typeof GuestLoginRoute
   '/_guest/signup': typeof GuestSignupRoute
-  '/_authenticated/mail/$mailbox': typeof AuthenticatedMailMailboxRoute
-  '/_authenticated/settings/account': typeof AuthenticatedSettingsAccountRoute
-  '/_authenticated/mail/': typeof AuthenticatedMailIndexRoute
-  '/_authenticated/settings/': typeof AuthenticatedSettingsIndexRoute
-  '/_authenticated/settings/label/$labelId': typeof AuthenticatedSettingsLabelLabelIdRoute
-  '/_authenticated/settings/label/': typeof AuthenticatedSettingsLabelIndexRoute
+  '/_authenticated/_app/compose': typeof AuthenticatedAppComposeRoute
+  '/_authenticated/_app/mail': typeof AuthenticatedAppMailRouteWithChildren
+  '/_authenticated/_app/settings': typeof AuthenticatedAppSettingsRouteWithChildren
+  '/_authenticated/_app/mail/$mailbox': typeof AuthenticatedAppMailMailboxRoute
+  '/_authenticated/_app/settings/account': typeof AuthenticatedAppSettingsAccountRoute
+  '/_authenticated/_app/mail/': typeof AuthenticatedAppMailIndexRoute
+  '/_authenticated/_app/settings/': typeof AuthenticatedAppSettingsIndexRoute
+  '/_authenticated/_app/settings/label/$labelId': typeof AuthenticatedAppSettingsLabelLabelIdRoute
+  '/_authenticated/_app/settings/label/': typeof AuthenticatedAppSettingsLabelIndexRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -175,11 +183,11 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/terms'
     | '/upgrade'
+    | '/login'
+    | '/signup'
     | '/compose'
     | '/mail'
     | '/settings'
-    | '/login'
-    | '/signup'
     | '/mail/$mailbox'
     | '/settings/account'
     | '/mail/'
@@ -192,9 +200,9 @@ export interface FileRouteTypes {
     | '/privacy'
     | '/terms'
     | '/upgrade'
-    | '/compose'
     | '/login'
     | '/signup'
+    | '/compose'
     | '/mail/$mailbox'
     | '/settings/account'
     | '/mail'
@@ -208,18 +216,19 @@ export interface FileRouteTypes {
     | '/_guest'
     | '/privacy'
     | '/terms'
-    | '/upgrade'
-    | '/_authenticated/compose'
-    | '/_authenticated/mail'
-    | '/_authenticated/settings'
+    | '/_authenticated/_app'
+    | '/_authenticated/upgrade'
     | '/_guest/login'
     | '/_guest/signup'
-    | '/_authenticated/mail/$mailbox'
-    | '/_authenticated/settings/account'
-    | '/_authenticated/mail/'
-    | '/_authenticated/settings/'
-    | '/_authenticated/settings/label/$labelId'
-    | '/_authenticated/settings/label/'
+    | '/_authenticated/_app/compose'
+    | '/_authenticated/_app/mail'
+    | '/_authenticated/_app/settings'
+    | '/_authenticated/_app/mail/$mailbox'
+    | '/_authenticated/_app/settings/account'
+    | '/_authenticated/_app/mail/'
+    | '/_authenticated/_app/settings/'
+    | '/_authenticated/_app/settings/label/$labelId'
+    | '/_authenticated/_app/settings/label/'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -228,18 +237,10 @@ export interface RootRouteChildren {
   GuestRoute: typeof GuestRouteWithChildren
   PrivacyRoute: typeof PrivacyRoute
   TermsRoute: typeof TermsRoute
-  UpgradeRoute: typeof UpgradeRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/upgrade': {
-      id: '/upgrade'
-      path: '/upgrade'
-      fullPath: '/upgrade'
-      preLoaderRoute: typeof UpgradeRouteImport
-      parentRoute: typeof rootRouteImport
-    }
     '/terms': {
       id: '/terms'
       path: '/terms'
@@ -289,115 +290,144 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof GuestLoginRouteImport
       parentRoute: typeof GuestRoute
     }
-    '/_authenticated/settings': {
-      id: '/_authenticated/settings'
+    '/_authenticated/upgrade': {
+      id: '/_authenticated/upgrade'
+      path: '/upgrade'
+      fullPath: '/upgrade'
+      preLoaderRoute: typeof AuthenticatedUpgradeRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/_app': {
+      id: '/_authenticated/_app'
+      path: ''
+      fullPath: '/'
+      preLoaderRoute: typeof AuthenticatedAppRouteImport
+      parentRoute: typeof AuthenticatedRoute
+    }
+    '/_authenticated/_app/settings': {
+      id: '/_authenticated/_app/settings'
       path: '/settings'
       fullPath: '/settings'
-      preLoaderRoute: typeof AuthenticatedSettingsRouteImport
-      parentRoute: typeof AuthenticatedRoute
+      preLoaderRoute: typeof AuthenticatedAppSettingsRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
     }
-    '/_authenticated/mail': {
-      id: '/_authenticated/mail'
+    '/_authenticated/_app/mail': {
+      id: '/_authenticated/_app/mail'
       path: '/mail'
       fullPath: '/mail'
-      preLoaderRoute: typeof AuthenticatedMailRouteImport
-      parentRoute: typeof AuthenticatedRoute
+      preLoaderRoute: typeof AuthenticatedAppMailRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
     }
-    '/_authenticated/compose': {
-      id: '/_authenticated/compose'
+    '/_authenticated/_app/compose': {
+      id: '/_authenticated/_app/compose'
       path: '/compose'
       fullPath: '/compose'
-      preLoaderRoute: typeof AuthenticatedComposeRouteImport
-      parentRoute: typeof AuthenticatedRoute
+      preLoaderRoute: typeof AuthenticatedAppComposeRouteImport
+      parentRoute: typeof AuthenticatedAppRoute
     }
-    '/_authenticated/settings/': {
-      id: '/_authenticated/settings/'
+    '/_authenticated/_app/settings/': {
+      id: '/_authenticated/_app/settings/'
       path: '/'
       fullPath: '/settings/'
-      preLoaderRoute: typeof AuthenticatedSettingsIndexRouteImport
-      parentRoute: typeof AuthenticatedSettingsRoute
+      preLoaderRoute: typeof AuthenticatedAppSettingsIndexRouteImport
+      parentRoute: typeof AuthenticatedAppSettingsRoute
     }
-    '/_authenticated/mail/': {
-      id: '/_authenticated/mail/'
+    '/_authenticated/_app/mail/': {
+      id: '/_authenticated/_app/mail/'
       path: '/'
       fullPath: '/mail/'
-      preLoaderRoute: typeof AuthenticatedMailIndexRouteImport
-      parentRoute: typeof AuthenticatedMailRoute
+      preLoaderRoute: typeof AuthenticatedAppMailIndexRouteImport
+      parentRoute: typeof AuthenticatedAppMailRoute
     }
-    '/_authenticated/settings/account': {
-      id: '/_authenticated/settings/account'
+    '/_authenticated/_app/settings/account': {
+      id: '/_authenticated/_app/settings/account'
       path: '/account'
       fullPath: '/settings/account'
-      preLoaderRoute: typeof AuthenticatedSettingsAccountRouteImport
-      parentRoute: typeof AuthenticatedSettingsRoute
+      preLoaderRoute: typeof AuthenticatedAppSettingsAccountRouteImport
+      parentRoute: typeof AuthenticatedAppSettingsRoute
     }
-    '/_authenticated/mail/$mailbox': {
-      id: '/_authenticated/mail/$mailbox'
+    '/_authenticated/_app/mail/$mailbox': {
+      id: '/_authenticated/_app/mail/$mailbox'
       path: '/$mailbox'
       fullPath: '/mail/$mailbox'
-      preLoaderRoute: typeof AuthenticatedMailMailboxRouteImport
-      parentRoute: typeof AuthenticatedMailRoute
+      preLoaderRoute: typeof AuthenticatedAppMailMailboxRouteImport
+      parentRoute: typeof AuthenticatedAppMailRoute
     }
-    '/_authenticated/settings/label/': {
-      id: '/_authenticated/settings/label/'
+    '/_authenticated/_app/settings/label/': {
+      id: '/_authenticated/_app/settings/label/'
       path: '/label'
       fullPath: '/settings/label/'
-      preLoaderRoute: typeof AuthenticatedSettingsLabelIndexRouteImport
-      parentRoute: typeof AuthenticatedSettingsRoute
+      preLoaderRoute: typeof AuthenticatedAppSettingsLabelIndexRouteImport
+      parentRoute: typeof AuthenticatedAppSettingsRoute
     }
-    '/_authenticated/settings/label/$labelId': {
-      id: '/_authenticated/settings/label/$labelId'
+    '/_authenticated/_app/settings/label/$labelId': {
+      id: '/_authenticated/_app/settings/label/$labelId'
       path: '/label/$labelId'
       fullPath: '/settings/label/$labelId'
-      preLoaderRoute: typeof AuthenticatedSettingsLabelLabelIdRouteImport
-      parentRoute: typeof AuthenticatedSettingsRoute
+      preLoaderRoute: typeof AuthenticatedAppSettingsLabelLabelIdRouteImport
+      parentRoute: typeof AuthenticatedAppSettingsRoute
     }
   }
 }
 
-interface AuthenticatedMailRouteChildren {
-  AuthenticatedMailMailboxRoute: typeof AuthenticatedMailMailboxRoute
-  AuthenticatedMailIndexRoute: typeof AuthenticatedMailIndexRoute
+interface AuthenticatedAppMailRouteChildren {
+  AuthenticatedAppMailMailboxRoute: typeof AuthenticatedAppMailMailboxRoute
+  AuthenticatedAppMailIndexRoute: typeof AuthenticatedAppMailIndexRoute
 }
 
-const AuthenticatedMailRouteChildren: AuthenticatedMailRouteChildren = {
-  AuthenticatedMailMailboxRoute: AuthenticatedMailMailboxRoute,
-  AuthenticatedMailIndexRoute: AuthenticatedMailIndexRoute,
+const AuthenticatedAppMailRouteChildren: AuthenticatedAppMailRouteChildren = {
+  AuthenticatedAppMailMailboxRoute: AuthenticatedAppMailMailboxRoute,
+  AuthenticatedAppMailIndexRoute: AuthenticatedAppMailIndexRoute,
 }
 
-const AuthenticatedMailRouteWithChildren =
-  AuthenticatedMailRoute._addFileChildren(AuthenticatedMailRouteChildren)
+const AuthenticatedAppMailRouteWithChildren =
+  AuthenticatedAppMailRoute._addFileChildren(AuthenticatedAppMailRouteChildren)
 
-interface AuthenticatedSettingsRouteChildren {
-  AuthenticatedSettingsAccountRoute: typeof AuthenticatedSettingsAccountRoute
-  AuthenticatedSettingsIndexRoute: typeof AuthenticatedSettingsIndexRoute
-  AuthenticatedSettingsLabelLabelIdRoute: typeof AuthenticatedSettingsLabelLabelIdRoute
-  AuthenticatedSettingsLabelIndexRoute: typeof AuthenticatedSettingsLabelIndexRoute
+interface AuthenticatedAppSettingsRouteChildren {
+  AuthenticatedAppSettingsAccountRoute: typeof AuthenticatedAppSettingsAccountRoute
+  AuthenticatedAppSettingsIndexRoute: typeof AuthenticatedAppSettingsIndexRoute
+  AuthenticatedAppSettingsLabelLabelIdRoute: typeof AuthenticatedAppSettingsLabelLabelIdRoute
+  AuthenticatedAppSettingsLabelIndexRoute: typeof AuthenticatedAppSettingsLabelIndexRoute
 }
 
-const AuthenticatedSettingsRouteChildren: AuthenticatedSettingsRouteChildren = {
-  AuthenticatedSettingsAccountRoute: AuthenticatedSettingsAccountRoute,
-  AuthenticatedSettingsIndexRoute: AuthenticatedSettingsIndexRoute,
-  AuthenticatedSettingsLabelLabelIdRoute:
-    AuthenticatedSettingsLabelLabelIdRoute,
-  AuthenticatedSettingsLabelIndexRoute: AuthenticatedSettingsLabelIndexRoute,
-}
+const AuthenticatedAppSettingsRouteChildren: AuthenticatedAppSettingsRouteChildren =
+  {
+    AuthenticatedAppSettingsAccountRoute: AuthenticatedAppSettingsAccountRoute,
+    AuthenticatedAppSettingsIndexRoute: AuthenticatedAppSettingsIndexRoute,
+    AuthenticatedAppSettingsLabelLabelIdRoute:
+      AuthenticatedAppSettingsLabelLabelIdRoute,
+    AuthenticatedAppSettingsLabelIndexRoute:
+      AuthenticatedAppSettingsLabelIndexRoute,
+  }
 
-const AuthenticatedSettingsRouteWithChildren =
-  AuthenticatedSettingsRoute._addFileChildren(
-    AuthenticatedSettingsRouteChildren,
+const AuthenticatedAppSettingsRouteWithChildren =
+  AuthenticatedAppSettingsRoute._addFileChildren(
+    AuthenticatedAppSettingsRouteChildren,
   )
 
+interface AuthenticatedAppRouteChildren {
+  AuthenticatedAppComposeRoute: typeof AuthenticatedAppComposeRoute
+  AuthenticatedAppMailRoute: typeof AuthenticatedAppMailRouteWithChildren
+  AuthenticatedAppSettingsRoute: typeof AuthenticatedAppSettingsRouteWithChildren
+}
+
+const AuthenticatedAppRouteChildren: AuthenticatedAppRouteChildren = {
+  AuthenticatedAppComposeRoute: AuthenticatedAppComposeRoute,
+  AuthenticatedAppMailRoute: AuthenticatedAppMailRouteWithChildren,
+  AuthenticatedAppSettingsRoute: AuthenticatedAppSettingsRouteWithChildren,
+}
+
+const AuthenticatedAppRouteWithChildren =
+  AuthenticatedAppRoute._addFileChildren(AuthenticatedAppRouteChildren)
+
 interface AuthenticatedRouteChildren {
-  AuthenticatedComposeRoute: typeof AuthenticatedComposeRoute
-  AuthenticatedMailRoute: typeof AuthenticatedMailRouteWithChildren
-  AuthenticatedSettingsRoute: typeof AuthenticatedSettingsRouteWithChildren
+  AuthenticatedAppRoute: typeof AuthenticatedAppRouteWithChildren
+  AuthenticatedUpgradeRoute: typeof AuthenticatedUpgradeRoute
 }
 
 const AuthenticatedRouteChildren: AuthenticatedRouteChildren = {
-  AuthenticatedComposeRoute: AuthenticatedComposeRoute,
-  AuthenticatedMailRoute: AuthenticatedMailRouteWithChildren,
-  AuthenticatedSettingsRoute: AuthenticatedSettingsRouteWithChildren,
+  AuthenticatedAppRoute: AuthenticatedAppRouteWithChildren,
+  AuthenticatedUpgradeRoute: AuthenticatedUpgradeRoute,
 }
 
 const AuthenticatedRouteWithChildren = AuthenticatedRoute._addFileChildren(
@@ -422,7 +452,6 @@ const rootRouteChildren: RootRouteChildren = {
   GuestRoute: GuestRouteWithChildren,
   PrivacyRoute: PrivacyRoute,
   TermsRoute: TermsRoute,
-  UpgradeRoute: UpgradeRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
