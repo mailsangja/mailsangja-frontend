@@ -196,6 +196,7 @@ function ThreadListItemSingleLine({
   isSelectionMode,
   account,
   participantLabel,
+  labelsColorMap,
   onToggleCheck,
 }: {
   thread: InboxThreadSummary
@@ -204,9 +205,11 @@ function ThreadListItemSingleLine({
   isSelectionMode: boolean
   account?: MailAccount
   participantLabel: string
+  labelsColorMap: LabelChipMap
   onToggleCheck: () => void
 }) {
   const showThreadCount = thread.messageCount > 1
+  const hasLabels = thread.labels.length > 0
   const hasAttachments = thread.attachments.length > 0
 
   return (
@@ -269,6 +272,17 @@ function ThreadListItemSingleLine({
 
         <span className="hidden min-w-0 flex-1 truncate text-sm text-muted-foreground md:block">{thread.snippet}</span>
 
+        {hasLabels ? (
+          <span className="flex shrink-0 items-center gap-1.5">
+            <LabelChipList
+              labels={thread.labels}
+              labelsColorMap={labelsColorMap}
+              hideMissingLabels
+              className="max-w-36 shrink-0 truncate"
+            />
+          </span>
+        ) : null}
+
         <div className="ml-auto flex shrink-0 items-center gap-1.5">
           <Tooltip>
             <TooltipTrigger render={<span className="text-xs text-muted-foreground" />}>
@@ -315,7 +329,7 @@ export function ThreadListItem({
     "flex cursor-pointer border-b border-l-2 border-l-transparent px-3 py-2.5 transition-colors select-none hover:bg-accent",
     view === "double" ? "flex-col gap-1.5 md:flex-row md:items-start md:gap-3" : "flex-col gap-1",
     isSelected && "border-l-primary",
-    isUnread ? "font-semibold" : "bg-accent/50",
+    isUnread ? "font-semibold" : "bg-accent/70",
     isSelected && isUnread && "bg-accent",
     isChecked && !isSelected && "bg-accent/70"
   )
@@ -407,6 +421,7 @@ export function ThreadListItem({
             isSelectionMode={isSelectionMode}
             account={account}
             participantLabel={participantLabel}
+            labelsColorMap={labelsColorMap}
             onToggleCheck={onToggleCheck}
           />
         ) : (
