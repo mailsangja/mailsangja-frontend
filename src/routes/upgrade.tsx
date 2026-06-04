@@ -1,20 +1,34 @@
-import { createFileRoute, Link, useRouter } from "@tanstack/react-router"
-import { ArrowLeft, Check } from "lucide-react"
+import { useEffect, useRef, useState } from "react"
+import { createFileRoute, Link, useNavigate, useRouter } from "@tanstack/react-router"
+import { toast } from "sonner"
+import { ArrowLeft, Check, Loader2 } from "lucide-react"
 
-import { buttonVariants } from "@/components/ui/button"
+import { PaymentDialog } from "@/components/payment/payment-dialog"
+import { Button, buttonVariants } from "@/components/ui/button"
+import { getErrorMessage } from "@/lib/http-error"
+import { useCompletePayment } from "@/mutations/payments"
 import { m } from "@/paraglide/messages"
+import { useUser } from "@/queries/user"
+
+interface UpgradeSearch {
+  paymentId?: string
+}
 
 export const Route = createFileRoute("/upgrade")({
+  validateSearch: (search: Record<string, unknown>): UpgradeSearch => {
+    const paymentId = typeof search.paymentId === "string" ? search.paymentId.trim() : ""
+    return paymentId ? { paymentId } : {}
+  },
   component: RouteComponent,
 })
 
 const pricingPlans = [
   {
     name: m.pricing_plan_free_name(),
+    plan: "FREE" as const,
     price: "₩0",
     period: m.pricing_period_month(),
     cta: m.upgrade_pricing_free_cta(),
-    ctaTo: "/mail/inbox",
     featured: false,
     comingSoon: false,
     items: [
@@ -26,14 +40,13 @@ const pricingPlans = [
   },
   {
     name: m.pricing_plan_pro_name(),
+    plan: "PRO" as const,
     originalPrice: "₩19,900",
     price: "₩9,900",
     period: m.pricing_period_month(),
     cta: m.upgrade_pricing_pro_cta(),
-    // Switch this link when the plan checkout page is implemented.
-    ctaTo: "/mail/inbox",
     featured: true,
-    comingSoon: true,
+    comingSoon: false,
     items: [
       m.pricing_feature_email_accounts_unlimited(),
       m.pricing_feature_ai_labeling(),
@@ -47,6 +60,35 @@ const pricingPlans = [
 
 function RouteComponent() {
   const router = useRouter()
+  const navigate = useNavigate({ from: "/upgrade" })
+  const search = Route.useSearch()
+  const { data: user, isPending: isUserPending } = useUser()
+  const { mutateAsync: completeRedirectPayment } = useCompletePayment()
+  const completedRedirectPaymentIdRef = useRef<string | null>(null)
+  const [paymentDialogOpen, setPaymentDialogOpen] = useState(false)
+
+  useEffect(() => {
+    if (!search.paymentId) return
+    if (completedRedirectPaymentIdRef.current === search.paymentId) return
+
+    completedRedirectPaymentIdRef.current = search.paymentId
+    const toastId = toast.loading(m.payment_redirect_completing())
+
+    completeRedirectPayment({ paymentId: search.paymentId })
+      .then(() => {
+        toast.success(m.payment_redirect_success(), { id: toastId })
+        void navigate({
+          search: {},
+          replace: true,
+        })
+      })
+      .catch((error: unknown) => {
+        toast.error(m.payment_redirect_error(), {
+          id: toastId,
+          description: getErrorMessage(error, m.payment_redirect_error()),
+        })
+      })
+  }, [completeRedirectPayment, navigate, search.paymentId])
 
   return (
     <div className="min-h-svh animate-in overflow-x-hidden bg-background duration-200 fade-in slide-in-from-right-2">
@@ -96,16 +138,34 @@ function RouteComponent() {
                   </li>
                 ))}
               </ul>
-              <Link
-                to={plan.ctaTo}
-                className={buttonVariants({
-                  size: "lg",
-                  variant: plan.featured ? "default" : "outline",
-                  className: "w-full",
-                })}
-              >
-                {plan.cta}
-              </Link>
+              {plan.plan === "PRO" ? (
+                <Button
+                  type="button"
+                  size="lg"
+                  className="w-full"
+                  disabled={isUserPending || !user || user.plan === "PRO"}
+                  onClick={() => setPaymentDialogOpen(true)}
+                >
+                  {isUserPending && <Loader2 className="size-4 animate-spin" />}
+                  {!user
+                    ? m.upgrade_pricing_payment_login_required()
+                    : user.plan === "PRO"
+                      ? m.upgrade_pricing_current_plan_cta()
+                      : plan.cta}
+                </Button>
+              ) : (
+                <Link
+                  to="/mail/$mailbox"
+                  params={{ mailbox: "inbox" }}
+                  className={buttonVariants({
+                    size: "lg",
+                    variant: "outline",
+                    className: "w-full",
+                  })}
+                >
+                  {plan.cta}
+                </Link>
+              )}
             </div>
           ))}
         </div>
@@ -113,6 +173,7 @@ function RouteComponent() {
           <p className="text-sm text-muted-foreground">{m.upgrade_pricing_notice()}</p>
         </div>
       </main>
+      {user ? <PaymentDialog open={paymentDialogOpen} user={user} onOpenChange={setPaymentDialogOpen} /> : null}
     </div>
   )
 }
