@@ -1,4 +1,4 @@
-import { Mail, MailOpen, RefreshCw, Tag, Trash2 } from "lucide-react"
+import { Mail, MailOpen, RefreshCw, Trash2 } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -25,7 +25,6 @@ interface ThreadListToolbarProps {
   onSelectAll: () => void
   onClearSelection: () => void
   onDeleteSelected: () => void
-  onLabelSelected: () => void
   onMarkSelectedAsRead: () => void
   onMarkSelectedAsUnread: () => void
 }
@@ -42,7 +41,6 @@ export function ThreadListToolbar({
   onSelectAll,
   onClearSelection,
   onDeleteSelected,
-  onLabelSelected,
   onMarkSelectedAsRead,
   onMarkSelectedAsUnread,
 }: ThreadListToolbarProps) {
@@ -86,9 +84,6 @@ export function ThreadListToolbar({
           </Button>
           <Button variant="ghost" size="icon-sm" onClick={onDeleteSelected} aria-label={m.mail_delete_selected()}>
             <Trash2 data-icon="inline-start" />
-          </Button>
-          <Button variant="ghost" size="icon-sm" onClick={onLabelSelected} aria-label={m.mail_assign_label()}>
-            <Tag data-icon="inline-start" />
           </Button>
         </div>
       </div>

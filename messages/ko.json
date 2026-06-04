@@ -161,6 +161,7 @@
   "mail_label_feature_pending": "라벨 기능은 준비 중입니다",
   "thread_select_title": "스레드를 선택해주세요",
   "thread_select_description": "목록에서 대화를 클릭하면 여기에 내용이 표시됩니다",
+  "thread_star": "중요 스레드",
   "thread_back_to_list": "스레드 목록으로 돌아가기",
   "thread_reply": "답장",
   "thread_mark_unread": "안읽음으로 표시",

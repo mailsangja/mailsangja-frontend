@@ -144,9 +144,6 @@ export function ThreadList({
             },
           })
         }}
-        onLabelSelected={() => {
-          toast.info(m.mail_label_feature_pending())
-        }}
         onMarkSelectedAsRead={() => {
           const ids = Array.from(selectedIds)
           setSelectedIds(new Set())

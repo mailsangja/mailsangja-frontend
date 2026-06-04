@@ -161,6 +161,7 @@
   "mail_label_feature_pending": "Labeling is not ready yet",
   "thread_select_title": "Select a thread",
   "thread_select_description": "Click a conversation in the list to view it here",
+  "thread_star": "Important thread",
   "thread_back_to_list": "Back to thread list",
   "thread_reply": "Reply",
   "thread_mark_unread": "Mark as unread",
