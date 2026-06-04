@@ -1,6 +1,7 @@
 import { useEffect, useRef } from "react"
-import { Paperclip, Star } from "lucide-react"
+import { Star } from "lucide-react"
 
+import { AttachmentDownloadChip } from "@/components/attachment/download-chip"
 import { LabelChipList, type LabelChipMap } from "@/components/label/label-chip"
 import { MailAccountIcon } from "@/components/mail-account-icon"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -57,13 +58,7 @@ function ThreadAttachmentChips({ attachments }: { attachments: InboxThreadSummar
   return (
     <div className="flex w-full min-w-0 items-center gap-1.5 overflow-hidden">
       {attachments.slice(0, 3).map((attachment) => (
-        <span
-          key={attachment.id}
-          className="flex min-w-0 shrink items-center gap-1 rounded-md border bg-transparent px-3 py-1.5 text-xs text-muted-foreground"
-        >
-          <Paperclip className="size-3 shrink-0" />
-          <span className="text-md min-w-0 truncate">{attachment.filename}</span>
-        </span>
+        <AttachmentDownloadChip key={attachment.id} attachment={attachment} className="max-w-60" />
       ))}
       {attachments.length > 3 ? (
         <span className="shrink-0 text-xs text-muted-foreground">+{attachments.length - 3}</span>
@@ -297,6 +292,7 @@ function ThreadListItemSingleLine({
         <div className="flex min-w-0 items-center">
           <div className="flex shrink-0 items-center gap-2.5" aria-hidden="true">
             <div className={cn("size-4 shrink-0", isSelectionMode ? "flex" : "hidden", "md:flex")} />
+            <div className="size-4 shrink-0" />
             <div className="size-5 shrink-0" />
             <div className={cn("w-28 shrink-0 md:w-36")} />
           </div>
