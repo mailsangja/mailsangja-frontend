@@ -27,7 +27,7 @@ export function ThreadPreviewPopoverContent({
   const hasFooter = thread.labels.length > 0 || thread.attachments.length > 0
 
   return (
-    <PopoverContent anchor={anchor} side="right" align="start" sideOffset={8} className="5 w-80 gap-3">
+    <PopoverContent anchor={anchor} side="right" align="start" sideOffset={8} className="w-80 gap-3 p-3">
       <div className="flex items-start gap-2">
         <MailAccountIcon icon={account?.icon} color={account?.color} className="mt-0.5 shrink-0" />
         <div className="min-w-0 flex-1">
@@ -54,7 +54,7 @@ export function ThreadPreviewPopoverContent({
           {thread.attachments.length > 0 && (
             <span className="flex items-center gap-1 text-xs text-muted-foreground">
               <Paperclip className="size-3" />
-              {thread.attachments.length}개 첨부파일
+              {m.message_attachment_count({ count: thread.attachments.length })}
             </span>
           )}
         </div>

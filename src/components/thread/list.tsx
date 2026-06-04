@@ -151,11 +151,13 @@ export function ThreadList({
           const ids = Array.from(selectedIds)
           setSelectedIds(new Set())
           ids.forEach((id) => markAsRead(id))
+          toast(m.mail_marked_as_read({ count: formatNumber(ids.length) }))
         }}
         onMarkSelectedAsUnread={() => {
           const ids = Array.from(selectedIds)
           setSelectedIds(new Set())
           ids.forEach((id) => markAsUnread(id))
+          toast(m.mail_marked_as_unread({ count: formatNumber(ids.length) }))
         }}
       />
 
