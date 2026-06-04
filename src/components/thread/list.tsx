@@ -8,7 +8,7 @@ import { useInboxView, useMailPreview } from "@/hooks/use-local-storage-setting"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { ThreadListSkeletonRows } from "@/components/thread/list-skeleton-rows"
 import { ThreadListToolbar } from "@/components/thread/list-toolbar"
-import { useMarkThreadAsRead, useMarkThreadAsUnread } from "@/mutations/emails"
+import { useMarkThreadsAsRead, useMarkThreadsAsUnread } from "@/mutations/emails"
 import { useDeleteThread, useRestoreTrashThread } from "@/mutations/trash"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { useSuspenseLabels } from "@/queries/labels"
@@ -70,8 +70,8 @@ export function ThreadList({
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const { mutate: deleteThread } = useDeleteThread()
   const { mutate: restoreThread } = useRestoreTrashThread()
-  const { mutate: markAsRead } = useMarkThreadAsRead()
-  const { mutate: markAsUnread } = useMarkThreadAsUnread()
+  const { mutate: markThreadsAsRead } = useMarkThreadsAsRead()
+  const { mutate: markThreadsAsUnread } = useMarkThreadsAsUnread()
   const { data: labelsList } = useSuspenseLabels()
   const labelsColorMap = useMemo(
     () => new Map(labelsList.map((l) => [l.id, { colorCode: l.colorCode, name: l.name }])),
@@ -150,13 +150,13 @@ export function ThreadList({
         onMarkSelectedAsRead={() => {
           const ids = Array.from(selectedIds)
           setSelectedIds(new Set())
-          ids.forEach((id) => markAsRead(id))
+          markThreadsAsRead(ids)
           toast(m.mail_marked_as_read({ count: formatNumber(ids.length) }))
         }}
         onMarkSelectedAsUnread={() => {
           const ids = Array.from(selectedIds)
           setSelectedIds(new Set())
-          ids.forEach((id) => markAsUnread(id))
+          markThreadsAsUnread(ids)
           toast(m.mail_marked_as_unread({ count: formatNumber(ids.length) }))
         }}
       />
