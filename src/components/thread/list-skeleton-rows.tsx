@@ -18,6 +18,7 @@ export function ThreadListSkeletonRows({ count = 10, view = "double" }: ThreadLi
           <div className="mr-0.5 hidden md:flex">
             <Skeleton className="size-4 rounded" />
           </div>
+          <Skeleton className="size-4 shrink-0" />
           <Skeleton className="size-5 shrink-0 rounded-full" />
           <Skeleton className="h-4 w-28 shrink-0 md:w-36" />
           <Skeleton className="h-4 w-32 min-w-0 shrink" />
@@ -37,6 +38,7 @@ export function ThreadListSkeletonRows({ count = 10, view = "double" }: ThreadLi
           <div className="mr-0.5 hidden md:flex">
             <Skeleton className="size-4 rounded" />
           </div>
+          <Skeleton className="size-4 shrink-0" />
           <Skeleton className="size-5 shrink-0 rounded-full" />
           <Skeleton className="h-4 w-24 min-w-0" />
           <Skeleton className="h-3 w-4 shrink-0" />

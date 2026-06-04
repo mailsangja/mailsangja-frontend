@@ -168,6 +168,53 @@ function SettingsPage() {
         <p className="text-md px-1 font-semibold text-muted-foreground">{m.settings_quick_settings_section()}</p>
         <Card>
           <CardHeader>
+            <CardTitle>{m.settings_theme_title()}</CardTitle>
+            <CardDescription>{m.settings_theme_description()}</CardDescription>
+          </CardHeader>
+          <CardContent className="pt-1">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+              {(
+                [
+                  { value: "light", label: m.settings_theme_light(), icon: Sun, preview: <LightPreview /> },
+                  { value: "system", label: m.settings_theme_system(), icon: Monitor, preview: <SystemPreview /> },
+                  { value: "dark", label: m.settings_theme_dark(), icon: Moon, preview: <DarkPreview /> },
+                ] as const
+              ).map(({ value, label, icon: Icon, preview }) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setTheme(value)}
+                  aria-pressed={theme === value}
+                  className={cn(
+                    "group flex flex-col gap-2 rounded-xl border-2 p-2.5 text-left transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+                    theme === value
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:border-border/80 hover:bg-muted/40"
+                  )}
+                >
+                  {preview}
+                  <div className="flex items-center justify-between px-0.5">
+                    <span
+                      className={cn(
+                        "flex items-center gap-1.5 text-xs font-medium",
+                        theme === value ? "text-primary" : "text-muted-foreground"
+                      )}
+                    >
+                      <Icon className="size-3.5" />
+                      {label}
+                    </span>
+                    {theme === value && <Check className="size-3.5 text-primary" />}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="flex flex-col gap-3">
+        <Card>
+          <CardHeader>
             <CardTitle>{m.settings_inbox_title()}</CardTitle>
             <CardDescription>{m.settings_inbox_description()}</CardDescription>
           </CardHeader>
@@ -214,53 +261,6 @@ function SettingsPage() {
                       {label}
                     </span>
                     {inboxView === value && <Check className="size-3.5 text-primary" />}
-                  </div>
-                </button>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="flex flex-col gap-3">
-        <Card>
-          <CardHeader>
-            <CardTitle>{m.settings_theme_title()}</CardTitle>
-            <CardDescription>{m.settings_theme_description()}</CardDescription>
-          </CardHeader>
-          <CardContent className="pt-1">
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
-              {(
-                [
-                  { value: "light", label: m.settings_theme_light(), icon: Sun, preview: <LightPreview /> },
-                  { value: "system", label: m.settings_theme_system(), icon: Monitor, preview: <SystemPreview /> },
-                  { value: "dark", label: m.settings_theme_dark(), icon: Moon, preview: <DarkPreview /> },
-                ] as const
-              ).map(({ value, label, icon: Icon, preview }) => (
-                <button
-                  key={value}
-                  type="button"
-                  onClick={() => setTheme(value)}
-                  aria-pressed={theme === value}
-                  className={cn(
-                    "group flex flex-col gap-2 rounded-xl border-2 p-2.5 text-left transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
-                    theme === value
-                      ? "border-primary bg-primary/5"
-                      : "border-border hover:border-border/80 hover:bg-muted/40"
-                  )}
-                >
-                  {preview}
-                  <div className="flex items-center justify-between px-0.5">
-                    <span
-                      className={cn(
-                        "flex items-center gap-1.5 text-xs font-medium",
-                        theme === value ? "text-primary" : "text-muted-foreground"
-                      )}
-                    >
-                      <Icon className="size-3.5" />
-                      {label}
-                    </span>
-                    {theme === value && <Check className="size-3.5 text-primary" />}
                   </div>
                 </button>
               ))}

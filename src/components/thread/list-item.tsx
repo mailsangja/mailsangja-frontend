@@ -59,10 +59,10 @@ function ThreadAttachmentChips({ attachments }: { attachments: InboxThreadSummar
       {attachments.slice(0, 3).map((attachment) => (
         <span
           key={attachment.id}
-          className="flex min-w-0 shrink items-center gap-1 rounded-md border bg-transparent px-2 py-1 text-xs text-muted-foreground"
+          className="flex min-w-0 shrink items-center gap-1 rounded-md border bg-transparent px-3 py-1.5 text-xs text-muted-foreground"
         >
           <Paperclip className="size-3 shrink-0" />
-          <span className="min-w-0 truncate">{attachment.filename}</span>
+          <span className="text-md min-w-0 truncate">{attachment.filename}</span>
         </span>
       ))}
       {attachments.length > 3 ? (
@@ -117,6 +117,11 @@ function ThreadListItemContent({
           <Checkbox checked={isChecked} onCheckedChange={onToggleCheck} aria-label={m.thread_select_mail()} />
         </div>
 
+        <Star
+          className={cn("size-4 shrink-0", thread.star ? "fill-primary text-primary" : "text-muted-foreground/40")}
+          aria-label={thread.star ? m.message_starred() : undefined}
+        />
+
         <span
           className={cn(
             "flex min-w-0 items-center gap-2 text-sm font-medium",
@@ -160,39 +165,20 @@ function ThreadListItemContent({
             {thread.latestSubject || m.message_no_subject()}
           </span>
 
-          {thread.star ? (
-            <Star
-              className="hidden size-4 shrink-0 fill-primary text-primary md:block"
-              aria-label={m.message_starred()}
-            />
-          ) : null}
-
           {renderTime("hidden md:flex")}
         </div>
 
         <div className="flex min-w-0 flex-col gap-2 md:flex-row md:items-center">
           <span className="line-clamp-1 min-w-0 text-sm text-muted-foreground md:flex-1">{thread.snippet}</span>
 
-          {thread.star || hasLabels ? (
-            <span className="flex w-full min-w-0 items-center gap-1.5 md:w-auto md:shrink-0 md:justify-end">
-              {hasLabels ? (
-                <span className="flex min-w-0 flex-1 items-center justify-start gap-1.5 md:flex-none md:justify-end">
-                  <LabelChipList
-                    labels={thread.labels}
-                    labelsColorMap={labelsColorMap}
-                    hideMissingLabels
-                    className="max-w-48 shrink-0 truncate"
-                  />
-                </span>
-              ) : (
-                <span className="min-w-0 flex-1 md:hidden" />
-              )}
-              {thread.star ? (
-                <Star
-                  className="ml-auto size-4 shrink-0 fill-primary text-primary md:hidden"
-                  aria-label={m.message_starred()}
-                />
-              ) : null}
+          {hasLabels ? (
+            <span className="flex min-w-0 items-center justify-start gap-1.5 md:shrink-0 md:justify-end">
+              <LabelChipList
+                labels={thread.labels}
+                labelsColorMap={labelsColorMap}
+                hideMissingLabels
+                className="max-w-48 shrink-0 truncate"
+              />
             </span>
           ) : null}
         </div>
@@ -233,6 +219,11 @@ function ThreadListItemSingleLine({
         >
           <Checkbox checked={isChecked} onCheckedChange={onToggleCheck} aria-label={m.thread_select_mail()} />
         </div>
+
+        <Star
+          className={cn("size-4 shrink-0", thread.star ? "fill-primary text-primary" : "text-muted-foreground/40")}
+          aria-label={thread.star ? m.message_starred() : undefined}
+        />
 
         <Tooltip>
           <TooltipTrigger
@@ -279,10 +270,6 @@ function ThreadListItemSingleLine({
         <span className="hidden min-w-0 flex-1 truncate text-sm text-muted-foreground md:block">{thread.snippet}</span>
 
         <div className="ml-auto flex shrink-0 items-center gap-1.5">
-          {thread.star ? (
-            <Star className="size-3.5 fill-primary text-primary" aria-label={m.message_starred()} />
-          ) : null}
-
           <Tooltip>
             <TooltipTrigger render={<span className="text-xs text-muted-foreground" />}>
               {formatRelativeDate(thread.lastMessageAt)}
