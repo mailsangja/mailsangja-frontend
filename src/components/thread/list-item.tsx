@@ -1,10 +1,12 @@
-import { useEffect, useRef } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { Star } from "lucide-react"
 
 import { AttachmentDownloadChip } from "@/components/attachment/download-chip"
 import { LabelChipList, type LabelChipMap } from "@/components/label/label-chip"
 import { MailAccountIcon } from "@/components/mail-account-icon"
+import { ThreadPreviewPopoverContent } from "@/components/thread/preview-popover"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Popover } from "@/components/ui/popover"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { formatFullDateTime, formatRelativeDate } from "@/lib/date"
@@ -22,6 +24,7 @@ interface ThreadListItemProps {
   account?: MailAccount
   labelsColorMap: LabelChipMap
   view?: "single" | "double"
+  previewEnabled?: boolean
   onSelect: () => void
   onToggleCheck: () => void
 }
@@ -76,6 +79,9 @@ function ThreadListItemContent({
   participantLabel,
   labelsColorMap,
   onToggleCheck,
+  onHoverStart,
+  onHoverEnd,
+  onHoverMove,
 }: {
   thread: InboxThreadSummary
   isUnread: boolean
@@ -85,6 +91,9 @@ function ThreadListItemContent({
   participantLabel: string
   labelsColorMap: LabelChipMap
   onToggleCheck: () => void
+  onHoverStart?: React.MouseEventHandler<HTMLDivElement>
+  onHoverEnd?: React.MouseEventHandler<HTMLDivElement>
+  onHoverMove?: React.MouseEventHandler<HTMLDivElement>
 }) {
   const showThreadCount = thread.messageCount > 1
   const hasLabels = thread.labels.length > 0
@@ -149,7 +158,12 @@ function ThreadListItemContent({
         {renderTime("ml-auto md:hidden")}
       </div>
 
-      <div className="flex min-w-0 flex-1 flex-col gap-1">
+      <div
+        className="flex min-w-0 flex-1 flex-col gap-1"
+        onMouseEnter={onHoverStart}
+        onMouseLeave={onHoverEnd}
+        onMouseMove={onHoverMove}
+      >
         <div className="flex w-full min-w-0 items-center gap-2">
           <span
             className={cn(
@@ -193,6 +207,9 @@ function ThreadListItemSingleLine({
   participantLabel,
   labelsColorMap,
   onToggleCheck,
+  onHoverStart,
+  onHoverEnd,
+  onHoverMove,
 }: {
   thread: InboxThreadSummary
   isUnread: boolean
@@ -202,6 +219,9 @@ function ThreadListItemSingleLine({
   participantLabel: string
   labelsColorMap: LabelChipMap
   onToggleCheck: () => void
+  onHoverStart?: React.MouseEventHandler<HTMLDivElement>
+  onHoverEnd?: React.MouseEventHandler<HTMLDivElement>
+  onHoverMove?: React.MouseEventHandler<HTMLDivElement>
 }) {
   const showThreadCount = thread.messageCount > 1
   const hasLabels = thread.labels.length > 0
@@ -254,31 +274,40 @@ function ThreadListItemSingleLine({
           </TooltipContent>
         </Tooltip>
 
-        <span
-          className={cn(
-            "min-w-0 shrink truncate text-sm",
-            isUnread ? "font-semibold text-foreground" : "font-medium text-muted-foreground"
-          )}
+        <div
+          className="flex min-w-0 flex-1 items-center gap-2.5 overflow-hidden"
+          onMouseEnter={onHoverStart}
+          onMouseLeave={onHoverEnd}
+          onMouseMove={onHoverMove}
         >
-          {thread.latestSubject || m.message_no_subject()}
-        </span>
-
-        <span className="mx-1 hidden shrink-0 text-muted-foreground/40 md:inline">—</span>
-
-        <span className="hidden min-w-0 flex-1 truncate text-sm text-muted-foreground md:block">{thread.snippet}</span>
-
-        {hasLabels ? (
-          <span className="flex shrink-0 items-center gap-1.5">
-            <LabelChipList
-              labels={thread.labels}
-              labelsColorMap={labelsColorMap}
-              hideMissingLabels
-              className="max-w-36 shrink-0 truncate"
-            />
+          <span
+            className={cn(
+              "min-w-0 shrink truncate text-sm",
+              isUnread ? "font-semibold text-foreground" : "font-medium text-muted-foreground"
+            )}
+          >
+            {thread.latestSubject || m.message_no_subject()}
           </span>
-        ) : null}
 
-        <div className="ml-auto flex shrink-0 items-center gap-1.5">
+          <span className="mx-1 hidden shrink-0 text-muted-foreground/40 md:inline">—</span>
+
+          <span className="hidden min-w-0 flex-1 truncate text-sm text-muted-foreground md:block">
+            {thread.snippet}
+          </span>
+
+          {hasLabels ? (
+            <span className="flex shrink-0 items-center gap-1.5">
+              <LabelChipList
+                labels={thread.labels}
+                labelsColorMap={labelsColorMap}
+                hideMissingLabels
+                className="max-w-36 shrink-0 truncate"
+              />
+            </span>
+          ) : null}
+        </div>
+
+        <div className="flex shrink-0 items-center gap-1.5">
           <Tooltip>
             <TooltipTrigger render={<span className="text-xs text-muted-foreground" />}>
               {formatRelativeDate(thread.lastMessageAt)}
@@ -313,12 +342,20 @@ export function ThreadListItem({
   account,
   labelsColorMap,
   view = "double",
+  previewEnabled = false,
   onSelect,
   onToggleCheck,
 }: ThreadListItemProps) {
   const isMobile = useIsMobile()
   const longPressTimerRef = useRef<ReturnType<typeof window.setTimeout> | null>(null)
+  const hoverTimerRef = useRef<ReturnType<typeof window.setTimeout> | null>(null)
   const ignoreNextClickRef = useRef(false)
+  const mousePositionRef = useRef({ x: 0, y: 0 })
+  const virtualAnchor = useMemo(
+    () => ({ getBoundingClientRect: () => new DOMRect(mousePositionRef.current.x, mousePositionRef.current.y, 0, 0) }),
+    []
+  )
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false)
   const isUnread = !thread.isRead
   const participantLabel = getMailAddressLabel(thread.participant)
   const rowClassName = cn(
@@ -335,6 +372,25 @@ export function ThreadListItem({
       window.clearTimeout(longPressTimerRef.current)
       longPressTimerRef.current = null
     }
+  }
+
+  const handleMouseEnter = () => {
+    if (isMobile || !previewEnabled) return
+    hoverTimerRef.current = window.setTimeout(() => {
+      setIsPreviewOpen(true)
+    }, 600)
+  }
+
+  const handleMouseLeave = () => {
+    if (hoverTimerRef.current !== null) {
+      window.clearTimeout(hoverTimerRef.current)
+      hoverTimerRef.current = null
+    }
+    setIsPreviewOpen(false)
+  }
+
+  const handleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
+    mousePositionRef.current = { x: event.clientX, y: event.clientY }
   }
 
   const startLongPressSelection = (event: React.PointerEvent<HTMLDivElement>) => {
@@ -363,6 +419,9 @@ export function ThreadListItem({
       if (longPressTimerRef.current !== null) {
         window.clearTimeout(longPressTimerRef.current)
       }
+      if (hoverTimerRef.current !== null) {
+        window.clearTimeout(hoverTimerRef.current)
+      }
     }
   }, [])
 
@@ -387,6 +446,7 @@ export function ThreadListItem({
             return
           }
 
+          setIsPreviewOpen(false)
           handleRowAction()
         }}
         onKeyDown={(event) => {
@@ -419,6 +479,9 @@ export function ThreadListItem({
             participantLabel={participantLabel}
             labelsColorMap={labelsColorMap}
             onToggleCheck={onToggleCheck}
+            onHoverStart={handleMouseEnter}
+            onHoverEnd={handleMouseLeave}
+            onHoverMove={handleMouseMove}
           />
         ) : (
           <ThreadListItemContent
@@ -430,11 +493,26 @@ export function ThreadListItem({
             participantLabel={participantLabel}
             labelsColorMap={labelsColorMap}
             onToggleCheck={onToggleCheck}
+            onHoverStart={handleMouseEnter}
+            onHoverEnd={handleMouseLeave}
+            onHoverMove={handleMouseMove}
           />
         )}
       </div>
     )
   }
 
-  return renderRow()
+  return (
+    <Popover open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
+      {renderRow()}
+      {previewEnabled && !isMobile && (
+        <ThreadPreviewPopoverContent
+          thread={thread}
+          account={account}
+          labelsColorMap={labelsColorMap}
+          anchor={virtualAnchor}
+        />
+      )}
+    </Popover>
+  )
 }

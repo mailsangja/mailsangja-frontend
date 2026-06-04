@@ -4,7 +4,7 @@ import { toast } from "sonner"
 
 import { MailErrorState } from "@/components/mail-error-state"
 import { ThreadListItem } from "@/components/thread/list-item"
-import { useInboxView } from "@/hooks/use-inbox-view"
+import { useInboxView, useMailPreview } from "@/hooks/use-local-storage-setting"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { ThreadListSkeletonRows } from "@/components/thread/list-skeleton-rows"
 import { ThreadListToolbar } from "@/components/thread/list-toolbar"
@@ -79,6 +79,7 @@ export function ThreadList({
   )
   const isSelectionMode = selectedIds.size > 0
   const { view: storedView } = useInboxView()
+  const { preview: mailPreview } = useMailPreview()
   const isMobile = useIsMobile()
   const inboxView = isMobile ? "double" : storedView
 
@@ -179,6 +180,7 @@ export function ThreadList({
                     account={getAccount(thread.accountId)}
                     labelsColorMap={labelsColorMap}
                     view={inboxView}
+                    previewEnabled={mailPreview === "enabled"}
                     onSelect={() => onSelectThread(thread.threadId)}
                     onToggleCheck={() => toggleSelected(thread.threadId)}
                   />

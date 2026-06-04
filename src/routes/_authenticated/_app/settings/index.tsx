@@ -1,4 +1,3 @@
-import { useState } from "react"
 import { Link, createFileRoute } from "@tanstack/react-router"
 import {
   Check,
@@ -22,7 +21,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
 import { m } from "@/paraglide/messages"
-import { useInboxView } from "@/hooks/use-inbox-view"
+import { useInboxView, useMailPreview } from "@/hooks/use-local-storage-setting"
 import { useAiUsages } from "@/queries/ai"
 import { useUser } from "@/queries/user"
 import { getAiUsageTypeLabel } from "@/types/ai"
@@ -42,7 +41,7 @@ function SettingsPage() {
   } = useAiUsages()
   const { theme, setTheme } = useTheme()
   const { view: inboxView, setView: setInboxView } = useInboxView()
-  const [hoverAction, setHoverAction] = useState<"enabled" | "disabled">("enabled")
+  const { preview: hoverAction, setPreview: setHoverAction } = useMailPreview()
 
   return (
     <>
@@ -239,7 +238,6 @@ function SettingsPage() {
                 <button
                   key={value}
                   type="button"
-                  // TODO: Persist this preference when the settings API is ready.
                   onClick={() => setInboxView(value)}
                   aria-pressed={inboxView === value}
                   className={cn(
