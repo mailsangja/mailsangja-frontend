@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Archive, ArrowLeft, Copy, Forward, MailOpen, Mail, Reply, Trash2 } from "lucide-react"
+import { Archive, ArrowLeft, ChevronsRight, Copy, Forward, MailOpen, Mail, Reply, Trash2 } from "lucide-react"
 import { useNavigate } from "@tanstack/react-router"
 import { toast } from "sonner"
 
@@ -131,7 +131,8 @@ function ThreadToolbar({
     <div className="flex h-11 shrink-0 items-center justify-between gap-2 px-4">
       {onClose ? (
         <Button variant="ghost" size="icon-sm" onClick={onClose} aria-label={m.thread_back_to_list()}>
-          <ArrowLeft />
+          <ArrowLeft className="md:hidden" />
+          <ChevronsRight className="hidden md:block" />
         </Button>
       ) : (
         <span />
