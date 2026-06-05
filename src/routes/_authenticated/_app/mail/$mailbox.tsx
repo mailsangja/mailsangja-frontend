@@ -25,7 +25,7 @@ import {
   type PrimaryMailboxId,
 } from "@/types/email"
 
-export const Route = createFileRoute("/_authenticated/mail/$mailbox")({
+export const Route = createFileRoute("/_authenticated/_app/mail/$mailbox")({
   params: {
     parse: (rawParams) => {
       const mailbox = parseMailboxId(rawParams.mailbox)

@@ -14,6 +14,8 @@ interface ImportMetaEnv {
   readonly VITE_AMPLITUDE_API_KEY?: string
   readonly VITE_AMPLITUDE_SERVER_ZONE?: "US" | "EU"
   readonly VITE_ANALYTICS_ENABLED?: string
+  readonly VITE_PORTONE_STORE_ID?: string
+  readonly VITE_PORTONE_KAKAOPAY_CHANNEL_KEY?: string
 }
 
 interface ImportMeta {

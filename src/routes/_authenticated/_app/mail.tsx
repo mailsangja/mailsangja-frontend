@@ -1,6 +1,6 @@
 import { Outlet, createFileRoute } from "@tanstack/react-router"
 
-export const Route = createFileRoute("/_authenticated/mail")({
+export const Route = createFileRoute("/_authenticated/_app/mail")({
   component: MailLayout,
 })
 

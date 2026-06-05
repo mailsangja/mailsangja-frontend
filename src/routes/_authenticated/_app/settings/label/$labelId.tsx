@@ -38,7 +38,7 @@ import {
   type UpdateLabelPayload,
 } from "@/types/label"
 
-export const Route = createFileRoute("/_authenticated/settings/label/$labelId")({
+export const Route = createFileRoute("/_authenticated/_app/settings/label/$labelId")({
   component: LabelDetailPage,
 })
 
