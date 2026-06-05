@@ -1,12 +1,14 @@
 import { Link, createFileRoute } from "@tanstack/react-router"
 import {
   Check,
+  Layers,
   LayoutList,
   List,
   Monitor,
   Moon,
   MousePointer,
   MousePointerClick,
+  Paperclip,
   RefreshCw,
   Sparkles,
   Sun,
@@ -21,7 +23,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
 import { m } from "@/paraglide/messages"
-import { useInboxView, useMailPreview } from "@/hooks/use-local-storage-setting"
+import { useAttachmentDisplay, useInboxView, useMailPreview } from "@/hooks/use-local-storage-setting"
 import { useAiUsages } from "@/queries/ai"
 import { useUser } from "@/queries/user"
 import { getAiUsageTypeLabel } from "@/types/ai"
@@ -42,6 +44,7 @@ function SettingsPage() {
   const { theme, setTheme } = useTheme()
   const { view: inboxView, setView: setInboxView } = useInboxView()
   const { preview: hoverAction, setPreview: setHoverAction } = useMailPreview()
+  const { display: attachmentDisplay, setDisplay: setAttachmentDisplay } = useAttachmentDisplay()
 
   return (
     <>
@@ -303,6 +306,49 @@ function SettingsPage() {
                     {label}
                   </span>
                   {hoverAction === value && <Check className="size-4 text-primary" />}
+                </button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="flex flex-col gap-3">
+        <Card>
+          <CardHeader>
+            <CardTitle>{m.settings_attachment_display_title()}</CardTitle>
+            <CardDescription>{m.settings_attachment_display_description()}</CardDescription>
+          </CardHeader>
+          <CardContent className="pt-1">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {(
+                [
+                  { value: "inline", label: m.settings_attachment_display_inline(), icon: Layers },
+                  { value: "icon", label: m.settings_attachment_display_icon(), icon: Paperclip },
+                ] as const
+              ).map(({ value, label, icon: Icon }) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setAttachmentDisplay(value)}
+                  aria-pressed={attachmentDisplay === value}
+                  className={cn(
+                    "flex items-center justify-between rounded-xl border-2 px-3 py-2 text-left transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+                    attachmentDisplay === value
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:border-border/80 hover:bg-muted/40"
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "flex items-center gap-2 text-sm font-medium",
+                      attachmentDisplay === value ? "text-primary" : "text-muted-foreground"
+                    )}
+                  >
+                    <Icon className="size-4" />
+                    {label}
+                  </span>
+                  {attachmentDisplay === value && <Check className="size-4 text-primary" />}
                 </button>
               ))}
             </div>

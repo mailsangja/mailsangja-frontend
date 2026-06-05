@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from "react"
-import { Star } from "lucide-react"
+import { Paperclip, Star } from "lucide-react"
 
 import { AttachmentDownloadChip } from "@/components/attachment/download-chip"
 import { LabelChipList, type LabelChipMap } from "@/components/label/label-chip"
@@ -25,6 +25,7 @@ interface ThreadListItemProps {
   labelsColorMap: LabelChipMap
   view?: "single" | "double"
   previewEnabled?: boolean
+  attachmentDisplay?: "inline" | "icon"
   onSelect: () => void
   onToggleCheck: () => void
 }
@@ -78,6 +79,7 @@ function ThreadListItemContent({
   account,
   participantLabel,
   labelsColorMap,
+  attachmentDisplay = "inline",
   onToggleCheck,
   onHoverStart,
   onHoverEnd,
@@ -90,6 +92,7 @@ function ThreadListItemContent({
   account?: MailAccount
   participantLabel: string
   labelsColorMap: LabelChipMap
+  attachmentDisplay?: "inline" | "icon"
   onToggleCheck: () => void
   onHoverStart?: React.MouseEventHandler<HTMLDivElement>
   onHoverEnd?: React.MouseEventHandler<HTMLDivElement>
@@ -112,7 +115,7 @@ function ThreadListItemContent({
 
   return (
     <>
-      <div className="flex w-full min-w-0 items-center gap-3.5 md:w-48 md:shrink-0">
+      <div className="flex w-full min-w-0 items-center gap-3.5 md:w-60 md:shrink-0">
         <div
           className={cn("mr-0.5", isSelectionMode ? "flex" : "hidden", "md:flex")}
           onClick={(event) => event.stopPropagation()}
@@ -178,6 +181,10 @@ function ThreadListItemContent({
               {thread.latestSubject || m.message_no_subject()}
             </span>
 
+            {hasAttachments && attachmentDisplay === "icon" && (
+              <Paperclip className="hidden size-3.5 shrink-0 text-muted-foreground md:block" />
+            )}
+
             {renderTime("hidden md:flex")}
           </div>
 
@@ -196,7 +203,9 @@ function ThreadListItemContent({
             ) : null}
           </div>
 
-          {hasAttachments ? <ThreadAttachmentChips attachments={thread.attachments} /> : null}
+          {hasAttachments && attachmentDisplay !== "icon" ? (
+            <ThreadAttachmentChips attachments={thread.attachments} />
+          ) : null}
         </div>
 
         <Star
@@ -218,6 +227,7 @@ function ThreadListItemSingleLine({
   account,
   participantLabel,
   labelsColorMap,
+  attachmentDisplay = "inline",
   onToggleCheck,
   onHoverStart,
   onHoverEnd,
@@ -229,6 +239,7 @@ function ThreadListItemSingleLine({
   account?: MailAccount
   participantLabel: string
   labelsColorMap: LabelChipMap
+  attachmentDisplay?: "inline" | "icon"
   onToggleCheck: () => void
   onHoverStart?: React.MouseEventHandler<HTMLDivElement>
   onHoverEnd?: React.MouseEventHandler<HTMLDivElement>
@@ -303,6 +314,10 @@ function ThreadListItemSingleLine({
             {thread.latestSubject || m.message_no_subject()}
           </span>
 
+          {hasAttachments && attachmentDisplay === "icon" && (
+            <Paperclip className="size-3.5 shrink-0 text-muted-foreground" />
+          )}
+
           <span className="mx-1 shrink-0 text-muted-foreground/40">—</span>
 
           <span className="min-w-0 flex-1 truncate text-sm text-muted-foreground">{thread.snippet}</span>
@@ -329,7 +344,7 @@ function ThreadListItemSingleLine({
         </div>
       </div>
 
-      {hasAttachments ? (
+      {hasAttachments && attachmentDisplay !== "icon" ? (
         <div className="flex min-w-0 items-center">
           <div className="flex shrink-0 items-center gap-3.5" aria-hidden="true">
             <div className="flex size-4 shrink-0" />
@@ -355,6 +370,7 @@ export function ThreadListItem({
   labelsColorMap,
   view = "double",
   previewEnabled = false,
+  attachmentDisplay = "inline",
   onSelect,
   onToggleCheck,
 }: ThreadListItemProps) {
@@ -489,6 +505,7 @@ export function ThreadListItem({
             account={account}
             participantLabel={participantLabel}
             labelsColorMap={labelsColorMap}
+            attachmentDisplay={attachmentDisplay}
             onToggleCheck={onToggleCheck}
             onHoverStart={handleMouseEnter}
             onHoverEnd={handleMouseLeave}
@@ -503,6 +520,7 @@ export function ThreadListItem({
             account={account}
             participantLabel={participantLabel}
             labelsColorMap={labelsColorMap}
+            attachmentDisplay={attachmentDisplay}
             onToggleCheck={onToggleCheck}
             onHoverStart={handleMouseEnter}
             onHoverEnd={handleMouseLeave}

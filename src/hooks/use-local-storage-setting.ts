@@ -58,3 +58,11 @@ export function useMailPreview() {
   const [preview, setPreview] = useLocalStorageSetting("mail-preview", MAIL_PREVIEW_VALID, "enabled")
   return { preview, setPreview }
 }
+
+type AttachmentDisplay = "inline" | "icon"
+const ATTACHMENT_DISPLAY_VALID: readonly AttachmentDisplay[] = ["inline", "icon"]
+
+export function useAttachmentDisplay() {
+  const [display, setDisplay] = useLocalStorageSetting("attachment-display", ATTACHMENT_DISPLAY_VALID, "inline")
+  return { display, setDisplay }
+}
