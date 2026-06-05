@@ -122,7 +122,10 @@ function ThreadListItemContent({
         </div>
 
         <Star
-          className={cn("size-4 shrink-0", thread.star ? "fill-primary text-primary" : "text-muted-foreground/40")}
+          className={cn(
+            "hidden size-4 shrink-0 md:block",
+            thread.star ? "fill-primary text-primary" : "text-muted-foreground/40"
+          )}
           aria-label={thread.star ? m.message_starred() : undefined}
         />
 
@@ -159,40 +162,50 @@ function ThreadListItemContent({
       </div>
 
       <div
-        className="flex min-w-0 flex-1 flex-col gap-1"
+        className="flex min-w-0 flex-1 gap-2 md:flex-col"
         onMouseEnter={onHoverStart}
         onMouseLeave={onHoverEnd}
         onMouseMove={onHoverMove}
       >
-        <div className="flex w-full min-w-0 items-center gap-2">
-          <span
-            className={cn(
-              "min-w-0 flex-1 truncate text-sm",
-              isUnread ? "font-semibold text-foreground" : "font-medium text-muted-foreground"
-            )}
-          >
-            {thread.latestSubject || m.message_no_subject()}
-          </span>
-
-          {renderTime("hidden md:flex")}
-        </div>
-
-        <div className="flex min-w-0 flex-col gap-2 md:flex-row md:items-center">
-          <span className="line-clamp-1 min-w-0 text-sm text-muted-foreground md:flex-1">{thread.snippet}</span>
-
-          {hasLabels ? (
-            <span className="flex min-w-0 items-center justify-start gap-1.5 md:shrink-0 md:justify-end">
-              <LabelChipList
-                labels={thread.labels}
-                labelsColorMap={labelsColorMap}
-                hideMissingLabels
-                className="max-w-48 shrink-0 truncate"
-              />
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
+          <div className="flex w-full min-w-0 items-center gap-2">
+            <span
+              className={cn(
+                "min-w-0 flex-1 truncate text-sm",
+                isUnread ? "font-semibold text-foreground" : "font-medium text-muted-foreground"
+              )}
+            >
+              {thread.latestSubject || m.message_no_subject()}
             </span>
-          ) : null}
+
+            {renderTime("hidden md:flex")}
+          </div>
+
+          <div className="flex min-w-0 flex-col gap-2 md:flex-row md:items-center">
+            <span className="line-clamp-1 min-w-0 text-sm text-muted-foreground md:flex-1">{thread.snippet}</span>
+
+            {hasLabels ? (
+              <span className="flex min-w-0 items-center justify-start gap-1.5 md:shrink-0 md:justify-end">
+                <LabelChipList
+                  labels={thread.labels}
+                  labelsColorMap={labelsColorMap}
+                  hideMissingLabels
+                  className="max-w-48 shrink-0 truncate"
+                />
+              </span>
+            ) : null}
+          </div>
+
+          {hasAttachments ? <ThreadAttachmentChips attachments={thread.attachments} /> : null}
         </div>
 
-        {hasAttachments ? <ThreadAttachmentChips attachments={thread.attachments} /> : null}
+        <Star
+          className={cn(
+            "size-4 shrink-0 self-end md:hidden",
+            thread.star ? "fill-primary text-primary" : "text-muted-foreground/40"
+          )}
+          aria-label={thread.star ? m.message_starred() : undefined}
+        />
       </div>
     </>
   )
@@ -202,7 +215,6 @@ function ThreadListItemSingleLine({
   thread,
   isUnread,
   isChecked,
-  isSelectionMode,
   account,
   participantLabel,
   labelsColorMap,
@@ -214,7 +226,6 @@ function ThreadListItemSingleLine({
   thread: InboxThreadSummary
   isUnread: boolean
   isChecked: boolean
-  isSelectionMode: boolean
   account?: MailAccount
   participantLabel: string
   labelsColorMap: LabelChipMap
@@ -231,7 +242,7 @@ function ThreadListItemSingleLine({
     <div className="flex w-full min-w-0 flex-col gap-1">
       <div className="flex w-full min-w-0 items-center gap-3.5">
         <div
-          className={cn("shrink-0", isSelectionMode ? "flex" : "hidden", "md:flex")}
+          className="flex shrink-0"
           onClick={(event) => event.stopPropagation()}
           onKeyDown={(event) => event.stopPropagation()}
         >
@@ -261,7 +272,7 @@ function ThreadListItemSingleLine({
             render={
               <span
                 className={cn(
-                  "w-36 shrink-0 truncate text-sm font-medium md:w-42",
+                  "w-42 shrink-0 truncate text-sm font-medium",
                   isUnread ? "text-foreground" : "text-muted-foreground"
                 )}
               />
@@ -292,11 +303,9 @@ function ThreadListItemSingleLine({
             {thread.latestSubject || m.message_no_subject()}
           </span>
 
-          <span className="mx-1 hidden shrink-0 text-muted-foreground/40 md:inline">—</span>
+          <span className="mx-1 shrink-0 text-muted-foreground/40">—</span>
 
-          <span className="hidden min-w-0 flex-1 truncate text-sm text-muted-foreground md:block">
-            {thread.snippet}
-          </span>
+          <span className="min-w-0 flex-1 truncate text-sm text-muted-foreground">{thread.snippet}</span>
 
           {hasLabels ? (
             <span className="flex shrink-0 items-center gap-1.5">
@@ -323,10 +332,10 @@ function ThreadListItemSingleLine({
       {hasAttachments ? (
         <div className="flex min-w-0 items-center">
           <div className="flex shrink-0 items-center gap-3.5" aria-hidden="true">
-            <div className={cn("size-4 shrink-0", isSelectionMode ? "flex" : "hidden", "md:flex")} />
+            <div className="flex size-4 shrink-0" />
             <div className="size-4 shrink-0" />
             <div className="size-5 shrink-0" />
-            <div className={cn("w-36 shrink-0 md:w-45")} />
+            <div className="w-45 shrink-0" />
           </div>
           <div className="ml-3.5 min-w-0 flex-1">
             <ThreadAttachmentChips attachments={thread.attachments} />
@@ -477,7 +486,6 @@ export function ThreadListItem({
             thread={thread}
             isUnread={isUnread}
             isChecked={isChecked}
-            isSelectionMode={isSelectionMode}
             account={account}
             participantLabel={participantLabel}
             labelsColorMap={labelsColorMap}
