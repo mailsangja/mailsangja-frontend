@@ -1,4 +1,5 @@
 import { Mail, MailOpen, RefreshCw, Trash2 } from "lucide-react"
+import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
@@ -49,12 +50,14 @@ export function ThreadListToolbar({
 
   if (selectedCount > 0) {
     return (
-      <div className="flex h-11 shrink-0 items-center gap-2 border-b bg-accent/40 px-3">
+      <div className="ml-0.5 flex h-11 shrink-0 items-center gap-2 border-b bg-accent/40 px-3">
         <Checkbox
           checked={isAllSelected}
           indeterminate={isIndeterminate}
           onCheckedChange={(checked) => {
-            if (checked) {
+            if (isIndeterminate) {
+              onClearSelection()
+            } else if (checked) {
               onSelectAll()
             } else {
               onClearSelection()
@@ -91,8 +94,15 @@ export function ThreadListToolbar({
   }
 
   return (
-    <div className="flex h-11 shrink-0 items-center gap-3 border-b px-3">
-      <Checkbox checked={false} onCheckedChange={() => onSelectAll()} aria-label={m.mail_select_all()} />
+    <div className="ml-0.5 flex h-11 shrink-0 items-center gap-3 border-b px-3">
+      <Checkbox
+        checked={false}
+        onCheckedChange={() => {
+          onSelectAll()
+          toast.info(m.mail_selected_count({ count: formatNumber(currentCount) }))
+        }}
+        aria-label={m.mail_select_all()}
+      />
       <h2 className="min-w-0 truncate text-sm font-medium">{mailboxName}</h2>
       <span className="hidden rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground sm:inline-flex">
         {m.mail_total_count({ count: formatNumber(totalCount) })}

@@ -1,35 +1,23 @@
 import { Paperclip } from "lucide-react"
 
-import { LabelChipList, type LabelChipMap } from "@/components/label/label-chip"
-import { MailAccountIcon } from "@/components/mail-account-icon"
 import { PopoverContent } from "@/components/ui/popover"
 import { formatFullDateTime } from "@/lib/date"
 import { getMailAddressLabel } from "@/lib/mail-address"
 import { m } from "@/paraglide/messages"
 import type { InboxThreadSummary } from "@/types/email"
-import type { MailAccount } from "@/types/mail-account"
 
 interface ThreadPreviewPopoverContentProps {
   thread: InboxThreadSummary
-  account?: MailAccount
-  labelsColorMap: LabelChipMap
   anchor: { getBoundingClientRect: () => DOMRect }
 }
 
-export function ThreadPreviewPopoverContent({
-  thread,
-  account,
-  labelsColorMap,
-  anchor,
-}: ThreadPreviewPopoverContentProps) {
+export function ThreadPreviewPopoverContent({ thread, anchor }: ThreadPreviewPopoverContentProps) {
   const participantLabel = getMailAddressLabel(thread.participant)
   const hasNameAndEmail = !!thread.participant.name?.trim() && !!thread.participant.email.trim()
-  const hasFooter = thread.labels.length > 0 || thread.attachments.length > 0
 
   return (
     <PopoverContent anchor={anchor} side="right" align="start" sideOffset={8} className="w-80 gap-3 p-3">
       <div className="flex items-start gap-2">
-        <MailAccountIcon icon={account?.icon} color={account?.color} className="mt-0.5 shrink-0" />
         <div className="min-w-0 flex-1">
           <p className="truncate text-sm leading-tight font-medium">{participantLabel}</p>
           {hasNameAndEmail && <p className="truncate text-xs text-muted-foreground">{thread.participant.email}</p>}
@@ -46,17 +34,12 @@ export function ThreadPreviewPopoverContent({
         {thread.snippet && <p className="line-clamp-3 text-sm text-muted-foreground">{thread.snippet}</p>}
       </div>
 
-      {hasFooter && (
+      {thread.attachments.length > 0 && (
         <div className="flex flex-wrap items-center gap-1.5 pt-0.5">
-          {thread.labels.length > 0 && (
-            <LabelChipList labels={thread.labels} labelsColorMap={labelsColorMap} hideMissingLabels />
-          )}
-          {thread.attachments.length > 0 && (
-            <span className="flex items-center gap-1 text-xs text-muted-foreground">
-              <Paperclip className="size-3" />
-              {m.message_attachment_count({ count: thread.attachments.length })}
-            </span>
-          )}
+          <span className="flex items-center gap-1 text-xs text-muted-foreground">
+            <Paperclip className="size-3" />
+            {m.message_attachment_count({ count: thread.attachments.length })}
+          </span>
         </div>
       )}
     </PopoverContent>

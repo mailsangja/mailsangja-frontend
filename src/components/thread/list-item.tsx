@@ -112,7 +112,7 @@ function ThreadListItemContent({
 
   return (
     <>
-      <div className="flex w-full min-w-0 items-center gap-2.5 md:w-48 md:shrink-0">
+      <div className="flex w-full min-w-0 items-center gap-3.5 md:w-48 md:shrink-0">
         <div
           className={cn("mr-0.5", isSelectionMode ? "flex" : "hidden", "md:flex")}
           onClick={(event) => event.stopPropagation()}
@@ -229,7 +229,7 @@ function ThreadListItemSingleLine({
 
   return (
     <div className="flex w-full min-w-0 flex-col gap-1">
-      <div className="flex w-full min-w-0 items-center gap-2.5">
+      <div className="flex w-full min-w-0 items-center gap-3.5">
         <div
           className={cn("shrink-0", isSelectionMode ? "flex" : "hidden", "md:flex")}
           onClick={(event) => event.stopPropagation()}
@@ -239,7 +239,10 @@ function ThreadListItemSingleLine({
         </div>
 
         <Star
-          className={cn("size-4 shrink-0", thread.star ? "fill-primary text-primary" : "text-muted-foreground/40")}
+          className={cn(
+            "mx-1.5 size-4 shrink-0",
+            thread.star ? "fill-primary text-primary" : "text-muted-foreground/40"
+          )}
           aria-label={thread.star ? m.message_starred() : undefined}
         />
 
@@ -258,7 +261,7 @@ function ThreadListItemSingleLine({
             render={
               <span
                 className={cn(
-                  "w-28 shrink-0 truncate text-sm font-medium md:w-36",
+                  "w-36 shrink-0 truncate text-sm font-medium md:w-42",
                   isUnread ? "text-foreground" : "text-muted-foreground"
                 )}
               />
@@ -319,13 +322,13 @@ function ThreadListItemSingleLine({
 
       {hasAttachments ? (
         <div className="flex min-w-0 items-center">
-          <div className="flex shrink-0 items-center gap-2.5" aria-hidden="true">
+          <div className="flex shrink-0 items-center gap-3.5" aria-hidden="true">
             <div className={cn("size-4 shrink-0", isSelectionMode ? "flex" : "hidden", "md:flex")} />
             <div className="size-4 shrink-0" />
             <div className="size-5 shrink-0" />
-            <div className={cn("w-28 shrink-0 md:w-36")} />
+            <div className={cn("w-36 shrink-0 md:w-45")} />
           </div>
-          <div className="ml-2.5 min-w-0 flex-1">
+          <div className="ml-3.5 min-w-0 flex-1">
             <ThreadAttachmentChips attachments={thread.attachments} />
           </div>
         </div>
@@ -505,14 +508,7 @@ export function ThreadListItem({
   return (
     <Popover open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
       {renderRow()}
-      {previewEnabled && !isMobile && (
-        <ThreadPreviewPopoverContent
-          thread={thread}
-          account={account}
-          labelsColorMap={labelsColorMap}
-          anchor={virtualAnchor}
-        />
-      )}
+      {previewEnabled && !isMobile && <ThreadPreviewPopoverContent thread={thread} anchor={virtualAnchor} />}
     </Popover>
   )
 }
