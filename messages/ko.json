@@ -125,6 +125,7 @@
   "mail_total_count": "{count}개",
   "mail_filter_all": "전체",
   "mail_filter_unread": "안읽음",
+  "mail_select_all_loaded_notice": "현재 로드된 항목만 선택됩니다.",
   "mail_clear_selection": "선택 해제",
   "mail_delete_selected": "선택 삭제",
   "mail_assign_label": "라벨 지정",

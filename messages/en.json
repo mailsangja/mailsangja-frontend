@@ -125,6 +125,7 @@
   "mail_total_count": "{count}",
   "mail_filter_all": "All",
   "mail_filter_unread": "Unread",
+  "mail_select_all_loaded_notice": "Only currently loaded items are selected.",
   "mail_clear_selection": "Clear selection",
   "mail_delete_selected": "Delete selected",
   "mail_assign_label": "Assign label",

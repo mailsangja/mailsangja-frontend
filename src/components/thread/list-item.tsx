@@ -119,7 +119,7 @@ function ThreadListItemContent({
 
   return (
     <>
-      <div className="flex w-full min-w-0 items-center gap-3.5 md:w-60 md:shrink-0">
+      <div className="flex w-full min-w-0 items-center gap-3.5 md:w-72 md:shrink-0">
         <div
           className={cn("mr-0.5", isSelectionMode ? "flex" : "hidden", "md:flex")}
           onClick={(event) => event.stopPropagation()}
@@ -130,40 +130,42 @@ function ThreadListItemContent({
 
         <Star
           className={cn(
-            "hidden size-4 shrink-0 md:block",
+            "mx-1.5 hidden size-4 shrink-0 md:block",
             thread.star ? "fill-primary text-primary" : "text-muted-foreground/40"
           )}
           aria-label={thread.star ? m.message_starred() : undefined}
         />
 
-        <span
-          className={cn(
-            "flex min-w-0 items-center gap-2 text-sm font-medium",
-            "flex-1",
-            isUnread ? "text-foreground" : "text-muted-foreground"
-          )}
-        >
-          <Tooltip>
-            <TooltipTrigger
-              aria-label={m.thread_account_info()}
-              render={<MailAccountIcon icon={account?.icon} color={account?.color} />}
-            />
-            <TooltipContent side="bottom" align="start" className="max-w-72 items-start">
-              <AccountTooltipContent account={account} />
-            </TooltipContent>
-          </Tooltip>
+        <Tooltip>
+          <TooltipTrigger
+            aria-label={m.thread_account_info()}
+            render={<MailAccountIcon icon={account?.icon} color={account?.color} className="shrink-0" />}
+          />
+          <TooltipContent side="bottom" align="start" className="max-w-72 items-start">
+            <AccountTooltipContent account={account} />
+          </TooltipContent>
+        </Tooltip>
 
-          <Tooltip>
-            <TooltipTrigger render={<span className="min-w-0 truncate" />}>{participantLabel}</TooltipTrigger>
-            <TooltipContent side="bottom" align="start" className="max-w-72 items-start">
-              <SenderTooltipContent participant={thread.participant} />
-            </TooltipContent>
-          </Tooltip>
-
-          {showThreadCount ? (
-            <span className="-ml-0.5 text-xs font-normal text-muted-foreground">{thread.messageCount}</span>
-          ) : null}
-        </span>
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <span
+                className={cn(
+                  "w-42 shrink-0 truncate text-sm font-medium",
+                  isUnread ? "text-foreground" : "text-muted-foreground"
+                )}
+              />
+            }
+          >
+            {participantLabel}
+            {showThreadCount ? (
+              <span className="ml-1 text-xs font-normal text-muted-foreground">{thread.messageCount}</span>
+            ) : null}
+          </TooltipTrigger>
+          <TooltipContent side="bottom" align="start" className="max-w-72 items-start">
+            <SenderTooltipContent participant={thread.participant} />
+          </TooltipContent>
+        </Tooltip>
 
         <ThreadLastMessageTime lastMessageAt={thread.lastMessageAt} className="ml-auto md:hidden" />
       </div>

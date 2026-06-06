@@ -50,7 +50,7 @@ export function ThreadListToolbar({
 
   if (selectedCount > 0) {
     return (
-      <div className="ml-0.5 flex h-11 shrink-0 items-center gap-2 border-b bg-accent/40 px-3">
+      <div className="ml-0.5 flex h-11 shrink-0 items-center gap-3 border-b bg-accent/40 px-3">
         <Checkbox
           checked={isAllSelected}
           indeterminate={isIndeterminate}
@@ -99,7 +99,9 @@ export function ThreadListToolbar({
         checked={false}
         onCheckedChange={() => {
           onSelectAll()
-          toast.info(m.mail_selected_count({ count: formatNumber(currentCount) }))
+          toast.info(m.mail_selected_count({ count: formatNumber(currentCount) }), {
+            description: m.mail_select_all_loaded_notice(),
+          })
         }}
         aria-label={m.mail_select_all()}
       />
