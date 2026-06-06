@@ -71,20 +71,20 @@ function ThreadAttachmentChips({ attachments }: { attachments: InboxThreadSummar
   )
 }
 
-function ThreadListItemContent({
-  thread,
-  isUnread,
-  isChecked,
-  isSelectionMode,
-  account,
-  participantLabel,
-  labelsColorMap,
-  attachmentDisplay = "inline",
-  onToggleCheck,
-  onHoverStart,
-  onHoverEnd,
-  onHoverMove,
-}: {
+function ThreadLastMessageTime({ lastMessageAt, className }: { lastMessageAt: string; className?: string }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        render={<span className={cn("flex shrink-0 items-center gap-1.5 text-xs text-muted-foreground", className)} />}
+      >
+        <span>{formatRelativeDate(lastMessageAt)}</span>
+      </TooltipTrigger>
+      <TooltipContent>{formatFullDateTime(lastMessageAt)}</TooltipContent>
+    </Tooltip>
+  )
+}
+
+type ThreadListItemSubProps = {
   thread: InboxThreadSummary
   isUnread: boolean
   isChecked: boolean
@@ -97,21 +97,25 @@ function ThreadListItemContent({
   onHoverStart?: React.MouseEventHandler<HTMLDivElement>
   onHoverEnd?: React.MouseEventHandler<HTMLDivElement>
   onHoverMove?: React.MouseEventHandler<HTMLDivElement>
-}) {
+}
+
+function ThreadListItemContent({
+  thread,
+  isUnread,
+  isChecked,
+  isSelectionMode,
+  account,
+  participantLabel,
+  labelsColorMap,
+  attachmentDisplay,
+  onToggleCheck,
+  onHoverStart,
+  onHoverEnd,
+  onHoverMove,
+}: ThreadListItemSubProps) {
   const showThreadCount = thread.messageCount > 1
   const hasLabels = thread.labels.length > 0
   const hasAttachments = thread.attachments.length > 0
-
-  const renderTime = (className?: string) => (
-    <Tooltip>
-      <TooltipTrigger
-        render={<span className={cn("flex shrink-0 items-center gap-1.5 text-xs text-muted-foreground", className)} />}
-      >
-        <span>{formatRelativeDate(thread.lastMessageAt)}</span>
-      </TooltipTrigger>
-      <TooltipContent>{formatFullDateTime(thread.lastMessageAt)}</TooltipContent>
-    </Tooltip>
-  )
 
   return (
     <>
@@ -161,7 +165,7 @@ function ThreadListItemContent({
           ) : null}
         </span>
 
-        {renderTime("ml-auto md:hidden")}
+        <ThreadLastMessageTime lastMessageAt={thread.lastMessageAt} className="ml-auto md:hidden" />
       </div>
 
       <div
@@ -185,7 +189,7 @@ function ThreadListItemContent({
               <Paperclip className="hidden size-3.5 shrink-0 text-muted-foreground md:block" />
             )}
 
-            {renderTime("hidden md:flex")}
+            <ThreadLastMessageTime lastMessageAt={thread.lastMessageAt} className="hidden md:flex" />
           </div>
 
           <div className="flex min-w-0 flex-col gap-2 md:flex-row md:items-center">
@@ -204,7 +208,9 @@ function ThreadListItemContent({
           </div>
 
           {hasAttachments && attachmentDisplay !== "icon" ? (
-            <ThreadAttachmentChips attachments={thread.attachments} />
+            <div className="hidden w-full md:block">
+              <ThreadAttachmentChips attachments={thread.attachments} />
+            </div>
           ) : null}
         </div>
 
@@ -224,27 +230,16 @@ function ThreadListItemSingleLine({
   thread,
   isUnread,
   isChecked,
+  isSelectionMode,
   account,
   participantLabel,
   labelsColorMap,
-  attachmentDisplay = "inline",
+  attachmentDisplay,
   onToggleCheck,
   onHoverStart,
   onHoverEnd,
   onHoverMove,
-}: {
-  thread: InboxThreadSummary
-  isUnread: boolean
-  isChecked: boolean
-  account?: MailAccount
-  participantLabel: string
-  labelsColorMap: LabelChipMap
-  attachmentDisplay?: "inline" | "icon"
-  onToggleCheck: () => void
-  onHoverStart?: React.MouseEventHandler<HTMLDivElement>
-  onHoverEnd?: React.MouseEventHandler<HTMLDivElement>
-  onHoverMove?: React.MouseEventHandler<HTMLDivElement>
-}) {
+}: ThreadListItemSubProps) {
   const showThreadCount = thread.messageCount > 1
   const hasLabels = thread.labels.length > 0
   const hasAttachments = thread.attachments.length > 0
@@ -253,7 +248,7 @@ function ThreadListItemSingleLine({
     <div className="flex w-full min-w-0 flex-col gap-1">
       <div className="flex w-full min-w-0 items-center gap-3.5">
         <div
-          className="flex shrink-0"
+          className={cn("mr-0.5", isSelectionMode ? "flex" : "hidden", "md:flex")}
           onClick={(event) => event.stopPropagation()}
           onKeyDown={(event) => event.stopPropagation()}
         >
@@ -334,18 +329,11 @@ function ThreadListItemSingleLine({
           ) : null}
         </div>
 
-        <div className="flex shrink-0 items-center gap-1.5">
-          <Tooltip>
-            <TooltipTrigger render={<span className="text-xs text-muted-foreground" />}>
-              {formatRelativeDate(thread.lastMessageAt)}
-            </TooltipTrigger>
-            <TooltipContent>{formatFullDateTime(thread.lastMessageAt)}</TooltipContent>
-          </Tooltip>
-        </div>
+        <ThreadLastMessageTime lastMessageAt={thread.lastMessageAt} />
       </div>
 
       {hasAttachments && attachmentDisplay !== "icon" ? (
-        <div className="flex min-w-0 items-center">
+        <div className="hidden min-w-0 items-center md:flex">
           <div className="flex shrink-0 items-center gap-3.5" aria-hidden="true">
             <div className="flex size-4 shrink-0" />
             <div className="size-4 shrink-0" />
@@ -402,8 +390,9 @@ export function ThreadListItem({
     }
   }
 
-  const handleMouseEnter = () => {
+  const handleMouseEnter = (event: React.MouseEvent<HTMLDivElement>) => {
     if (isMobile || !previewEnabled) return
+    mousePositionRef.current = { x: event.clientX, y: event.clientY }
     hoverTimerRef.current = window.setTimeout(() => {
       setIsPreviewOpen(true)
     }, 600)
@@ -462,8 +451,8 @@ export function ThreadListItem({
     onSelect()
   }
 
-  const renderRow = () => {
-    return (
+  return (
+    <Popover open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
       <div
         role="listitem"
         data-state={isSelected ? "selected" : undefined}
@@ -502,6 +491,7 @@ export function ThreadListItem({
             thread={thread}
             isUnread={isUnread}
             isChecked={isChecked}
+            isSelectionMode={isSelectionMode}
             account={account}
             participantLabel={participantLabel}
             labelsColorMap={labelsColorMap}
@@ -528,12 +518,6 @@ export function ThreadListItem({
           />
         )}
       </div>
-    )
-  }
-
-  return (
-    <Popover open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
-      {renderRow()}
       {previewEnabled && !isMobile && <ThreadPreviewPopoverContent thread={thread} anchor={virtualAnchor} />}
     </Popover>
   )

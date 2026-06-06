@@ -13,7 +13,7 @@ interface ThreadPreviewPopoverContentProps {
 
 export function ThreadPreviewPopoverContent({ thread, anchor }: ThreadPreviewPopoverContentProps) {
   const participantLabel = getMailAddressLabel(thread.participant)
-  const hasNameAndEmail = !!thread.participant.name?.trim() && !!thread.participant.email.trim()
+  const hasNameAndEmail = !!thread.participant.name?.trim() && !!thread.participant.email?.trim()
 
   return (
     <PopoverContent anchor={anchor} side="right" align="start" sideOffset={8} className="w-80 gap-3 p-3">
