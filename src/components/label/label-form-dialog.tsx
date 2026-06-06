@@ -87,7 +87,7 @@ function LabelFormContent({
   return (
     <>
       <ScrollArea className="min-h-0 flex-1">
-        <div className="flex flex-col gap-4 px-1 py-2">
+        <div className="flex flex-col gap-4 px-3 py-2">
           <Input
             value={name}
             onChange={(e) => setName(e.target.value)}

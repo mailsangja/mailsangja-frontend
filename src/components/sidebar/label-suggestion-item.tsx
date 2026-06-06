@@ -63,7 +63,13 @@ export function LabelSuggestionItem({ suggestion }: LabelSuggestionItemProps) {
 
   return (
     <SidebarMenuItem className="ai-suggestion-item">
-      <SidebarMenuButton type="button" size="sm" tooltip={suggestion.name} onClick={() => setApproveOpen(true)}>
+      <SidebarMenuButton
+        type="button"
+        size="sm"
+        tooltip={suggestion.name}
+        aria-haspopup="dialog"
+        onClick={() => setApproveOpen(true)}
+      >
         <span className="size-3 shrink-0 rounded-sm" style={{ backgroundColor: suggestion.colorCode }} />
         <span className="truncate">{suggestion.name}</span>
       </SidebarMenuButton>
