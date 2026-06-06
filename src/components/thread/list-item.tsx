@@ -178,18 +178,20 @@ function ThreadListItemContent({
       >
         <div className="flex min-w-0 flex-1 flex-col gap-1">
           <div className="flex w-full min-w-0 items-center gap-2">
-            <span
-              className={cn(
-                "min-w-0 flex-1 truncate text-sm",
-                isUnread ? "font-semibold text-foreground" : "font-medium text-muted-foreground"
-              )}
-            >
-              {thread.latestSubject || m.message_no_subject()}
-            </span>
+            <div className="flex min-w-0 flex-1 items-center gap-1.5">
+              <span
+                className={cn(
+                  "min-w-0 truncate text-sm",
+                  isUnread ? "font-semibold text-foreground" : "font-medium text-muted-foreground"
+                )}
+              >
+                {thread.latestSubject || m.message_no_subject()}
+              </span>
 
-            {hasAttachments && attachmentDisplay === "icon" && (
-              <Paperclip className="hidden size-3.5 shrink-0 text-muted-foreground md:block" />
-            )}
+              {hasAttachments && attachmentDisplay === "icon" && (
+                <Paperclip className="hidden size-3.5 shrink-0 text-muted-foreground md:block" />
+              )}
+            </div>
 
             <ThreadLastMessageTime lastMessageAt={thread.lastMessageAt} className="hidden md:flex" />
           </div>
@@ -197,15 +199,32 @@ function ThreadListItemContent({
           <div className="flex min-w-0 flex-col gap-2 md:flex-row md:items-center">
             <span className="line-clamp-1 min-w-0 text-sm text-muted-foreground md:flex-1">{thread.snippet}</span>
 
-            {hasLabels ? (
-              <span className="flex min-w-0 items-center justify-start gap-1.5 md:shrink-0 md:justify-end">
-                <LabelChipList
-                  labels={thread.labels}
-                  labelsColorMap={labelsColorMap}
-                  hideMissingLabels
-                  className="max-w-48 shrink-0 truncate"
-                />
-              </span>
+            {hasLabels || hasAttachments ? (
+              <div className="flex min-w-0 items-center gap-1.5 md:shrink-0 md:justify-end">
+                {hasAttachments && attachmentDisplay === "icon" ? (
+                  <Paperclip className="size-3.5 shrink-0 text-muted-foreground md:hidden" />
+                ) : null}
+
+                {hasLabels ? (
+                  <span className="flex shrink-0 items-center gap-1.5">
+                    <LabelChipList
+                      labels={thread.labels}
+                      labelsColorMap={labelsColorMap}
+                      hideMissingLabels
+                      className="max-w-48 shrink-0 truncate"
+                    />
+                  </span>
+                ) : null}
+
+                {hasAttachments && attachmentDisplay !== "icon" ? (
+                  <span className="flex min-w-0 shrink items-center gap-1 overflow-hidden md:hidden">
+                    <AttachmentDownloadChip attachment={thread.attachments[0]} className="max-w-40 min-w-0" />
+                    {thread.attachments.length > 1 ? (
+                      <span className="shrink-0 text-xs text-muted-foreground">+{thread.attachments.length - 1}개</span>
+                    ) : null}
+                  </span>
+                ) : null}
+              </div>
             ) : null}
           </div>
 
