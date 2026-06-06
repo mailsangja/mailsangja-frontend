@@ -1,9 +1,12 @@
-import { useEffect, useRef } from "react"
+import { useEffect, useMemo, useRef, useState } from "react"
 import { Paperclip, Star } from "lucide-react"
 
+import { AttachmentDownloadChip } from "@/components/attachment/download-chip"
 import { LabelChipList, type LabelChipMap } from "@/components/label/label-chip"
 import { MailAccountIcon } from "@/components/mail-account-icon"
+import { ThreadPreviewPopoverContent } from "@/components/thread/preview-popover"
 import { Checkbox } from "@/components/ui/checkbox"
+import { Popover } from "@/components/ui/popover"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { formatFullDateTime, formatRelativeDate } from "@/lib/date"
@@ -20,6 +23,9 @@ interface ThreadListItemProps {
   isSelectionMode: boolean
   account?: MailAccount
   labelsColorMap: LabelChipMap
+  view?: "single" | "double"
+  previewEnabled?: boolean
+  attachmentDisplay?: "inline" | "icon"
   onSelect: () => void
   onToggleCheck: () => void
 }
@@ -52,6 +58,47 @@ function AccountTooltipContent({ account }: { account?: MailAccount }) {
   return <span>{account.alias ? `${account.alias} (${account.emailAddress})` : account.emailAddress}</span>
 }
 
+function ThreadAttachmentChips({ attachments }: { attachments: InboxThreadSummary["attachments"] }) {
+  return (
+    <div className="flex w-full min-w-0 items-center gap-1.5 overflow-hidden">
+      {attachments.slice(0, 3).map((attachment) => (
+        <AttachmentDownloadChip key={attachment.id} attachment={attachment} className="max-w-60" />
+      ))}
+      {attachments.length > 3 ? (
+        <span className="shrink-0 text-xs text-muted-foreground">+{attachments.length - 3}</span>
+      ) : null}
+    </div>
+  )
+}
+
+function ThreadLastMessageTime({ lastMessageAt, className }: { lastMessageAt: string; className?: string }) {
+  return (
+    <Tooltip>
+      <TooltipTrigger
+        render={<span className={cn("flex shrink-0 items-center gap-1.5 text-xs text-muted-foreground", className)} />}
+      >
+        <span>{formatRelativeDate(lastMessageAt)}</span>
+      </TooltipTrigger>
+      <TooltipContent>{formatFullDateTime(lastMessageAt)}</TooltipContent>
+    </Tooltip>
+  )
+}
+
+type ThreadListItemSubProps = {
+  thread: InboxThreadSummary
+  isUnread: boolean
+  isChecked: boolean
+  isSelectionMode: boolean
+  account?: MailAccount
+  participantLabel: string
+  labelsColorMap: LabelChipMap
+  attachmentDisplay?: "inline" | "icon"
+  onToggleCheck: () => void
+  onHoverStart?: React.MouseEventHandler<HTMLDivElement>
+  onHoverEnd?: React.MouseEventHandler<HTMLDivElement>
+  onHoverMove?: React.MouseEventHandler<HTMLDivElement>
+}
+
 function ThreadListItemContent({
   thread,
   isUnread,
@@ -60,36 +107,19 @@ function ThreadListItemContent({
   account,
   participantLabel,
   labelsColorMap,
+  attachmentDisplay,
   onToggleCheck,
-}: {
-  thread: InboxThreadSummary
-  isUnread: boolean
-  isChecked: boolean
-  isSelectionMode: boolean
-  account?: MailAccount
-  participantLabel: string
-  labelsColorMap: LabelChipMap
-  onToggleCheck: () => void
-}) {
+  onHoverStart,
+  onHoverEnd,
+  onHoverMove,
+}: ThreadListItemSubProps) {
   const showThreadCount = thread.messageCount > 1
   const hasLabels = thread.labels.length > 0
   const hasAttachments = thread.attachments.length > 0
 
-  const renderTime = (className?: string) => (
-    <Tooltip>
-      <TooltipTrigger
-        render={<span className={cn("flex shrink-0 items-center gap-1.5 text-xs text-muted-foreground", className)} />}
-      >
-        <span>{formatRelativeDate(thread.lastMessageAt)}</span>
-        {isUnread ? <span className="ml-0.5 size-1.5 rounded-full bg-primary" aria-hidden="true" /> : null}
-      </TooltipTrigger>
-      <TooltipContent>{formatFullDateTime(thread.lastMessageAt)}</TooltipContent>
-    </Tooltip>
-  )
-
   return (
     <>
-      <div className="flex w-full min-w-0 items-center gap-2.5 md:w-48 md:shrink-0">
+      <div className="flex w-full min-w-0 items-center gap-3.5 md:w-72 md:shrink-0">
         <div
           className={cn("mr-0.5", isSelectionMode ? "flex" : "hidden", "md:flex")}
           onClick={(event) => event.stopPropagation()}
@@ -98,109 +128,245 @@ function ThreadListItemContent({
           <Checkbox checked={isChecked} onCheckedChange={onToggleCheck} aria-label={m.thread_select_mail()} />
         </div>
 
-        <span
+        <Star
           className={cn(
-            "flex min-w-0 items-center gap-2 text-sm font-medium",
-            "flex-1",
-            isUnread ? "text-foreground" : "text-muted-foreground"
+            "mx-1.5 hidden size-4 shrink-0 md:block",
+            thread.star ? "fill-primary text-primary" : "text-muted-foreground/40"
           )}
-        >
-          <Tooltip>
-            <TooltipTrigger
-              aria-label={m.thread_account_info()}
-              render={<MailAccountIcon icon={account?.icon} color={account?.color} />}
-            />
-            <TooltipContent side="bottom" align="start" className="max-w-72 items-start">
-              <AccountTooltipContent account={account} />
-            </TooltipContent>
-          </Tooltip>
+          aria-label={thread.star ? m.message_starred() : undefined}
+        />
 
-          <Tooltip>
-            <TooltipTrigger render={<span className="min-w-0 truncate" />}>{participantLabel}</TooltipTrigger>
-            <TooltipContent side="bottom" align="start" className="max-w-72 items-start">
-              <SenderTooltipContent participant={thread.participant} />
-            </TooltipContent>
-          </Tooltip>
+        <Tooltip>
+          <TooltipTrigger
+            aria-label={m.thread_account_info()}
+            render={<MailAccountIcon icon={account?.icon} color={account?.color} className="shrink-0" />}
+          />
+          <TooltipContent side="bottom" align="start" className="max-w-72 items-start">
+            <AccountTooltipContent account={account} />
+          </TooltipContent>
+        </Tooltip>
 
-          {showThreadCount ? (
-            <span className="-ml-0.5 text-xs font-normal text-muted-foreground">{thread.messageCount}</span>
-          ) : null}
-        </span>
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <span
+                className={cn(
+                  "w-42 shrink-0 truncate text-sm font-medium",
+                  isUnread ? "text-foreground" : "text-muted-foreground"
+                )}
+              />
+            }
+          >
+            {participantLabel}
+            {showThreadCount ? (
+              <span className="ml-1 text-xs font-normal text-muted-foreground">{thread.messageCount}</span>
+            ) : null}
+          </TooltipTrigger>
+          <TooltipContent side="bottom" align="start" className="max-w-72 items-start">
+            <SenderTooltipContent participant={thread.participant} />
+          </TooltipContent>
+        </Tooltip>
 
-        {renderTime("ml-auto md:hidden")}
+        <ThreadLastMessageTime lastMessageAt={thread.lastMessageAt} className="ml-auto md:hidden" />
       </div>
 
-      <div className="flex min-w-0 flex-1 flex-col gap-1">
-        <div className="flex w-full min-w-0 items-center gap-2">
+      <div
+        className="flex min-w-0 flex-1 gap-2 md:flex-col"
+        onMouseEnter={onHoverStart}
+        onMouseLeave={onHoverEnd}
+        onMouseMove={onHoverMove}
+      >
+        <div className="flex min-w-0 flex-1 flex-col gap-1">
+          <div className="flex w-full min-w-0 items-center gap-2">
+            <div className="flex min-w-0 flex-1 items-center gap-1.5">
+              <span
+                className={cn(
+                  "min-w-0 truncate text-sm",
+                  isUnread ? "font-semibold text-foreground" : "font-medium text-muted-foreground"
+                )}
+              >
+                {thread.latestSubject || m.message_no_subject()}
+              </span>
+
+              {hasAttachments && attachmentDisplay === "icon" && (
+                <Paperclip className="hidden size-3.5 shrink-0 text-muted-foreground md:block" />
+              )}
+            </div>
+
+            <ThreadLastMessageTime lastMessageAt={thread.lastMessageAt} className="hidden md:flex" />
+          </div>
+
+          <div className="flex min-w-0 flex-col gap-2 md:flex-row md:items-center">
+            <span className="line-clamp-1 min-w-0 text-sm text-muted-foreground md:flex-1">{thread.snippet}</span>
+
+            {hasLabels || hasAttachments ? (
+              <div className="flex min-w-0 items-center gap-1.5 md:shrink-0 md:justify-end">
+                {hasAttachments && attachmentDisplay === "icon" ? (
+                  <Paperclip className="size-3.5 shrink-0 text-muted-foreground md:hidden" />
+                ) : null}
+
+                {hasLabels ? (
+                  <span className="flex shrink-0 items-center gap-1.5">
+                    <LabelChipList
+                      labels={thread.labels}
+                      labelsColorMap={labelsColorMap}
+                      hideMissingLabels
+                      className="max-w-48 shrink-0 truncate"
+                    />
+                  </span>
+                ) : null}
+
+                {hasAttachments && attachmentDisplay !== "icon" ? (
+                  <span className="flex min-w-0 shrink items-center gap-1 overflow-hidden md:hidden">
+                    <AttachmentDownloadChip attachment={thread.attachments[0]} className="max-w-40 min-w-0" />
+                    {thread.attachments.length > 1 ? (
+                      <span className="shrink-0 text-xs text-muted-foreground">+{thread.attachments.length - 1}개</span>
+                    ) : null}
+                  </span>
+                ) : null}
+              </div>
+            ) : null}
+          </div>
+
+          {hasAttachments && attachmentDisplay !== "icon" ? (
+            <div className="hidden w-full md:block">
+              <ThreadAttachmentChips attachments={thread.attachments} />
+            </div>
+          ) : null}
+        </div>
+
+        <Star
+          className={cn(
+            "size-4 shrink-0 self-end md:hidden",
+            thread.star ? "fill-primary text-primary" : "text-muted-foreground/40"
+          )}
+          aria-label={thread.star ? m.message_starred() : undefined}
+        />
+      </div>
+    </>
+  )
+}
+
+function ThreadListItemSingleLine({
+  thread,
+  isUnread,
+  isChecked,
+  isSelectionMode,
+  account,
+  participantLabel,
+  labelsColorMap,
+  attachmentDisplay,
+  onToggleCheck,
+  onHoverStart,
+  onHoverEnd,
+  onHoverMove,
+}: ThreadListItemSubProps) {
+  const showThreadCount = thread.messageCount > 1
+  const hasLabels = thread.labels.length > 0
+  const hasAttachments = thread.attachments.length > 0
+
+  return (
+    <div className="flex w-full min-w-0 flex-col gap-1">
+      <div className="flex w-full min-w-0 items-center gap-3.5">
+        <div
+          className={cn("mr-0.5", isSelectionMode ? "flex" : "hidden", "md:flex")}
+          onClick={(event) => event.stopPropagation()}
+          onKeyDown={(event) => event.stopPropagation()}
+        >
+          <Checkbox checked={isChecked} onCheckedChange={onToggleCheck} aria-label={m.thread_select_mail()} />
+        </div>
+
+        <Star
+          className={cn(
+            "mx-1.5 size-4 shrink-0",
+            thread.star ? "fill-primary text-primary" : "text-muted-foreground/40"
+          )}
+          aria-label={thread.star ? m.message_starred() : undefined}
+        />
+
+        <Tooltip>
+          <TooltipTrigger
+            aria-label={m.thread_account_info()}
+            render={<MailAccountIcon icon={account?.icon} color={account?.color} className="shrink-0" />}
+          />
+          <TooltipContent side="bottom" align="start" className="max-w-72 items-start">
+            <AccountTooltipContent account={account} />
+          </TooltipContent>
+        </Tooltip>
+
+        <Tooltip>
+          <TooltipTrigger
+            render={
+              <span
+                className={cn(
+                  "w-42 shrink-0 truncate text-sm font-medium",
+                  isUnread ? "text-foreground" : "text-muted-foreground"
+                )}
+              />
+            }
+          >
+            {participantLabel}
+            {showThreadCount ? (
+              <span className="ml-1 text-xs font-normal text-muted-foreground">{thread.messageCount}</span>
+            ) : null}
+          </TooltipTrigger>
+          <TooltipContent side="bottom" align="start" className="max-w-72 items-start">
+            <SenderTooltipContent participant={thread.participant} />
+          </TooltipContent>
+        </Tooltip>
+
+        <div
+          className="flex min-w-0 flex-1 items-center gap-2.5 overflow-hidden"
+          onMouseEnter={onHoverStart}
+          onMouseLeave={onHoverEnd}
+          onMouseMove={onHoverMove}
+        >
           <span
             className={cn(
-              "min-w-0 flex-1 truncate text-sm",
+              "min-w-0 shrink truncate text-sm",
               isUnread ? "font-semibold text-foreground" : "font-medium text-muted-foreground"
             )}
           >
             {thread.latestSubject || m.message_no_subject()}
           </span>
 
-          {thread.star ? (
-            <Star
-              className="hidden size-4 shrink-0 fill-primary text-primary md:block"
-              aria-label={m.message_starred()}
-            />
-          ) : null}
+          {hasAttachments && attachmentDisplay === "icon" && (
+            <Paperclip className="size-3.5 shrink-0 text-muted-foreground" />
+          )}
 
-          {renderTime("hidden md:flex")}
-        </div>
+          <span className="mx-1 shrink-0 text-muted-foreground/40">—</span>
 
-        <div className="flex min-w-0 flex-col gap-2 md:flex-row md:items-center">
-          <span className="line-clamp-1 min-w-0 text-sm text-muted-foreground md:flex-1">{thread.snippet}</span>
+          <span className="min-w-0 flex-1 truncate text-sm text-muted-foreground">{thread.snippet}</span>
 
-          {thread.star || hasLabels || hasAttachments ? (
-            <span className="flex w-full min-w-0 items-center gap-1.5 md:w-auto md:shrink-0 md:justify-end">
-              {hasLabels || hasAttachments ? (
-                <span className="flex min-w-0 flex-1 items-center justify-start gap-1.5 md:flex-none md:justify-end">
-                  {hasAttachments ? (
-                    <Tooltip>
-                      <TooltipTrigger render={<span className="flex shrink-0 items-center" />}>
-                        <Paperclip className="mx-auto size-4 text-muted-foreground" />
-                      </TooltipTrigger>
-                      <TooltipContent side="bottom" align="end" className="max-w-72 items-start">
-                        <span className="flex min-w-0 flex-col items-start gap-1">
-                          <span>{m.thread_attachment_count({ count: thread.attachments.length })}</span>
-                          {thread.attachments.slice(0, 3).map((attachment) => (
-                            <span key={attachment.id} className="max-w-64 truncate text-background/80">
-                              {attachment.filename}
-                            </span>
-                          ))}
-                          {thread.attachments.length > 3 ? (
-                            <span className="text-background/70">
-                              {m.thread_attachment_more_count({ count: thread.attachments.length - 3 })}
-                            </span>
-                          ) : null}
-                        </span>
-                      </TooltipContent>
-                    </Tooltip>
-                  ) : null}
-                  <LabelChipList
-                    labels={thread.labels}
-                    labelsColorMap={labelsColorMap}
-                    hideMissingLabels
-                    className="max-w-48 shrink-0 truncate"
-                  />
-                </span>
-              ) : (
-                <span className="min-w-0 flex-1 md:hidden" />
-              )}
-              {thread.star ? (
-                <Star
-                  className="ml-auto size-4 shrink-0 fill-primary text-primary md:hidden"
-                  aria-label={m.message_starred()}
-                />
-              ) : null}
+          {hasLabels ? (
+            <span className="flex shrink-0 items-center gap-1.5">
+              <LabelChipList
+                labels={thread.labels}
+                labelsColorMap={labelsColorMap}
+                hideMissingLabels
+                className="max-w-36 shrink-0 truncate"
+              />
             </span>
           ) : null}
         </div>
+
+        <ThreadLastMessageTime lastMessageAt={thread.lastMessageAt} />
       </div>
-    </>
+
+      {hasAttachments && attachmentDisplay !== "icon" ? (
+        <div className="hidden min-w-0 items-center md:flex">
+          <div className="flex shrink-0 items-center gap-3.5" aria-hidden="true">
+            <div className="flex size-4 shrink-0" />
+            <div className="size-4 shrink-0" />
+            <div className="size-5 shrink-0" />
+            <div className="w-45 shrink-0" />
+          </div>
+          <div className="ml-3.5 min-w-0 flex-1">
+            <ThreadAttachmentChips attachments={thread.attachments} />
+          </div>
+        </div>
+      ) : null}
+    </div>
   )
 }
 
@@ -211,18 +377,29 @@ export function ThreadListItem({
   isSelectionMode,
   account,
   labelsColorMap,
+  view = "double",
+  previewEnabled = false,
+  attachmentDisplay = "inline",
   onSelect,
   onToggleCheck,
 }: ThreadListItemProps) {
   const isMobile = useIsMobile()
   const longPressTimerRef = useRef<ReturnType<typeof window.setTimeout> | null>(null)
+  const hoverTimerRef = useRef<ReturnType<typeof window.setTimeout> | null>(null)
   const ignoreNextClickRef = useRef(false)
+  const mousePositionRef = useRef({ x: 0, y: 0 })
+  const virtualAnchor = useMemo(
+    () => ({ getBoundingClientRect: () => new DOMRect(mousePositionRef.current.x, mousePositionRef.current.y, 0, 0) }),
+    []
+  )
+  const [isPreviewOpen, setIsPreviewOpen] = useState(false)
   const isUnread = !thread.isRead
   const participantLabel = getMailAddressLabel(thread.participant)
   const rowClassName = cn(
-    "flex cursor-pointer flex-col gap-1.5 border-b border-l-2 border-l-transparent p-3 transition-colors select-none hover:bg-accent md:flex-row md:items-center md:gap-3",
+    "flex cursor-pointer border-b border-l-2 border-l-transparent px-3 py-2.5 transition-colors select-none hover:bg-accent",
+    view === "double" ? "flex-col gap-1.5 md:flex-row md:items-start md:gap-3" : "flex-col gap-1",
     isSelected && "border-l-primary",
-    isUnread ? "font-semibold" : "bg-accent/50",
+    isUnread ? "font-semibold" : "bg-accent/70",
     isSelected && isUnread && "bg-accent",
     isChecked && !isSelected && "bg-accent/70"
   )
@@ -232,6 +409,26 @@ export function ThreadListItem({
       window.clearTimeout(longPressTimerRef.current)
       longPressTimerRef.current = null
     }
+  }
+
+  const handleMouseEnter = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (isMobile || !previewEnabled) return
+    mousePositionRef.current = { x: event.clientX, y: event.clientY }
+    hoverTimerRef.current = window.setTimeout(() => {
+      setIsPreviewOpen(true)
+    }, 600)
+  }
+
+  const handleMouseLeave = () => {
+    if (hoverTimerRef.current !== null) {
+      window.clearTimeout(hoverTimerRef.current)
+      hoverTimerRef.current = null
+    }
+    setIsPreviewOpen(false)
+  }
+
+  const handleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
+    mousePositionRef.current = { x: event.clientX, y: event.clientY }
   }
 
   const startLongPressSelection = (event: React.PointerEvent<HTMLDivElement>) => {
@@ -260,6 +457,9 @@ export function ThreadListItem({
       if (longPressTimerRef.current !== null) {
         window.clearTimeout(longPressTimerRef.current)
       }
+      if (hoverTimerRef.current !== null) {
+        window.clearTimeout(hoverTimerRef.current)
+      }
     }
   }, [])
 
@@ -272,8 +472,8 @@ export function ThreadListItem({
     onSelect()
   }
 
-  const renderRow = () => {
-    return (
+  return (
+    <Popover open={isPreviewOpen} onOpenChange={setIsPreviewOpen}>
       <div
         role="listitem"
         data-state={isSelected ? "selected" : undefined}
@@ -284,6 +484,7 @@ export function ThreadListItem({
             return
           }
 
+          setIsPreviewOpen(false)
           handleRowAction()
         }}
         onKeyDown={(event) => {
@@ -306,19 +507,39 @@ export function ThreadListItem({
         }}
         className={rowClassName}
       >
-        <ThreadListItemContent
-          thread={thread}
-          isUnread={isUnread}
-          isChecked={isChecked}
-          isSelectionMode={isSelectionMode}
-          account={account}
-          participantLabel={participantLabel}
-          labelsColorMap={labelsColorMap}
-          onToggleCheck={onToggleCheck}
-        />
+        {view === "single" ? (
+          <ThreadListItemSingleLine
+            thread={thread}
+            isUnread={isUnread}
+            isChecked={isChecked}
+            isSelectionMode={isSelectionMode}
+            account={account}
+            participantLabel={participantLabel}
+            labelsColorMap={labelsColorMap}
+            attachmentDisplay={attachmentDisplay}
+            onToggleCheck={onToggleCheck}
+            onHoverStart={handleMouseEnter}
+            onHoverEnd={handleMouseLeave}
+            onHoverMove={handleMouseMove}
+          />
+        ) : (
+          <ThreadListItemContent
+            thread={thread}
+            isUnread={isUnread}
+            isChecked={isChecked}
+            isSelectionMode={isSelectionMode}
+            account={account}
+            participantLabel={participantLabel}
+            labelsColorMap={labelsColorMap}
+            attachmentDisplay={attachmentDisplay}
+            onToggleCheck={onToggleCheck}
+            onHoverStart={handleMouseEnter}
+            onHoverEnd={handleMouseLeave}
+            onHoverMove={handleMouseMove}
+          />
+        )}
       </div>
-    )
-  }
-
-  return renderRow()
+      {previewEnabled && !isMobile && <ThreadPreviewPopoverContent thread={thread} anchor={virtualAnchor} />}
+    </Popover>
+  )
 }

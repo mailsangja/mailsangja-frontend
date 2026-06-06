@@ -1,7 +1,10 @@
-import { RefreshCw, Tag, Trash2, SquareMinus } from "lucide-react"
+import { Mail, MailOpen, RefreshCw, Trash2 } from "lucide-react"
+import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import { Toggle } from "@/components/ui/toggle"
+import { useIsMobile } from "@/hooks/use-mobile"
 import { formatNumber } from "@/lib/date"
 import { cn } from "@/lib/utils"
 import { m } from "@/paraglide/messages"
@@ -21,36 +24,78 @@ interface ThreadListToolbarProps {
   isRefreshing?: boolean
   onRefresh?: () => void
   selectedCount: number
+  onSelectAll: () => void
   onClearSelection: () => void
   onDeleteSelected: () => void
-  onLabelSelected: () => void
+  onMarkSelectedAsRead: () => void
+  onMarkSelectedAsUnread: () => void
 }
 
 export function ThreadListToolbar({
   mailboxName,
+  currentCount,
   totalCount,
   filter,
   onFilterChange,
   isRefreshing = false,
   onRefresh,
   selectedCount,
+  onSelectAll,
   onClearSelection,
   onDeleteSelected,
-  onLabelSelected,
+  onMarkSelectedAsRead,
+  onMarkSelectedAsUnread,
 }: ThreadListToolbarProps) {
+  const isMobile = useIsMobile()
+  const isAllSelected = selectedCount > 0 && selectedCount === currentCount
+  const isIndeterminate = selectedCount > 0 && selectedCount < currentCount
+
   if (selectedCount > 0) {
     return (
-      <div className="flex h-11 shrink-0 items-center gap-2 border-b bg-accent/40 px-3">
-        <Button variant="ghost" size="icon-sm" onClick={onClearSelection} aria-label={m.mail_clear_selection()}>
-          <SquareMinus />
-        </Button>
+      <div className="ml-0.5 flex h-11 shrink-0 items-center gap-3 border-b bg-accent/40 px-3">
+        <Checkbox
+          checked={isAllSelected}
+          indeterminate={!isMobile && isIndeterminate}
+          onCheckedChange={() => {
+            if (isMobile) {
+              if (isAllSelected) {
+                onClearSelection()
+              } else {
+                onSelectAll()
+              }
+            } else if (isIndeterminate) {
+              onClearSelection()
+            } else if (isAllSelected) {
+              onClearSelection()
+            } else {
+              onSelectAll()
+            }
+          }}
+          aria-label={isAllSelected ? m.mail_clear_selection() : m.mail_select_all()}
+        />
+        {isMobile && <span className="text-sm">{m.mail_select_all()}</span>}
         <span className="text-sm font-medium">{m.mail_selected_count({ count: formatNumber(selectedCount) })}</span>
         <div className="ml-auto flex shrink-0 items-center gap-2">
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={onMarkSelectedAsRead}
+            aria-label={m.thread_mark_read_aria()}
+            title={m.thread_mark_read()}
+          >
+            <MailOpen />
+          </Button>
+          <Button
+            variant="ghost"
+            size="icon-sm"
+            onClick={onMarkSelectedAsUnread}
+            aria-label={m.thread_mark_unread_aria()}
+            title={m.thread_mark_unread()}
+          >
+            <Mail />
+          </Button>
           <Button variant="ghost" size="icon-sm" onClick={onDeleteSelected} aria-label={m.mail_delete_selected()}>
             <Trash2 data-icon="inline-start" />
-          </Button>
-          <Button variant="ghost" size="icon-sm" onClick={onLabelSelected} aria-label={m.mail_assign_label()}>
-            <Tag data-icon="inline-start" />
           </Button>
         </div>
       </div>
@@ -58,7 +103,19 @@ export function ThreadListToolbar({
   }
 
   return (
-    <div className="flex h-11 shrink-0 items-center gap-3 border-b px-4">
+    <div className="ml-0.5 flex h-11 shrink-0 items-center gap-3 border-b px-3">
+      {!isMobile && (
+        <Checkbox
+          checked={false}
+          onCheckedChange={() => {
+            onSelectAll()
+            toast.info(m.mail_selected_count({ count: formatNumber(currentCount) }), {
+              description: m.mail_select_all_loaded_notice(),
+            })
+          }}
+          aria-label={m.mail_select_all()}
+        />
+      )}
       <h2 className="min-w-0 truncate text-sm font-medium">{mailboxName}</h2>
       <span className="hidden rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground sm:inline-flex">
         {m.mail_total_count({ count: formatNumber(totalCount) })}

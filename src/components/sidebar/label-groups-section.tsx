@@ -23,6 +23,8 @@ export function SidebarLabelGroupsSection({
   const { data: labels = [] } = useLabels()
   const [createOpen, setCreateOpen] = useState(false)
 
+  if (groups.length === 0) return null
+
   return (
     <SidebarGroup className={className}>
       <SidebarGroupLabel className="flex items-center justify-between pr-1">

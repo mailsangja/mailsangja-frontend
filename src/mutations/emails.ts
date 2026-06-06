@@ -54,6 +54,40 @@ export function useMarkThreadAsUnread() {
   })
 }
 
+export function useMarkThreadsAsRead() {
+  return useMutation({
+    mutationFn: async (threadIds: string[]) => {
+      const results = await Promise.allSettled(threadIds.map((id) => markThreadAsRead(id)))
+      const failed = results.filter((r) => r.status === "rejected").length
+      return { failed }
+    },
+    onSettled: invalidateEmailAndLabelQueries,
+    onSuccess: ({ failed }) => {
+      if (failed > 0) toast.error(m.mail_mark_read_error())
+    },
+    onError: () => {
+      toast.error(m.mail_mark_read_error())
+    },
+  })
+}
+
+export function useMarkThreadsAsUnread() {
+  return useMutation({
+    mutationFn: async (threadIds: string[]) => {
+      const results = await Promise.allSettled(threadIds.map((id) => markThreadAsUnread(id)))
+      const failed = results.filter((r) => r.status === "rejected").length
+      return { failed }
+    },
+    onSettled: invalidateEmailAndLabelQueries,
+    onSuccess: ({ failed }) => {
+      if (failed > 0) toast.error(m.mail_mark_unread_error())
+    },
+    onError: () => {
+      toast.error(m.mail_mark_unread_error())
+    },
+  })
+}
+
 export function useMarkMessageAsRead() {
   return useMutation({
     mutationFn: (messageId: string) => markMessageAsRead(messageId),

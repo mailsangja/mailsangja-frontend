@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { Archive, ArrowLeft, Copy, Forward, MailOpen, Mail, Reply, Trash2 } from "lucide-react"
+import { ArrowLeft, ChevronsRight, Copy, Forward, MailOpen, Mail, Reply, Star, Trash2 } from "lucide-react"
 import { useNavigate } from "@tanstack/react-router"
 import { toast } from "sonner"
 
@@ -131,7 +131,8 @@ function ThreadToolbar({
     <div className="flex h-11 shrink-0 items-center justify-between gap-2 px-4">
       {onClose ? (
         <Button variant="ghost" size="icon-sm" onClick={onClose} aria-label={m.thread_back_to_list()}>
-          <ArrowLeft />
+          <ArrowLeft className="md:hidden" />
+          <ChevronsRight className="hidden md:block" />
         </Button>
       ) : (
         <span />
@@ -148,13 +149,16 @@ function ThreadToolbar({
           aria-label={isRead ? m.thread_mark_unread_aria() : m.thread_mark_read_aria()}
           title={isRead ? m.thread_mark_unread() : m.thread_mark_read()}
         >
-          <Mail />
+          {isRead ? <Mail /> : <MailOpen />}
         </Button>
-        <Button variant="ghost" size="icon-sm" disabled title={m.thread_forward_disabled()}>
-          <Forward />
-        </Button>
-        <Button variant="ghost" size="icon-sm" disabled title={m.thread_archive_disabled()}>
-          <Archive />
+        <Button
+          variant="ghost"
+          size="icon-sm"
+          onClick={() => toast("준비 중인 기능이에요.")}
+          title={m.message_star()}
+          aria-label={m.thread_star()}
+        >
+          <Star />
         </Button>
         <Button
           variant="ghost"

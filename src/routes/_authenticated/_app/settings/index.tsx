@@ -1,13 +1,14 @@
-import { useState } from "react"
 import { Link, createFileRoute } from "@tanstack/react-router"
 import {
   Check,
+  Layers,
   LayoutList,
   List,
   Monitor,
   Moon,
   MousePointer,
   MousePointerClick,
+  Paperclip,
   RefreshCw,
   Sparkles,
   Sun,
@@ -22,6 +23,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Skeleton } from "@/components/ui/skeleton"
 import { cn } from "@/lib/utils"
 import { m } from "@/paraglide/messages"
+import { useAttachmentDisplay, useInboxView, useMailPreview } from "@/hooks/use-local-storage-setting"
 import { useAiUsages } from "@/queries/ai"
 import { useUser } from "@/queries/user"
 import { getAiUsageTypeLabel } from "@/types/ai"
@@ -40,9 +42,9 @@ function SettingsPage() {
     refetch: refetchAiUsages,
   } = useAiUsages()
   const { theme, setTheme } = useTheme()
-  // TODO: 실제 설정 저장/불러오기 기능은 추후 구현 예정
-  const [inboxView, setInboxView] = useState<"single" | "double">("double")
-  const [hoverAction, setHoverAction] = useState<"enabled" | "disabled">("enabled")
+  const { view: inboxView, setView: setInboxView } = useInboxView()
+  const { preview: hoverAction, setPreview: setHoverAction } = useMailPreview()
+  const { display: attachmentDisplay, setDisplay: setAttachmentDisplay } = useAttachmentDisplay()
 
   return (
     <>
@@ -168,63 +170,6 @@ function SettingsPage() {
         <p className="text-md px-1 font-semibold text-muted-foreground">{m.settings_quick_settings_section()}</p>
         <Card>
           <CardHeader>
-            <CardTitle>{m.settings_inbox_title()}</CardTitle>
-            <CardDescription>{m.settings_inbox_description()}</CardDescription>
-          </CardHeader>
-          <CardContent className="pt-1">
-            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
-              {(
-                [
-                  {
-                    value: "single",
-                    label: m.settings_inbox_single_line(),
-                    icon: List,
-                    preview: <InboxSingleLinePreview />,
-                  },
-                  {
-                    value: "double",
-                    label: m.settings_inbox_two_line(),
-                    icon: LayoutList,
-                    preview: <InboxTwoLinePreview />,
-                  },
-                ] as const
-              ).map(({ value, label, icon: Icon, preview }) => (
-                <button
-                  key={value}
-                  type="button"
-                  // TODO: Persist this preference when the settings API is ready.
-                  onClick={() => setInboxView(value)}
-                  aria-pressed={inboxView === value}
-                  className={cn(
-                    "group flex flex-col gap-2 rounded-xl border-2 p-2.5 text-left transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
-                    inboxView === value
-                      ? "border-primary bg-primary/5"
-                      : "border-border hover:border-border/80 hover:bg-muted/40"
-                  )}
-                >
-                  {preview}
-                  <div className="mt-auto flex items-center justify-between px-0.5">
-                    <span
-                      className={cn(
-                        "flex items-center gap-1.5 text-xs font-medium",
-                        inboxView === value ? "text-primary" : "text-muted-foreground"
-                      )}
-                    >
-                      <Icon className="size-3.5" />
-                      {label}
-                    </span>
-                    {inboxView === value && <Check className="size-3.5 text-primary" />}
-                  </div>
-                </button>
-              ))}
-            </div>
-          </CardContent>
-        </Card>
-      </div>
-
-      <div className="flex flex-col gap-3">
-        <Card>
-          <CardHeader>
             <CardTitle>{m.settings_theme_title()}</CardTitle>
             <CardDescription>{m.settings_theme_description()}</CardDescription>
           </CardHeader>
@@ -272,6 +217,62 @@ function SettingsPage() {
       <div className="flex flex-col gap-3">
         <Card>
           <CardHeader>
+            <CardTitle>{m.settings_inbox_title()}</CardTitle>
+            <CardDescription>{m.settings_inbox_description()}</CardDescription>
+          </CardHeader>
+          <CardContent className="pt-1">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {(
+                [
+                  {
+                    value: "single",
+                    label: m.settings_inbox_single_line(),
+                    icon: List,
+                    preview: <InboxSingleLinePreview />,
+                  },
+                  {
+                    value: "double",
+                    label: m.settings_inbox_two_line(),
+                    icon: LayoutList,
+                    preview: <InboxTwoLinePreview />,
+                  },
+                ] as const
+              ).map(({ value, label, icon: Icon, preview }) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setInboxView(value)}
+                  aria-pressed={inboxView === value}
+                  className={cn(
+                    "group flex flex-col gap-2 rounded-xl border-2 p-2.5 text-left transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+                    inboxView === value
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:border-border/80 hover:bg-muted/40"
+                  )}
+                >
+                  {preview}
+                  <div className="mt-auto flex items-center justify-between px-0.5">
+                    <span
+                      className={cn(
+                        "flex items-center gap-1.5 text-xs font-medium",
+                        inboxView === value ? "text-primary" : "text-muted-foreground"
+                      )}
+                    >
+                      <Icon className="size-3.5" />
+                      {label}
+                    </span>
+                    {inboxView === value && <Check className="size-3.5 text-primary" />}
+                  </div>
+                </button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="flex flex-col gap-3">
+        <Card>
+          <CardHeader>
             <CardTitle>{m.settings_mail_preview_title()}</CardTitle>
             <CardDescription>{m.settings_mail_preview_description()}</CardDescription>
           </CardHeader>
@@ -305,6 +306,49 @@ function SettingsPage() {
                     {label}
                   </span>
                   {hoverAction === value && <Check className="size-4 text-primary" />}
+                </button>
+              ))}
+            </div>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="flex flex-col gap-3">
+        <Card>
+          <CardHeader>
+            <CardTitle>{m.settings_attachment_display_title()}</CardTitle>
+            <CardDescription>{m.settings_attachment_display_description()}</CardDescription>
+          </CardHeader>
+          <CardContent className="pt-1">
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              {(
+                [
+                  { value: "inline", label: m.settings_attachment_display_inline(), icon: Layers },
+                  { value: "icon", label: m.settings_attachment_display_icon(), icon: Paperclip },
+                ] as const
+              ).map(({ value, label, icon: Icon }) => (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => setAttachmentDisplay(value)}
+                  aria-pressed={attachmentDisplay === value}
+                  className={cn(
+                    "flex items-center justify-between rounded-xl border-2 px-3 py-2 text-left transition-all focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none",
+                    attachmentDisplay === value
+                      ? "border-primary bg-primary/5"
+                      : "border-border hover:border-border/80 hover:bg-muted/40"
+                  )}
+                >
+                  <span
+                    className={cn(
+                      "flex items-center gap-2 text-sm font-medium",
+                      attachmentDisplay === value ? "text-primary" : "text-muted-foreground"
+                    )}
+                  >
+                    <Icon className="size-4" />
+                    {label}
+                  </span>
+                  {attachmentDisplay === value && <Check className="size-4 text-primary" />}
                 </button>
               ))}
             </div>

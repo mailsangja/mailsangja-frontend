@@ -4,6 +4,7 @@ import { toast } from "sonner"
 
 import { MailErrorState } from "@/components/mail-error-state"
 import { ThreadListItem } from "@/components/thread/list-item"
+import { useAttachmentDisplay } from "@/hooks/use-local-storage-setting"
 import { ThreadListSkeletonRows } from "@/components/thread/list-skeleton-rows"
 import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
@@ -78,6 +79,7 @@ export function TrashThreadList({
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const { mutateAsync: restoreThread } = useRestoreTrashThread()
   const { data: labelsList } = useLabels()
+  const { display: attachmentDisplay } = useAttachmentDisplay()
   const labelsColorMap = useMemo(
     () => new Map(labelsList?.map((l) => [l.id, { colorCode: l.colorCode, name: l.name }]) ?? []),
     [labelsList]
@@ -226,6 +228,7 @@ export function TrashThreadList({
                   isSelectionMode={isSelectionMode}
                   account={getAccount(thread.accountId)}
                   labelsColorMap={labelsColorMap}
+                  attachmentDisplay={attachmentDisplay}
                   onSelect={() => onSelectThread(thread.threadId)}
                   onToggleCheck={() => toggleSelected(thread.threadId)}
                 />

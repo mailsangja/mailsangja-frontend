@@ -9,10 +9,15 @@ import type { Attachment } from "@/types/email"
 
 interface AttachmentDownloadChipProps {
   attachment: Attachment
+  className?: string
 }
 
-export function AttachmentDownloadChip({ attachment }: AttachmentDownloadChipProps) {
-  const className = cn(buttonVariants({ variant: "outline", size: "sm" }), "max-w-full gap-2")
+export function AttachmentDownloadChip({ attachment, className: classNameProp }: AttachmentDownloadChipProps) {
+  const className = cn(
+    buttonVariants({ variant: "outline", size: "sm" }),
+    "max-w-full gap-2 bg-transparent p-3",
+    classNameProp
+  )
 
   return (
     <a
@@ -22,6 +27,7 @@ export function AttachmentDownloadChip({ attachment }: AttachmentDownloadChipPro
       download={attachment.filename}
       className={className}
       title={m.attachment_download_title({ filename: attachment.filename })}
+      onClick={(e) => e.stopPropagation()}
     >
       <FileText className="size-3.5 shrink-0 text-muted-foreground" />
       <span className="min-w-0 truncate font-medium">{attachment.filename}</span>

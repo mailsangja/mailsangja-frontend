@@ -4,8 +4,11 @@ import { toast } from "sonner"
 
 import { MailErrorState } from "@/components/mail-error-state"
 import { ThreadListItem } from "@/components/thread/list-item"
+import { useAttachmentDisplay, useInboxView, useMailPreview } from "@/hooks/use-local-storage-setting"
+import { useIsMobile } from "@/hooks/use-mobile"
 import { ThreadListSkeletonRows } from "@/components/thread/list-skeleton-rows"
 import { ThreadListToolbar } from "@/components/thread/list-toolbar"
+import { useMarkThreadsAsRead, useMarkThreadsAsUnread } from "@/mutations/emails"
 import { useDeleteThread, useRestoreTrashThread } from "@/mutations/trash"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { useSuspenseLabels } from "@/queries/labels"
@@ -67,12 +70,19 @@ export function ThreadList({
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
   const { mutate: deleteThread } = useDeleteThread()
   const { mutate: restoreThread } = useRestoreTrashThread()
+  const { mutate: markThreadsAsRead } = useMarkThreadsAsRead()
+  const { mutate: markThreadsAsUnread } = useMarkThreadsAsUnread()
   const { data: labelsList } = useSuspenseLabels()
   const labelsColorMap = useMemo(
     () => new Map(labelsList.map((l) => [l.id, { colorCode: l.colorCode, name: l.name }])),
     [labelsList]
   )
   const isSelectionMode = selectedIds.size > 0
+  const { view: storedView } = useInboxView()
+  const { preview: mailPreview } = useMailPreview()
+  const { display: attachmentDisplay } = useAttachmentDisplay()
+  const isMobile = useIsMobile()
+  const inboxView = isMobile ? "double" : storedView
 
   const toggleSelected = (id: string) => {
     setSelectedIds((prev) => {
@@ -118,6 +128,7 @@ export function ThreadList({
         isRefreshing={isRefreshing}
         onRefresh={onRefresh}
         selectedCount={selectedIds.size}
+        onSelectAll={() => setSelectedIds(new Set(threads?.map((t) => t.threadId) ?? []))}
         onClearSelection={() => setSelectedIds(new Set())}
         onDeleteSelected={() => {
           const ids = Array.from(selectedIds)
@@ -134,15 +145,24 @@ export function ThreadList({
             },
           })
         }}
-        onLabelSelected={() => {
-          toast.info(m.mail_label_feature_pending())
+        onMarkSelectedAsRead={() => {
+          const ids = Array.from(selectedIds)
+          setSelectedIds(new Set())
+          markThreadsAsRead(ids)
+          toast(m.mail_marked_as_read({ count: formatNumber(ids.length) }))
+        }}
+        onMarkSelectedAsUnread={() => {
+          const ids = Array.from(selectedIds)
+          setSelectedIds(new Set())
+          markThreadsAsUnread(ids)
+          toast(m.mail_marked_as_unread({ count: formatNumber(ids.length) }))
         }}
       />
 
       <ScrollArea className="min-h-0 flex-1">
         {isLoading ? (
           <div role="list" aria-label={m.mail_list_label({ mailbox: mailboxName })} className="min-w-0">
-            <ThreadListSkeletonRows />
+            <ThreadListSkeletonRows view={inboxView} />
           </div>
         ) : errorTitle && errorDescription ? (
           <MailErrorState title={errorTitle} description={errorDescription} onRetry={onRetry} />
@@ -159,12 +179,15 @@ export function ThreadList({
                     isSelectionMode={isSelectionMode}
                     account={getAccount(thread.accountId)}
                     labelsColorMap={labelsColorMap}
+                    view={inboxView}
+                    previewEnabled={mailPreview === "enabled"}
+                    attachmentDisplay={attachmentDisplay}
                     onSelect={() => onSelectThread(thread.threadId)}
                     onToggleCheck={() => toggleSelected(thread.threadId)}
                   />
                 )
               })}
-              {isFetchingNextPage ? <ThreadListSkeletonRows /> : null}
+              {isFetchingNextPage ? <ThreadListSkeletonRows view={inboxView} /> : null}
             </div>
             {loadMoreErrorTitle && loadMoreErrorDescription ? (
               <div className="border-t px-4 py-3">
