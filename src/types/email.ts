@@ -108,7 +108,7 @@ export interface ListThreadsParams {
   q?: string
 }
 
-export type StarredThreadsParams = Pick<ListThreadsParams, "marker" | "size">
+export type StarredThreadsParams = Pick<ListThreadsParams, "marker" | "size" | "labelId" | "read" | "q">
 
 export interface UnreadCountResponse {
   unreadCount: number
