@@ -1,4 +1,4 @@
-import { useState, type ElementType } from "react"
+import { useState, type ElementType, type ReactNode } from "react"
 import { BellRing, Bell, BellOff } from "lucide-react"
 
 import { Button } from "@/components/ui/button"
@@ -35,6 +35,11 @@ interface LabelFormDialogProps {
   isPending?: boolean
   submitLabel?: string
   submitDisabled?: boolean
+  cancelLabel?: string
+  cancelVariant?: "outline" | "destructive" | "ghost" | "secondary"
+  cancelIcon?: ReactNode
+  submitIcon?: ReactNode
+  onCancel?: () => void
 }
 
 interface LabelFormContentProps {
@@ -46,6 +51,10 @@ interface LabelFormContentProps {
   isPending?: boolean
   submitLabel: string
   submitDisabled?: boolean
+  cancelLabel: string
+  cancelVariant: "outline" | "destructive" | "ghost" | "secondary"
+  cancelIcon?: ReactNode
+  submitIcon?: ReactNode
   onClose: () => void
 }
 
@@ -58,6 +67,10 @@ function LabelFormContent({
   isPending,
   submitLabel,
   submitDisabled,
+  cancelLabel,
+  cancelVariant,
+  cancelIcon,
+  submitIcon,
   onClose,
 }: LabelFormContentProps) {
   const [name, setName] = useState(defaultName)
@@ -131,10 +144,12 @@ function LabelFormContent({
         </div>
       </ScrollArea>
       <DialogFooter>
-        <Button variant="outline" onClick={onClose}>
-          {m.common_cancel()}
+        <Button variant={cancelVariant} onClick={onClose}>
+          {cancelIcon}
+          {cancelLabel}
         </Button>
         <Button onClick={handleSubmit} disabled={!name.trim() || isPending || submitDisabled}>
+          {submitIcon}
           {submitLabel}
         </Button>
       </DialogFooter>
@@ -154,7 +169,17 @@ export function LabelFormDialog({
   isPending,
   submitLabel = m.common_confirm(),
   submitDisabled,
+  cancelLabel = m.common_cancel(),
+  cancelVariant = "outline",
+  cancelIcon,
+  submitIcon,
+  onCancel,
 }: LabelFormDialogProps) {
+  function handleClose() {
+    onCancel?.()
+    onOpenChange(false)
+  }
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[90vh] grid-rows-[auto_1fr_auto] overflow-hidden sm:max-w-lg">
@@ -171,7 +196,11 @@ export function LabelFormDialog({
             isPending={isPending}
             submitLabel={submitLabel}
             submitDisabled={submitDisabled}
-            onClose={() => onOpenChange(false)}
+            cancelLabel={cancelLabel}
+            cancelVariant={cancelVariant}
+            cancelIcon={cancelIcon}
+            submitIcon={submitIcon}
+            onClose={handleClose}
           />
         )}
       </DialogContent>
