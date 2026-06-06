@@ -4,6 +4,7 @@ import { toast } from "sonner"
 import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Toggle } from "@/components/ui/toggle"
+import { useIsMobile } from "@/hooks/use-mobile"
 import { formatNumber } from "@/lib/date"
 import { cn } from "@/lib/utils"
 import { m } from "@/paraglide/messages"
@@ -45,6 +46,7 @@ export function ThreadListToolbar({
   onMarkSelectedAsRead,
   onMarkSelectedAsUnread,
 }: ThreadListToolbarProps) {
+  const isMobile = useIsMobile()
   const isAllSelected = selectedCount > 0 && selectedCount === currentCount
   const isIndeterminate = selectedCount > 0 && selectedCount < currentCount
 
@@ -53,18 +55,25 @@ export function ThreadListToolbar({
       <div className="ml-0.5 flex h-11 shrink-0 items-center gap-3 border-b bg-accent/40 px-3">
         <Checkbox
           checked={isAllSelected}
-          indeterminate={isIndeterminate}
-          onCheckedChange={(checked) => {
-            if (isIndeterminate) {
+          indeterminate={!isMobile && isIndeterminate}
+          onCheckedChange={() => {
+            if (isMobile) {
+              if (isAllSelected) {
+                onClearSelection()
+              } else {
+                onSelectAll()
+              }
+            } else if (isIndeterminate) {
               onClearSelection()
-            } else if (checked) {
-              onSelectAll()
+            } else if (isAllSelected) {
+              onClearSelection()
             } else {
-              onClearSelection()
+              onSelectAll()
             }
           }}
           aria-label={isAllSelected ? m.mail_clear_selection() : m.mail_select_all()}
         />
+        {isMobile && <span className="text-sm">{m.mail_select_all()}</span>}
         <span className="text-sm font-medium">{m.mail_selected_count({ count: formatNumber(selectedCount) })}</span>
         <div className="ml-auto flex shrink-0 items-center gap-2">
           <Button
@@ -95,16 +104,18 @@ export function ThreadListToolbar({
 
   return (
     <div className="ml-0.5 flex h-11 shrink-0 items-center gap-3 border-b px-3">
-      <Checkbox
-        checked={false}
-        onCheckedChange={() => {
-          onSelectAll()
-          toast.info(m.mail_selected_count({ count: formatNumber(currentCount) }), {
-            description: m.mail_select_all_loaded_notice(),
-          })
-        }}
-        aria-label={m.mail_select_all()}
-      />
+      {!isMobile && (
+        <Checkbox
+          checked={false}
+          onCheckedChange={() => {
+            onSelectAll()
+            toast.info(m.mail_selected_count({ count: formatNumber(currentCount) }), {
+              description: m.mail_select_all_loaded_notice(),
+            })
+          }}
+          aria-label={m.mail_select_all()}
+        />
+      )}
       <h2 className="min-w-0 truncate text-sm font-medium">{mailboxName}</h2>
       <span className="hidden rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground sm:inline-flex">
         {m.mail_total_count({ count: formatNumber(totalCount) })}
