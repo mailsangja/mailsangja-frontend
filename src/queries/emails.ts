@@ -56,7 +56,12 @@ export function useMailboxThreads(mailbox: SupportedMailboxId | null, options: O
 
 export function useStarredThreads(options: Omit<StarredThreadsParams, "marker"> = {}, enabled = true) {
   const size = options.size ?? 50
-  const params = { size }
+  const params = {
+    size,
+    labelId: options.labelId,
+    read: options.read,
+    q: options.q,
+  }
 
   return useInfiniteQuery({
     queryKey: emailKeys.starred(params),

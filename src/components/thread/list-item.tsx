@@ -5,6 +5,7 @@ import { AttachmentDownloadChip } from "@/components/attachment/download-chip"
 import { LabelChipList, type LabelChipMap } from "@/components/label/label-chip"
 import { MailAccountIcon } from "@/components/mail-account-icon"
 import { ThreadPreviewPopoverContent } from "@/components/thread/preview-popover"
+import { Button } from "@/components/ui/button"
 import { Checkbox } from "@/components/ui/checkbox"
 import { Popover } from "@/components/ui/popover"
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
@@ -28,6 +29,40 @@ interface ThreadListItemProps {
   attachmentDisplay?: "inline" | "icon"
   onSelect: () => void
   onToggleCheck: () => void
+  onToggleStar?: () => void
+  isTogglingStar?: boolean
+}
+
+function StarButton({
+  isStar,
+  onToggle,
+  disabled,
+  className,
+}: {
+  isStar: boolean
+  onToggle?: () => void
+  disabled?: boolean
+  className?: string
+}) {
+  return (
+    <Button
+      variant="ghost"
+      size="icon-sm"
+      className={cn(className, isStar ? "text-primary hover:text-primary" : "text-muted-foreground/40")}
+      disabled={disabled}
+      onKeyDown={(event) => {
+        event.stopPropagation()
+      }}
+      onClick={(event) => {
+        event.stopPropagation()
+        onToggle?.()
+      }}
+      aria-label={isStar ? m.message_unstar() : m.message_star()}
+      title={isStar ? m.message_unstar() : m.message_star()}
+    >
+      <Star className={cn(isStar && "fill-primary")} />
+    </Button>
+  )
 }
 
 function SenderTooltipContent({ participant }: { participant: InboxThreadSummary["participant"] }) {
@@ -94,6 +129,8 @@ type ThreadListItemSubProps = {
   labelsColorMap: LabelChipMap
   attachmentDisplay?: "inline" | "icon"
   onToggleCheck: () => void
+  onToggleStar?: () => void
+  isTogglingStar?: boolean
   onHoverStart?: React.MouseEventHandler<HTMLDivElement>
   onHoverEnd?: React.MouseEventHandler<HTMLDivElement>
   onHoverMove?: React.MouseEventHandler<HTMLDivElement>
@@ -109,6 +146,8 @@ function ThreadListItemContent({
   labelsColorMap,
   attachmentDisplay,
   onToggleCheck,
+  onToggleStar,
+  isTogglingStar,
   onHoverStart,
   onHoverEnd,
   onHoverMove,
@@ -128,12 +167,11 @@ function ThreadListItemContent({
           <Checkbox checked={isChecked} onCheckedChange={onToggleCheck} aria-label={m.thread_select_mail()} />
         </div>
 
-        <Star
-          className={cn(
-            "mx-1.5 hidden size-4 shrink-0 md:block",
-            thread.star ? "fill-primary text-primary" : "text-muted-foreground/40"
-          )}
-          aria-label={thread.star ? m.message_starred() : undefined}
+        <StarButton
+          isStar={thread.star}
+          onToggle={onToggleStar}
+          disabled={isTogglingStar}
+          className="mx-0.5 hidden md:flex"
         />
 
         <Tooltip>
@@ -235,12 +273,11 @@ function ThreadListItemContent({
           ) : null}
         </div>
 
-        <Star
-          className={cn(
-            "size-4 shrink-0 self-end md:hidden",
-            thread.star ? "fill-primary text-primary" : "text-muted-foreground/40"
-          )}
-          aria-label={thread.star ? m.message_starred() : undefined}
+        <StarButton
+          isStar={thread.star}
+          onToggle={onToggleStar}
+          disabled={isTogglingStar}
+          className="self-end md:hidden"
         />
       </div>
     </>
@@ -257,6 +294,8 @@ function ThreadListItemSingleLine({
   labelsColorMap,
   attachmentDisplay,
   onToggleCheck,
+  onToggleStar,
+  isTogglingStar,
   onHoverStart,
   onHoverEnd,
   onHoverMove,
@@ -276,13 +315,7 @@ function ThreadListItemSingleLine({
           <Checkbox checked={isChecked} onCheckedChange={onToggleCheck} aria-label={m.thread_select_mail()} />
         </div>
 
-        <Star
-          className={cn(
-            "mx-1.5 size-4 shrink-0",
-            thread.star ? "fill-primary text-primary" : "text-muted-foreground/40"
-          )}
-          aria-label={thread.star ? m.message_starred() : undefined}
-        />
+        <StarButton isStar={thread.star} onToggle={onToggleStar} disabled={isTogglingStar} className="mx-0.5" />
 
         <Tooltip>
           <TooltipTrigger
@@ -382,6 +415,8 @@ export function ThreadListItem({
   attachmentDisplay = "inline",
   onSelect,
   onToggleCheck,
+  onToggleStar,
+  isTogglingStar,
 }: ThreadListItemProps) {
   const isMobile = useIsMobile()
   const longPressTimerRef = useRef<ReturnType<typeof window.setTimeout> | null>(null)
@@ -518,6 +553,8 @@ export function ThreadListItem({
             labelsColorMap={labelsColorMap}
             attachmentDisplay={attachmentDisplay}
             onToggleCheck={onToggleCheck}
+            onToggleStar={onToggleStar}
+            isTogglingStar={isTogglingStar}
             onHoverStart={handleMouseEnter}
             onHoverEnd={handleMouseLeave}
             onHoverMove={handleMouseMove}
@@ -533,6 +570,8 @@ export function ThreadListItem({
             labelsColorMap={labelsColorMap}
             attachmentDisplay={attachmentDisplay}
             onToggleCheck={onToggleCheck}
+            onToggleStar={onToggleStar}
+            isTogglingStar={isTogglingStar}
             onHoverStart={handleMouseEnter}
             onHoverEnd={handleMouseLeave}
             onHoverMove={handleMouseMove}

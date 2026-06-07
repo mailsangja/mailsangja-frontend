@@ -123,11 +123,11 @@ export function MessageCard({
               size="icon-sm"
               onClick={onToggleStar}
               disabled={!onToggleStar || isTogglingStar}
-              title={message.isStar ? m.message_unstar() : m.message_star()}
-              aria-label={message.isStar ? m.message_unstar() : m.message_star()}
-              className={cn(message.isStar && "text-primary")}
+              title={message.star ? m.message_unstar() : m.message_star()}
+              aria-label={message.star ? m.message_unstar() : m.message_star()}
+              className={cn(message.star && "text-primary")}
             >
-              <Star className={cn(message.isStar && "fill-current")} />
+              <Star className={cn(message.star && "fill-primary")} />
             </Button>
             {menuActions ? (
               <DropdownMenu>

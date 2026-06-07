@@ -193,7 +193,7 @@ export async function getStarredThreads(
   params: StarredThreadsParams = {}
 ): Promise<MarkerSliceResponse<InboxThreadSummary>> {
   const response = await apiClient.get<MarkerSliceResponse<InboxThreadSummary>>("/api/v1/threads/starred", {
-    params: params as Record<string, string | number | null | undefined>,
+    params: params as Record<string, string | string[] | number | boolean | null | undefined>,
   })
 
   return {
@@ -226,6 +226,10 @@ export async function markMessageAsUnread(messageId: string): Promise<void> {
 
 export async function toggleMessageStar(messageId: string): Promise<void> {
   return apiClient.post<void>(`/api/v1/messages/${messageId}/star`)
+}
+
+export async function toggleThreadStar(threadId: string): Promise<void> {
+  return apiClient.post<void>(`/api/v1/threads/${threadId}/star`)
 }
 
 export async function getUnreadCount(): Promise<UnreadCountResponse> {

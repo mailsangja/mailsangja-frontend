@@ -58,7 +58,7 @@ export interface InboxMessage {
   cc: MailAddress[]
   snippet: string
   isRead: boolean
-  isStar: boolean
+  star: boolean
   sentAt: string
   bodyText: string
   bodyHtml: string
@@ -108,7 +108,7 @@ export interface ListThreadsParams {
   q?: string
 }
 
-export type StarredThreadsParams = Pick<ListThreadsParams, "marker" | "size">
+export type StarredThreadsParams = Pick<ListThreadsParams, "marker" | "size" | "labelId" | "read" | "q">
 
 export interface UnreadCountResponse {
   unreadCount: number
