@@ -180,8 +180,16 @@ export function LabelFormDialog({
     onOpenChange(false)
   }
 
+  function handleOpenChange(nextOpen: boolean) {
+    if (!nextOpen) {
+      handleClose()
+      return
+    }
+    onOpenChange(true)
+  }
+
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="max-h-[90vh] grid-rows-[auto_1fr_auto] overflow-hidden sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>

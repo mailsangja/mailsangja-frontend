@@ -35,6 +35,7 @@ export function SidebarLabelsSection({ activeLabelId, onLabelToggle, className }
   const [confirmOpen, setConfirmOpen] = useState(false)
 
   function handleGenerateSuggestions() {
+    if (createSuggestions.isPending) return
     setConfirmOpen(false)
     createSuggestions.mutate(undefined, {
       onSuccess: () => {
@@ -135,7 +136,7 @@ export function SidebarLabelsSection({ activeLabelId, onLabelToggle, className }
             <Button variant="outline" onClick={() => setConfirmOpen(false)}>
               {m.common_cancel()}
             </Button>
-            <Button onClick={handleGenerateSuggestions}>
+            <Button onClick={handleGenerateSuggestions} disabled={createSuggestions.isPending}>
               <Sparkles className="size-4" />
               {m.sidebar_label_ai_confirm_button()}
             </Button>
