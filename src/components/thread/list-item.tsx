@@ -32,6 +32,24 @@ interface ThreadListItemProps {
   onToggleStar?: () => void
 }
 
+function StarButton({ isStar, onToggle, className }: { isStar: boolean; onToggle?: () => void; className?: string }) {
+  return (
+    <Button
+      variant="ghost"
+      size="icon-sm"
+      className={cn(className, isStar ? "text-primary hover:text-primary" : "text-muted-foreground/40")}
+      onClick={(event) => {
+        event.stopPropagation()
+        onToggle?.()
+      }}
+      aria-label={isStar ? m.message_unstar() : m.message_star()}
+      title={isStar ? m.message_unstar() : m.message_star()}
+    >
+      <Star className={cn(isStar && "fill-primary")} />
+    </Button>
+  )
+}
+
 function SenderTooltipContent({ participant }: { participant: InboxThreadSummary["participant"] }) {
   const name = participant.name?.trim()
   const email = participant.email.trim()
@@ -132,22 +150,7 @@ function ThreadListItemContent({
           <Checkbox checked={isChecked} onCheckedChange={onToggleCheck} aria-label={m.thread_select_mail()} />
         </div>
 
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          className={cn(
-            "mx-0.5 hidden md:flex",
-            thread.star ? "text-primary hover:text-primary" : "text-muted-foreground/40"
-          )}
-          onClick={(event) => {
-            event.stopPropagation()
-            onToggleStar?.()
-          }}
-          aria-label={thread.star ? m.message_unstar() : m.message_star()}
-          title={thread.star ? m.message_unstar() : m.message_star()}
-        >
-          <Star className={cn(thread.star && "fill-primary")} />
-        </Button>
+        <StarButton isStar={thread.star} onToggle={onToggleStar} className="mx-0.5 hidden md:flex" />
 
         <Tooltip>
           <TooltipTrigger
@@ -248,22 +251,7 @@ function ThreadListItemContent({
           ) : null}
         </div>
 
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          className={cn(
-            "self-end md:hidden",
-            thread.star ? "text-primary hover:text-primary" : "text-muted-foreground/40"
-          )}
-          onClick={(event) => {
-            event.stopPropagation()
-            onToggleStar?.()
-          }}
-          aria-label={thread.star ? m.message_unstar() : m.message_star()}
-          title={thread.star ? m.message_unstar() : m.message_star()}
-        >
-          <Star className={cn(thread.star && "fill-primary")} />
-        </Button>
+        <StarButton isStar={thread.star} onToggle={onToggleStar} className="self-end md:hidden" />
       </div>
     </>
   )
@@ -299,19 +287,7 @@ function ThreadListItemSingleLine({
           <Checkbox checked={isChecked} onCheckedChange={onToggleCheck} aria-label={m.thread_select_mail()} />
         </div>
 
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          className={cn("mx-0.5", thread.star ? "text-primary hover:text-primary" : "text-muted-foreground/40")}
-          onClick={(event) => {
-            event.stopPropagation()
-            onToggleStar?.()
-          }}
-          aria-label={thread.star ? m.message_unstar() : m.message_star()}
-          title={thread.star ? m.message_unstar() : m.message_star()}
-        >
-          <Star className={cn(thread.star && "fill-primary")} />
-        </Button>
+        <StarButton isStar={thread.star} onToggle={onToggleStar} className="mx-0.5" />
 
         <Tooltip>
           <TooltipTrigger

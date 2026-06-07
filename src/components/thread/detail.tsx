@@ -165,7 +165,7 @@ function ThreadToolbar({
           onClick={onToggleStar}
           disabled={isTogglingStar}
           title={isStar ? m.message_unstar() : m.message_star()}
-          aria-label={m.thread_star()}
+          aria-label={isStar ? m.message_unstar() : m.message_star()}
           className={cn(isStar && "text-primary hover:text-primary")}
         >
           <Star className={cn(isStar && "fill-primary")} />

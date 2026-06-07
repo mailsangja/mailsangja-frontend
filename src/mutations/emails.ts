@@ -111,7 +111,7 @@ export function useMarkMessageAsUnread() {
 
 export function useToggleMessageStar() {
   return useMutation({
-    mutationFn: (messageId: string) => toggleMessageStar(messageId),
+    mutationFn: toggleMessageStar,
     onSuccess: invalidateEmailAndLabelQueries,
     onError: () => {
       toast.error(m.mail_star_error())
@@ -121,7 +121,7 @@ export function useToggleMessageStar() {
 
 export function useToggleThreadStar() {
   return useMutation({
-    mutationFn: (threadId: string) => toggleThreadStar(threadId),
+    mutationFn: toggleThreadStar,
     onSuccess: invalidateEmailAndLabelQueries,
     onError: () => {
       toast.error(m.mail_star_error())
