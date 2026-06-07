@@ -30,14 +30,29 @@ interface ThreadListItemProps {
   onSelect: () => void
   onToggleCheck: () => void
   onToggleStar?: () => void
+  isTogglingStar?: boolean
 }
 
-function StarButton({ isStar, onToggle, className }: { isStar: boolean; onToggle?: () => void; className?: string }) {
+function StarButton({
+  isStar,
+  onToggle,
+  disabled,
+  className,
+}: {
+  isStar: boolean
+  onToggle?: () => void
+  disabled?: boolean
+  className?: string
+}) {
   return (
     <Button
       variant="ghost"
       size="icon-sm"
       className={cn(className, isStar ? "text-primary hover:text-primary" : "text-muted-foreground/40")}
+      disabled={disabled}
+      onKeyDown={(event) => {
+        event.stopPropagation()
+      }}
       onClick={(event) => {
         event.stopPropagation()
         onToggle?.()
@@ -115,6 +130,7 @@ type ThreadListItemSubProps = {
   attachmentDisplay?: "inline" | "icon"
   onToggleCheck: () => void
   onToggleStar?: () => void
+  isTogglingStar?: boolean
   onHoverStart?: React.MouseEventHandler<HTMLDivElement>
   onHoverEnd?: React.MouseEventHandler<HTMLDivElement>
   onHoverMove?: React.MouseEventHandler<HTMLDivElement>
@@ -131,6 +147,7 @@ function ThreadListItemContent({
   attachmentDisplay,
   onToggleCheck,
   onToggleStar,
+  isTogglingStar,
   onHoverStart,
   onHoverEnd,
   onHoverMove,
@@ -150,7 +167,12 @@ function ThreadListItemContent({
           <Checkbox checked={isChecked} onCheckedChange={onToggleCheck} aria-label={m.thread_select_mail()} />
         </div>
 
-        <StarButton isStar={thread.star} onToggle={onToggleStar} className="mx-0.5 hidden md:flex" />
+        <StarButton
+          isStar={thread.star}
+          onToggle={onToggleStar}
+          disabled={isTogglingStar}
+          className="mx-0.5 hidden md:flex"
+        />
 
         <Tooltip>
           <TooltipTrigger
@@ -251,7 +273,12 @@ function ThreadListItemContent({
           ) : null}
         </div>
 
-        <StarButton isStar={thread.star} onToggle={onToggleStar} className="self-end md:hidden" />
+        <StarButton
+          isStar={thread.star}
+          onToggle={onToggleStar}
+          disabled={isTogglingStar}
+          className="self-end md:hidden"
+        />
       </div>
     </>
   )
@@ -268,6 +295,7 @@ function ThreadListItemSingleLine({
   attachmentDisplay,
   onToggleCheck,
   onToggleStar,
+  isTogglingStar,
   onHoverStart,
   onHoverEnd,
   onHoverMove,
@@ -287,7 +315,7 @@ function ThreadListItemSingleLine({
           <Checkbox checked={isChecked} onCheckedChange={onToggleCheck} aria-label={m.thread_select_mail()} />
         </div>
 
-        <StarButton isStar={thread.star} onToggle={onToggleStar} className="mx-0.5" />
+        <StarButton isStar={thread.star} onToggle={onToggleStar} disabled={isTogglingStar} className="mx-0.5" />
 
         <Tooltip>
           <TooltipTrigger
@@ -388,6 +416,7 @@ export function ThreadListItem({
   onSelect,
   onToggleCheck,
   onToggleStar,
+  isTogglingStar,
 }: ThreadListItemProps) {
   const isMobile = useIsMobile()
   const longPressTimerRef = useRef<ReturnType<typeof window.setTimeout> | null>(null)
@@ -525,6 +554,7 @@ export function ThreadListItem({
             attachmentDisplay={attachmentDisplay}
             onToggleCheck={onToggleCheck}
             onToggleStar={onToggleStar}
+            isTogglingStar={isTogglingStar}
             onHoverStart={handleMouseEnter}
             onHoverEnd={handleMouseLeave}
             onHoverMove={handleMouseMove}
@@ -541,6 +571,7 @@ export function ThreadListItem({
             attachmentDisplay={attachmentDisplay}
             onToggleCheck={onToggleCheck}
             onToggleStar={onToggleStar}
+            isTogglingStar={isTogglingStar}
             onHoverStart={handleMouseEnter}
             onHoverEnd={handleMouseLeave}
             onHoverMove={handleMouseMove}

@@ -72,7 +72,11 @@ export function ThreadList({
   const { mutate: restoreThread } = useRestoreTrashThread()
   const { mutate: markThreadsAsRead } = useMarkThreadsAsRead()
   const { mutate: markThreadsAsUnread } = useMarkThreadsAsUnread()
-  const { mutate: toggleThreadStar } = useToggleThreadStar()
+  const {
+    mutate: toggleThreadStar,
+    isPending: isTogglingThreadStar,
+    variables: togglingStarThreadId,
+  } = useToggleThreadStar()
   const { data: labelsList } = useSuspenseLabels()
   const labelsColorMap = useMemo(
     () => new Map(labelsList.map((l) => [l.id, { colorCode: l.colorCode, name: l.name }])),
@@ -186,6 +190,7 @@ export function ThreadList({
                     onSelect={() => onSelectThread(thread.threadId)}
                     onToggleCheck={() => toggleSelected(thread.threadId)}
                     onToggleStar={() => toggleThreadStar(thread.threadId)}
+                    isTogglingStar={isTogglingThreadStar && togglingStarThreadId === thread.threadId}
                   />
                 )
               })}
