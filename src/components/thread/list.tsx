@@ -8,7 +8,7 @@ import { useAttachmentDisplay, useInboxView, useMailPreview } from "@/hooks/use-
 import { useIsMobile } from "@/hooks/use-mobile"
 import { ThreadListSkeletonRows } from "@/components/thread/list-skeleton-rows"
 import { ThreadListToolbar } from "@/components/thread/list-toolbar"
-import { useMarkThreadsAsRead, useMarkThreadsAsUnread } from "@/mutations/emails"
+import { useMarkThreadsAsRead, useMarkThreadsAsUnread, useToggleThreadStar } from "@/mutations/emails"
 import { useDeleteThread, useRestoreTrashThread } from "@/mutations/trash"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { useSuspenseLabels } from "@/queries/labels"
@@ -72,6 +72,7 @@ export function ThreadList({
   const { mutate: restoreThread } = useRestoreTrashThread()
   const { mutate: markThreadsAsRead } = useMarkThreadsAsRead()
   const { mutate: markThreadsAsUnread } = useMarkThreadsAsUnread()
+  const { mutate: toggleThreadStar } = useToggleThreadStar()
   const { data: labelsList } = useSuspenseLabels()
   const labelsColorMap = useMemo(
     () => new Map(labelsList.map((l) => [l.id, { colorCode: l.colorCode, name: l.name }])),
@@ -184,6 +185,7 @@ export function ThreadList({
                     attachmentDisplay={attachmentDisplay}
                     onSelect={() => onSelectThread(thread.threadId)}
                     onToggleCheck={() => toggleSelected(thread.threadId)}
+                    onToggleStar={() => toggleThreadStar(thread.threadId)}
                   />
                 )
               })}

@@ -17,12 +17,14 @@ import { Skeleton } from "@/components/ui/skeleton"
 import { useThreadMessageExpansion } from "@/hooks/use-thread-message-expansion"
 import { copyTextToClipboard } from "@/lib/clipboard"
 import { getErrorMessage, getHttpStatus } from "@/lib/http-error"
+import { cn } from "@/lib/utils"
 import {
   useMarkMessageAsRead,
   useMarkMessageAsUnread,
   useMarkThreadAsRead,
   useMarkThreadAsUnread,
   useToggleMessageStar,
+  useToggleThreadStar,
 } from "@/mutations/emails"
 import { useDeleteMessage, useDeleteThread, useRestoreTrashMessage, useRestoreTrashThread } from "@/mutations/trash"
 import { m } from "@/paraglide/messages"
@@ -110,22 +112,28 @@ function getLatestInboundMessage(messages: readonly InboxMessage[]) {
 
 interface ThreadToolbarProps {
   isRead: boolean
+  isStar: boolean
   onClose?: () => void
   onDelete: () => void
   onReply: () => void
   onToggleRead: () => void
+  onToggleStar: () => void
   isDeleting: boolean
   isTogglingRead: boolean
+  isTogglingStar: boolean
 }
 
 function ThreadToolbar({
   isRead,
+  isStar,
   onClose,
   onDelete,
   onReply,
   onToggleRead,
+  onToggleStar,
   isDeleting,
   isTogglingRead,
+  isTogglingStar,
 }: ThreadToolbarProps) {
   return (
     <div className="flex h-11 shrink-0 items-center justify-between gap-2 px-4">
@@ -154,11 +162,13 @@ function ThreadToolbar({
         <Button
           variant="ghost"
           size="icon-sm"
-          onClick={() => toast("준비 중인 기능이에요.")}
-          title={m.message_star()}
+          onClick={onToggleStar}
+          disabled={isTogglingStar}
+          title={isStar ? m.message_unstar() : m.message_star()}
           aria-label={m.thread_star()}
+          className={cn(isStar && "text-primary hover:text-primary")}
         >
-          <Star />
+          <Star className={cn(isStar && "fill-current")} />
         </Button>
         <Button
           variant="ghost"
@@ -231,6 +241,7 @@ export function ThreadDetail({ threadId, messageId = null, onClose }: ThreadDeta
     variables: togglingStarMessageId,
     isPending: isTogglingMessageStar,
   } = useToggleMessageStar()
+  const { mutate: toggleThreadStar, isPending: isTogglingThreadStar } = useToggleThreadStar()
   const { expandedIds, toggleExpanded } = useThreadMessageExpansion({
     threadId,
     messages: thread?.messages ?? [],
@@ -346,12 +357,15 @@ export function ThreadDetail({ threadId, messageId = null, onClose }: ThreadDeta
     <div className="relative flex h-full w-full min-w-0 flex-1 flex-col">
       <ThreadToolbar
         isRead={thread.isRead}
+        isStar={thread.star}
         onClose={onClose}
         onDelete={handleDeleteThread}
         onReply={() => handleReply()}
         onToggleRead={handleToggleThreadRead}
+        onToggleStar={() => toggleThreadStar(thread.threadId)}
         isDeleting={isDeleting}
         isTogglingRead={isMarkingThreadRead || isMarkingThreadUnread}
+        isTogglingStar={isTogglingThreadStar}
       />
       <ThreadHeader thread={thread} account={account} labels={thread.labels} />
       <ThreadMessageList
