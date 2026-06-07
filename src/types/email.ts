@@ -58,7 +58,7 @@ export interface InboxMessage {
   cc: MailAddress[]
   snippet: string
   isRead: boolean
-  isStar: boolean
+  star: boolean
   sentAt: string
   bodyText: string
   bodyHtml: string

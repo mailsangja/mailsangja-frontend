@@ -168,7 +168,7 @@ function ThreadToolbar({
           aria-label={m.thread_star()}
           className={cn(isStar && "text-primary hover:text-primary")}
         >
-          <Star className={cn(isStar && "fill-current")} />
+          <Star className={cn(isStar && "fill-primary")} />
         </Button>
         <Button
           variant="ghost"

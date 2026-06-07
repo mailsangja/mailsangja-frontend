@@ -146,7 +146,7 @@ function ThreadListItemContent({
           aria-label={thread.star ? m.message_unstar() : m.message_star()}
           title={thread.star ? m.message_unstar() : m.message_star()}
         >
-          <Star className={cn(thread.star && "fill-current")} />
+          <Star className={cn(thread.star && "fill-primary")} />
         </Button>
 
         <Tooltip>
@@ -262,7 +262,7 @@ function ThreadListItemContent({
           aria-label={thread.star ? m.message_unstar() : m.message_star()}
           title={thread.star ? m.message_unstar() : m.message_star()}
         >
-          <Star className={cn(thread.star && "fill-current")} />
+          <Star className={cn(thread.star && "fill-primary")} />
         </Button>
       </div>
     </>
@@ -310,7 +310,7 @@ function ThreadListItemSingleLine({
           aria-label={thread.star ? m.message_unstar() : m.message_star()}
           title={thread.star ? m.message_unstar() : m.message_star()}
         >
-          <Star className={cn(thread.star && "fill-current")} />
+          <Star className={cn(thread.star && "fill-primary")} />
         </Button>
 
         <Tooltip>
