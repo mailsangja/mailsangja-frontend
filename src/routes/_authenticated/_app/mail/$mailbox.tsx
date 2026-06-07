@@ -17,13 +17,7 @@ import { useMailAccounts, mailAccountQueries } from "@/queries/mail-accounts"
 import { emailKeys, useMailboxThreads, useStarredThreads } from "@/queries/emails"
 import { useLabels, labelQueries, useLabelGroups, labelGroupQueries } from "@/queries/labels"
 import { useTrashThreads } from "@/queries/trash"
-import {
-  getMailboxLabel,
-  isSupportedMailboxId,
-  parseMailboxId,
-  type InboxThreadSummary,
-  type PrimaryMailboxId,
-} from "@/types/email"
+import { getMailboxLabel, isSupportedMailboxId, parseMailboxId, type PrimaryMailboxId } from "@/types/email"
 
 export const Route = createFileRoute("/_authenticated/_app/mail/$mailbox")({
   params: {
@@ -94,44 +88,6 @@ function getMailboxThreadsErrorCopy(error: unknown) {
   }
 }
 
-function includesSearchValue(value: string | undefined, normalizedQuery: string) {
-  return value?.toLocaleLowerCase().includes(normalizedQuery) ?? false
-}
-
-function matchesLocalThreadFilters(
-  thread: InboxThreadSummary,
-  options: {
-    query: string
-    unreadOnly: boolean
-    labelIds?: string[]
-  }
-) {
-  if (options.unreadOnly && thread.isRead) {
-    return false
-  }
-
-  if (options.labelIds?.length) {
-    const threadLabelIds = new Set(thread.labels.map((label) => label.labelId))
-
-    if (!options.labelIds.some((labelId) => threadLabelIds.has(labelId))) {
-      return false
-    }
-  }
-
-  const normalizedQuery = options.query.trim().toLocaleLowerCase()
-
-  if (!normalizedQuery) {
-    return true
-  }
-
-  return (
-    includesSearchValue(thread.latestSubject, normalizedQuery) ||
-    includesSearchValue(thread.snippet, normalizedQuery) ||
-    includesSearchValue(thread.participant.name, normalizedQuery) ||
-    includesSearchValue(thread.participant.email, normalizedQuery)
-  )
-}
-
 function MailboxPage() {
   const { mailbox } = Route.useParams()
 
@@ -171,7 +127,15 @@ function MailboxView({ mailbox }: { mailbox: PrimaryMailboxId }) {
     labelId: effectiveLabelIds,
     q: hasSearchQuery ? query : undefined,
   })
-  const starredThreadsQuery = useStarredThreads({ size: 50 }, isStarredMailbox)
+  const starredThreadsQuery = useStarredThreads(
+    {
+      size: 50,
+      read: filter === "unread" ? false : undefined,
+      labelId: effectiveLabelIds,
+      q: hasSearchQuery ? query : undefined,
+    },
+    isStarredMailbox
+  )
   const {
     data,
     isLoading,
@@ -190,26 +154,9 @@ function MailboxView({ mailbox }: { mailbox: PrimaryMailboxId }) {
   const selectedAccount = accountId ? (accounts?.find((account) => account.id === accountId) ?? null) : null
 
   const threads = isThreadListMailbox
-    ? loadedThreads.filter((thread) => {
-        if (selectedAccount && thread.accountId !== selectedAccount.id) {
-          return false
-        }
-
-        if (isStarredMailbox) {
-          return matchesLocalThreadFilters(thread, {
-            query,
-            unreadOnly: filter === "unread",
-            labelIds: effectiveLabelIds,
-          })
-        }
-
-        return true
-      })
+    ? loadedThreads.filter((thread) => !selectedAccount || thread.accountId === selectedAccount.id)
     : []
-  const totalThreadCount =
-    isStarredMailbox && (hasSearchQuery || filter === "unread" || selectedAccount || effectiveLabelIds)
-      ? threads.length
-      : baseTotalThreadCount
+  const totalThreadCount = isStarredMailbox && selectedAccount ? threads.length : baseTotalThreadCount
   const mailboxErrorCopy = isError ? getMailboxThreadsErrorCopy(error) : null
   const loadMoreErrorCopy = isFetchNextPageError ? getMailboxThreadsErrorCopy(error) : null
 
