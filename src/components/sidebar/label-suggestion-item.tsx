@@ -62,7 +62,7 @@ export function LabelSuggestionItem({ suggestion }: LabelSuggestionItemProps) {
   }
 
   return (
-    <SidebarMenuItem className="ai-suggestion-item">
+    <SidebarMenuItem className="ai-suggestion-item group/suggestion">
       <SidebarMenuButton
         type="button"
         size="sm"
@@ -73,6 +73,21 @@ export function LabelSuggestionItem({ suggestion }: LabelSuggestionItemProps) {
         <span className="size-3 shrink-0 rounded-sm" style={{ backgroundColor: suggestion.colorCode }} />
         <span className="truncate">{suggestion.name}</span>
       </SidebarMenuButton>
+
+      <div className="absolute top-1/2 right-1 flex -translate-y-1/2 items-center gap-0.5 transition-opacity [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-focus-within/suggestion:opacity-100 [@media(hover:hover)]:group-hover/suggestion:opacity-100">
+        <button
+          type="button"
+          className="flex size-5 items-center justify-center rounded text-muted-foreground hover:text-destructive"
+          aria-label={m.label_suggestion_reject()}
+          onClick={(e) => {
+            e.stopPropagation()
+            handleReject()
+          }}
+          disabled={deleteSuggestion.isPending}
+        >
+          <X className="size-3.5" />
+        </button>
+      </div>
 
       <LabelFormDialog
         open={approveOpen}

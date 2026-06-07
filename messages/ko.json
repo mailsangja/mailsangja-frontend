@@ -435,6 +435,7 @@
   "label_suggestion_approve_success": "{name} 라벨이 추가되었습니다",
   "label_suggestion_reject": "거부",
   "label_suggestion_reject_error": "라벨 제안 거부에 실패했습니다.",
+  "label_suggestion_weekly_usage": "이번 주 사용량: {used}/{limit}",
   "label_sensitive_title": "AI 기능에서 제외",
   "label_sensitive_description": "이 라벨의 메일은 AI 초안 생성, 검토 등에 사용되지 않습니다.",
   "label_sensitive_badge": "AI 제외",

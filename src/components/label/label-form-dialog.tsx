@@ -182,7 +182,7 @@ export function LabelFormDialog({
 
   function handleOpenChange(nextOpen: boolean) {
     if (!nextOpen) {
-      handleClose()
+      onOpenChange(false)
       return
     }
     onOpenChange(true)

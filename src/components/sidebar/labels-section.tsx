@@ -17,6 +17,7 @@ import { getErrorMessage, getHttpStatus } from "@/lib/http-error"
 import { cn } from "@/lib/utils"
 import { useCreateLabel, useCreateLabelSuggestions } from "@/mutations/labels"
 import { m } from "@/paraglide/messages"
+import { useAiUsages } from "@/queries/ai"
 import { useLabels, useLabelSuggestions } from "@/queries/labels"
 
 interface SidebarLabelsSectionProps {
@@ -31,6 +32,8 @@ export function SidebarLabelsSection({ activeLabelId, onLabelToggle, className }
   const createLabel = useCreateLabel()
   const createSuggestions = useCreateLabelSuggestions()
   const { orderedLabels, sensors, handleDragEnd } = useLabelOrder(serverLabels)
+  const { data: usageData } = useAiUsages(["LABEL_SUGGESTION"])
+  const labelUsage = usageData?.usages.find((u) => u.type === "LABEL_SUGGESTION")
   const [open, setOpen] = useState(false)
   const [confirmOpen, setConfirmOpen] = useState(false)
 
@@ -132,6 +135,14 @@ export function SidebarLabelsSection({ activeLabelId, onLabelToggle, className }
             <DialogTitle>{m.sidebar_label_ai_confirm_title()}</DialogTitle>
           </DialogHeader>
           <p className="text-sm text-muted-foreground">{m.sidebar_label_ai_confirm_description()}</p>
+          {labelUsage && (
+            <p className="text-sm text-muted-foreground">
+              {m.label_suggestion_weekly_usage({
+                used: labelUsage.used,
+                limit: labelUsage.limit,
+              })}
+            </p>
+          )}
           <DialogFooter>
             <Button variant="outline" onClick={() => setConfirmOpen(false)}>
               {m.common_cancel()}
