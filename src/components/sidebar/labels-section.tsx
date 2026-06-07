@@ -1,4 +1,5 @@
 import { useState } from "react"
+import { createPortal } from "react-dom"
 import { DndContext, closestCenter } from "@dnd-kit/core"
 import { SortableContext, verticalListSortingStrategy } from "@dnd-kit/sortable"
 import { Plus, Sparkles } from "lucide-react"
@@ -8,6 +9,7 @@ import { LabelFormDialog, type LabelFormData } from "@/components/label/label-fo
 import { LabelItem } from "@/components/sidebar/label-item"
 import { LabelSuggestionItem } from "@/components/sidebar/label-suggestion-item"
 import { Button, buttonVariants } from "@/components/ui/button"
+import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import { SidebarGroup, SidebarGroupLabel, SidebarMenu } from "@/components/ui/sidebar"
 import { useLabelOrder } from "@/hooks/use-label-order"
 import { trackEvent } from "@/lib/analytics"
@@ -15,6 +17,7 @@ import { getErrorMessage, getHttpStatus } from "@/lib/http-error"
 import { cn } from "@/lib/utils"
 import { useCreateLabel, useCreateLabelSuggestions } from "@/mutations/labels"
 import { m } from "@/paraglide/messages"
+import { useAiUsages } from "@/queries/ai"
 import { useLabels, useLabelSuggestions } from "@/queries/labels"
 
 interface SidebarLabelsSectionProps {
@@ -29,7 +32,22 @@ export function SidebarLabelsSection({ activeLabelId, onLabelToggle, className }
   const createLabel = useCreateLabel()
   const createSuggestions = useCreateLabelSuggestions()
   const { orderedLabels, sensors, handleDragEnd } = useLabelOrder(serverLabels)
+  const { data: usageData } = useAiUsages(["LABEL_SUGGESTION"])
+  const labelUsage = usageData?.usages.find((u) => u.type === "LABEL_SUGGESTION")
   const [open, setOpen] = useState(false)
+  const [confirmOpen, setConfirmOpen] = useState(false)
+
+  function handleGenerateSuggestions() {
+    if (createSuggestions.isPending) return
+    setConfirmOpen(false)
+    createSuggestions.mutate(undefined, {
+      onSuccess: () => {
+        trackEvent("ai_label_suggestions_generate")
+        toast.success(m.sidebar_label_ai_success())
+      },
+      onError: (e) => toast.error(getErrorMessage(e, m.sidebar_label_ai_error())),
+    })
+  }
 
   function handleCreate({ name, colorCode, notificationPolicy }: LabelFormData) {
     const maxOrder = serverLabels.length > 0 ? Math.max(...serverLabels.map((l) => l.order)) : 0
@@ -64,16 +82,7 @@ export function SidebarLabelsSection({ activeLabelId, onLabelToggle, className }
               "text-primary hover:bg-primary/10 hover:text-primary",
               createSuggestions.isPending && "animate-pulse"
             )}
-            onClick={() => {
-              const toastId = toast.loading(m.sidebar_label_ai_loading())
-              createSuggestions.mutate(undefined, {
-                onSuccess: () => {
-                  trackEvent("ai_label_suggestions_generate")
-                  toast.success(m.sidebar_label_ai_success(), { id: toastId })
-                },
-                onError: (e) => toast.error(getErrorMessage(e, m.sidebar_label_ai_error()), { id: toastId }),
-              })
-            }}
+            onClick={() => setConfirmOpen(true)}
             disabled={createSuggestions.isPending}
           >
             <Sparkles className="ai-sparkle-icon size-3.5" />
@@ -119,6 +128,44 @@ export function SidebarLabelsSection({ activeLabelId, onLabelToggle, className }
         isPending={createLabel.isPending}
         onSubmit={handleCreate}
       />
+
+      <Dialog open={confirmOpen} onOpenChange={setConfirmOpen}>
+        <DialogContent showCloseButton={false}>
+          <DialogHeader>
+            <DialogTitle>{m.sidebar_label_ai_confirm_title()}</DialogTitle>
+          </DialogHeader>
+          <p className="text-sm text-muted-foreground">{m.sidebar_label_ai_confirm_description()}</p>
+          {labelUsage && (
+            <p className="text-sm text-muted-foreground">
+              {m.label_suggestion_weekly_usage({
+                used: labelUsage.used,
+                limit: labelUsage.limit,
+              })}
+            </p>
+          )}
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setConfirmOpen(false)}>
+              {m.common_cancel()}
+            </Button>
+            <Button onClick={handleGenerateSuggestions} disabled={createSuggestions.isPending}>
+              <Sparkles className="size-4" />
+              {m.sidebar_label_ai_confirm_button()}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {createSuggestions.isPending &&
+        createPortal(
+          <div className="fixed inset-0 z-100 flex items-center justify-center bg-black/20 backdrop-blur-[2px]">
+            <div className="flex flex-col items-center gap-3 rounded-xl bg-popover px-8 py-6 shadow-lg ring-1 ring-foreground/10">
+              <Sparkles className="ai-sparkle-icon size-8 animate-pulse text-primary" />
+              <p className="text-sm font-medium">{m.sidebar_label_ai_generating()}</p>
+              <p className="text-xs text-muted-foreground">{m.sidebar_label_ai_generating_description()}</p>
+            </div>
+          </div>,
+          document.body
+        )}
     </SidebarGroup>
   )
 }

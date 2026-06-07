@@ -63,23 +63,18 @@ export function LabelSuggestionItem({ suggestion }: LabelSuggestionItemProps) {
 
   return (
     <SidebarMenuItem className="ai-suggestion-item group/suggestion">
-      <SidebarMenuButton type="button" size="sm" tooltip={suggestion.name} onClick={() => setApproveOpen(true)}>
+      <SidebarMenuButton
+        type="button"
+        size="sm"
+        tooltip={suggestion.name}
+        aria-haspopup="dialog"
+        onClick={() => setApproveOpen(true)}
+      >
         <span className="size-3 shrink-0 rounded-sm" style={{ backgroundColor: suggestion.colorCode }} />
         <span className="truncate">{suggestion.name}</span>
       </SidebarMenuButton>
 
       <div className="absolute top-1/2 right-1 flex -translate-y-1/2 items-center gap-0.5 transition-opacity [@media(hover:hover)]:opacity-0 [@media(hover:hover)]:group-focus-within/suggestion:opacity-100 [@media(hover:hover)]:group-hover/suggestion:opacity-100">
-        <button
-          type="button"
-          className="flex size-5 items-center justify-center rounded text-muted-foreground hover:text-green-600"
-          aria-label={m.label_suggestion_approve()}
-          onClick={(e) => {
-            e.stopPropagation()
-            setApproveOpen(true)
-          }}
-        >
-          <Check className="size-3.5" />
-        </button>
         <button
           type="button"
           className="flex size-5 items-center justify-center rounded text-muted-foreground hover:text-destructive"
@@ -103,7 +98,12 @@ export function LabelSuggestionItem({ suggestion }: LabelSuggestionItemProps) {
         groups={groups}
         onSubmit={handleApprove}
         isPending={approveLabelSuggestion.isPending}
-        submitLabel={m.label_add_submit()}
+        submitLabel={m.label_suggestion_approve()}
+        submitIcon={<Check className="size-4" />}
+        cancelLabel={m.label_suggestion_reject()}
+        cancelVariant="destructive"
+        cancelIcon={<X className="size-4" />}
+        onCancel={handleReject}
         submitDisabled={!detail}
       />
     </SidebarMenuItem>
