@@ -38,6 +38,10 @@ export function getMailAddressSearchText(address?: MailAddress | null) {
   return [name, email].filter(Boolean).join(" ")
 }
 
+export function getMailAddressKey(address: MailAddress) {
+  return normalize(address.email).toLowerCase()
+}
+
 export function formatMailAddressList(addresses: MailAddress[]) {
   return addresses.map((address) => getMailAddressFullLabel(address)).join(", ")
 }

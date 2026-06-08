@@ -1,4 +1,4 @@
-import { useMemo, useState, type ClipboardEvent, type KeyboardEvent } from "react"
+import { useMemo, useState, type ClipboardEvent, type KeyboardEvent, type MouseEvent } from "react"
 import { Loader2, UserRound } from "lucide-react"
 
 import {
@@ -16,6 +16,7 @@ import {
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import {
   getMailAddressDisplayName,
+  getMailAddressKey,
   getMailAddressSearchText,
   getUniqueMailAddresses,
   parseMailAddressEntry,
@@ -26,6 +27,7 @@ import { useContacts } from "@/queries/contacts"
 import { m } from "@/paraglide/messages"
 import type { Contact } from "@/types/contact"
 import type { MailAddress } from "@/types/email"
+import { RecipientEditDialog } from "./recipient-edit-dialog"
 
 interface RecipientInputProps {
   id: string
@@ -68,13 +70,15 @@ export function RecipientInput({
   const [draft, setDraft] = useState("")
   const [isOpen, setIsOpen] = useState(false)
   const [isFocused, setIsFocused] = useState(false)
+  const [editingRecipientEmail, setEditingRecipientEmail] = useState<string | null>(null)
   const keyword = draft.trim()
   const debouncedKeyword = useDebounce(keyword)
   const isDebouncing = keyword !== debouncedKeyword
   const contactsQuery = useContacts({ keyword: debouncedKeyword }, !disabled && (isFocused || isOpen))
-  const selectedEmails = useMemo(
-    () => new Set(recipients.map((recipient) => recipient.email.toLowerCase())),
-    [recipients]
+  const selectedEmails = useMemo(() => new Set(recipients.map(getMailAddressKey)), [recipients])
+  const editingRecipient = useMemo(
+    () => recipients.find((recipient) => getMailAddressKey(recipient) === editingRecipientEmail) ?? null,
+    [editingRecipientEmail, recipients]
   )
   const draftRecipient = useMemo(() => parseMailAddressEntry(draft), [draft])
   const recipientOptions = useMemo<RecipientOption[]>(() => {
@@ -163,93 +167,142 @@ export function RecipientInput({
     setDraft("")
   }
 
+  const closeRecipientEditor = () => {
+    setEditingRecipientEmail(null)
+  }
+
+  const openRecipientEditor = (recipient: MailAddress) => {
+    if (disabled) {
+      return
+    }
+
+    setIsOpen(false)
+    setEditingRecipientEmail(getMailAddressKey(recipient))
+  }
+
+  const handleRecipientChipClick = (event: MouseEvent, recipient: MailAddress) => {
+    if (event.target instanceof Element && event.target.closest('[data-slot="combobox-chip-remove"]')) {
+      return
+    }
+
+    openRecipientEditor(recipient)
+  }
+
+  const saveEditedRecipient = (recipient: MailAddress) => {
+    if (!editingRecipientEmail) {
+      return
+    }
+
+    updateRecipients(recipients.map((r) => (getMailAddressKey(r) === editingRecipientEmail ? recipient : r)))
+    closeRecipientEditor()
+  }
+
   return (
-    <Combobox<MailAddress, true>
-      id={id}
-      items={recipientOptions}
-      filteredItems={recipientOptions}
-      multiple
-      value={recipients}
-      open={disabled ? false : isOpen}
-      inputValue={draft}
-      autoHighlight="always"
-      itemToStringLabel={getMailAddressSearchText}
-      itemToStringValue={(recipient) => recipient.email}
-      isItemEqualToValue={(item, value) => item.email.toLowerCase() === value.email.toLowerCase()}
-      onInputValueChange={(value) => {
-        if (!disabled) {
-          setDraft(value)
-        }
-      }}
-      onOpenChange={(open) => {
-        setIsOpen(disabled ? false : open)
-      }}
-      onValueChange={(value) => {
-        updateRecipients(value)
-        if (!disabled) {
-          setDraft("")
-        }
-      }}
-    >
-      <ComboboxChips
-        ref={anchorRef}
-        className="min-h-6 rounded-none border-0 bg-transparent px-0 py-0 shadow-none focus-within:ring-0 dark:bg-transparent"
+    <>
+      <Combobox<MailAddress, true>
+        id={id}
+        items={recipientOptions}
+        filteredItems={recipientOptions}
+        multiple
+        value={recipients}
+        open={disabled ? false : isOpen}
+        inputValue={draft}
+        autoHighlight="always"
+        itemToStringLabel={getMailAddressSearchText}
+        itemToStringValue={(recipient) => recipient.email}
+        isItemEqualToValue={(item, value) => getMailAddressKey(item) === getMailAddressKey(value)}
+        onInputValueChange={(value) => {
+          if (!disabled) {
+            setDraft(value)
+          }
+        }}
+        onOpenChange={(open) => {
+          setIsOpen(disabled ? false : open)
+        }}
+        onValueChange={(value) => {
+          updateRecipients(value)
+          if (!disabled) {
+            setDraft("")
+          }
+        }}
       >
-        <ComboboxValue>
-          {recipients.map((recipient) => (
-            <Tooltip key={recipient.email}>
-              <TooltipTrigger render={<ComboboxChip className="max-w-full font-normal" showRemove={!disabled} />}>
-                <span className="truncate">{getMailAddressDisplayName(recipient)}</span>
-              </TooltipTrigger>
-              <TooltipContent>{recipient.email}</TooltipContent>
-            </Tooltip>
-          ))}
-        </ComboboxValue>
-        <ComboboxChipsInput
-          id={id}
-          placeholder={recipients.length === 0 ? placeholder : undefined}
-          disabled={disabled}
-          className="h-6 min-w-36 bg-transparent text-sm placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-60"
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => {
-            commitDraft()
-            setIsFocused(false)
-          }}
-          onKeyDown={handleKeyDown}
-          onPaste={handlePaste}
-        />
-      </ComboboxChips>
-      <ComboboxContent anchor={anchorRef} side="bottom" align="start" className="min-w-72">
-        {emptyState === "loading" ? (
-          <div className="flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground">
-            <Loader2 className="size-4 animate-spin" />
-            {m.compose_contacts_loading()}
-          </div>
-        ) : emptyState === "error" ? (
-          <div className="px-3 py-2 text-sm text-muted-foreground">{m.compose_contacts_load_error()}</div>
-        ) : emptyState === "invalid" ? (
-          <div className="px-3 py-2 text-sm text-muted-foreground">{m.compose_recipient_invalid_email()}</div>
-        ) : (
-          <ComboboxEmpty>{m.compose_contacts_empty()}</ComboboxEmpty>
-        )}
-        <ComboboxList>
-          {(recipient: RecipientOption) => (
-            <ComboboxItem key={recipient.id} value={recipient}>
-              <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-medium text-muted-foreground">
-                {getRecipientInitial(recipient) || <UserRound className="size-4" />}
-              </span>
-              <span className="min-w-0 flex-1">
-                <span className="block truncate font-medium">{getMailAddressDisplayName(recipient)}</span>
-                <span className="block truncate text-xs text-muted-foreground">
-                  {recipient.source === "manual"
-                    ? m.compose_recipient_add_manual({ email: recipient.email })
-                    : recipient.email}
-                </span>
-              </span>
-            </ComboboxItem>
+        <ComboboxChips
+          ref={anchorRef}
+          className="min-h-6 rounded-none border-0 bg-transparent px-0 py-0 shadow-none focus-within:ring-0 dark:bg-transparent"
+        >
+          <ComboboxValue>
+            {recipients.map((recipient) => (
+              <Tooltip key={recipient.email}>
+                <TooltipTrigger
+                  render={
+                    <ComboboxChip
+                      className={disabled ? "max-w-full font-normal" : "max-w-full cursor-pointer font-normal"}
+                      showRemove={!disabled}
+                      onClick={(event) => handleRecipientChipClick(event, recipient)}
+                    />
+                  }
+                >
+                  <span className="truncate">{getMailAddressDisplayName(recipient)}</span>
+                </TooltipTrigger>
+                <TooltipContent>{recipient.email}</TooltipContent>
+              </Tooltip>
+            ))}
+          </ComboboxValue>
+          <ComboboxChipsInput
+            id={id}
+            placeholder={recipients.length === 0 ? placeholder : undefined}
+            disabled={disabled}
+            className="h-6 min-w-36 bg-transparent text-sm placeholder:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-60"
+            onFocus={() => setIsFocused(true)}
+            onBlur={() => {
+              commitDraft()
+              setIsFocused(false)
+            }}
+            onKeyDown={handleKeyDown}
+            onPaste={handlePaste}
+          />
+        </ComboboxChips>
+        <ComboboxContent anchor={anchorRef} side="bottom" align="start" className="min-w-72">
+          {emptyState === "loading" ? (
+            <div className="flex items-center gap-2 px-3 py-2 text-sm text-muted-foreground">
+              <Loader2 className="size-4 animate-spin" />
+              {m.compose_contacts_loading()}
+            </div>
+          ) : emptyState === "error" ? (
+            <div className="px-3 py-2 text-sm text-muted-foreground">{m.compose_contacts_load_error()}</div>
+          ) : emptyState === "invalid" ? (
+            <div className="px-3 py-2 text-sm text-muted-foreground">{m.compose_recipient_invalid_email()}</div>
+          ) : (
+            <ComboboxEmpty>{m.compose_contacts_empty()}</ComboboxEmpty>
           )}
-        </ComboboxList>
-      </ComboboxContent>
-    </Combobox>
+          <ComboboxList>
+            {(recipient: RecipientOption) => (
+              <ComboboxItem key={recipient.id} value={recipient}>
+                <span className="flex size-8 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-medium text-muted-foreground">
+                  {getRecipientInitial(recipient) || <UserRound className="size-4" />}
+                </span>
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate font-medium">{getMailAddressDisplayName(recipient)}</span>
+                  <span className="block truncate text-xs text-muted-foreground">
+                    {recipient.source === "manual"
+                      ? m.compose_recipient_add_manual({ email: recipient.email })
+                      : recipient.email}
+                  </span>
+                </span>
+              </ComboboxItem>
+            )}
+          </ComboboxList>
+        </ComboboxContent>
+      </Combobox>
+
+      <RecipientEditDialog
+        key={editingRecipientEmail ?? "closed-recipient-editor"}
+        id={id}
+        recipient={editingRecipient}
+        recipients={recipients}
+        onClose={closeRecipientEditor}
+        onSave={saveEditedRecipient}
+      />
+    </>
   )
 }
