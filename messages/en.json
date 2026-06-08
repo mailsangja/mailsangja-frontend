@@ -306,6 +306,7 @@
   "compose_error_inline_image_only": "Only image files can be inserted into the body",
   "compose_error_preview_failed": "Could not generate mail preview",
   "compose_error_select_from_account": "Select a sender account",
+  "compose_error_sender_name_required": "Could not load your user name, so the email cannot be sent",
   "compose_error_subject_required": "Enter a subject",
   "compose_error_to_required": "Enter a recipient",
   "compose_error_upload_limit": "Attachments, including inline images, must be 20MB or less",

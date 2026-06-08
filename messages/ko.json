@@ -306,6 +306,7 @@
   "compose_error_inline_image_only": "이미지 파일만 본문에 삽입할 수 있습니다",
   "compose_error_preview_failed": "메일 미리보기를 생성하지 못했습니다",
   "compose_error_select_from_account": "발신 계정을 선택해주세요",
+  "compose_error_sender_name_required": "사용자 이름을 불러오지 못해 메일을 발송할 수 없습니다",
   "compose_error_subject_required": "제목을 입력해주세요",
   "compose_error_to_required": "받는 사람을 입력해주세요",
   "compose_error_upload_limit": "첨부 용량은 본문 이미지를 포함해 20MB 이하만 가능합니다",

@@ -33,7 +33,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { MailDraftStreamError, streamMailDraft } from "@/api/emails"
 import { trackEvent } from "@/lib/analytics"
 import { getErrorMessage } from "@/lib/http-error"
-import { formatMailAddressesForSend, parseMailRecipients } from "@/lib/mail-address"
+import { formatMailAddressForSend, formatMailAddressesForSend, parseMailRecipients } from "@/lib/mail-address"
 import { cn } from "@/lib/utils"
 import { useSendMail } from "@/mutations/emails"
 import { m } from "@/paraglide/messages"
@@ -704,6 +704,17 @@ export function ComposeEmail({
   const handleSend = async () => {
     if (!validateComposeForm({ requireFromAddress: true })) return
 
+    if (!selectedFromAddress) {
+      toast.error(m.compose_error_select_from_account())
+      return
+    }
+
+    const senderName = user?.name?.trim()
+    if (!senderName) {
+      toast.error(m.compose_error_sender_name_required())
+      return
+    }
+
     setIsPreparingSend(true)
     try {
       const editorContent = editorRef.current!.getJSON()
@@ -720,7 +731,7 @@ export function ComposeEmail({
       })
 
       const mailData = {
-        from: selectedFromAddress!,
+        from: formatMailAddressForSend({ name: senderName, email: selectedFromAddress }),
         to: formatMailAddressesForSend(to),
         cc: formatMailAddressesForSend(cc),
         bcc: formatMailAddressesForSend(bcc),
