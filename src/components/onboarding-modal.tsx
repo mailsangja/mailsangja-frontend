@@ -23,7 +23,9 @@ const SLIDE_KEYFRAMES = `
 `
 
 export function OnboardingModal() {
-  const [open, setOpen] = useState(() => !localStorage.getItem(ONBOARDING_COMPLETED_KEY))
+  const [open, setOpen] = useState(
+    () => typeof window !== "undefined" && !localStorage.getItem(ONBOARDING_COMPLETED_KEY)
+  )
   const [step, setStep] = useState<1 | 2 | 3 | 4 | 5 | 6 | 7>(1)
   const [animKey, setAnimKey] = useState(0)
   const [direction, setDirection] = useState<"forward" | "backward">("forward")
