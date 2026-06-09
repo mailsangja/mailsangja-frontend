@@ -692,5 +692,8 @@
   "onboarding_step6_no_spelling_errors": "No spelling errors",
   "onboarding_step7_title": "Ready to use MailSangja!",
   "onboarding_step7_description": "Connect your account to get started right away",
-  "onboarding_step7_cta": "Connect account"
+  "onboarding_step7_cta": "Connect account",
+  "settings_mail_accounts_reauthorize": "Re-authorize",
+  "settings_mail_accounts_reauthorize_required": "Re-authorization required",
+  "settings_mail_accounts_reauthorize_error": "Failed to get re-authorization URL."
 }

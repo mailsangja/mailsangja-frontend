@@ -692,5 +692,8 @@
   "onboarding_step6_no_spelling_errors": "맞춤법 오류가 없어요",
   "onboarding_step7_title": "메일상자 사용 준비가 됐어요!",
   "onboarding_step7_description": "계정을 연동하면 바로 시작할 수 있어요",
-  "onboarding_step7_cta": "계정 연동하기"
+  "onboarding_step7_cta": "계정 연동하기",
+  "settings_mail_accounts_reauthorize": "재인증",
+  "settings_mail_accounts_reauthorize_required": "재인증 필요",
+  "settings_mail_accounts_reauthorize_error": "재인증 URL을 불러오지 못했습니다."
 }

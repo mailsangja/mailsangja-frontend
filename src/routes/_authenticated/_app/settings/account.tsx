@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react"
 import { createFileRoute } from "@tanstack/react-router"
-import { Pencil, Plus, Trash2 } from "lucide-react"
+import { AlertTriangle, Pencil, Plus, Trash2 } from "lucide-react"
+import { toast } from "sonner"
 
 import { AddAccountDialog, EditAccountDialog } from "@/components/add-account-dialog"
 import { MailAccountIcon } from "@/components/mail-account-icon"
@@ -18,7 +19,10 @@ import {
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Switch } from "@/components/ui/switch"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
 import { m } from "@/paraglide/messages"
+import { reauthorizeGoogle } from "@/api/mail-accounts"
+import { getErrorMessage } from "@/lib/http-error"
 import {
   useActivateMailAccount,
   useDeactivateMailAccount,
@@ -42,6 +46,7 @@ function SettingsAccountPage() {
   const [pendingAccountId, setPendingAccountId] = useState<string | null>(null)
   const [deletingAccountId, setDeletingAccountId] = useState<string | null>(null)
   const [editingAccount, setEditingAccount] = useState<MailAccount | null>(null)
+  const [reauthorizingAccountId, setReauthorizingAccountId] = useState<string | null>(null)
   const updateDefaultAccountMutation = useUpdateDefaultAccount()
   const { mutate: mutateDefaultAccount } = updateDefaultAccountMutation
   const { mutate: activate } = useActivateMailAccount()
@@ -96,6 +101,17 @@ function SettingsAccountPage() {
     deleteAccount(deletingAccountId, {
       onSettled: () => setDeletingAccountId(null),
     })
+  }
+
+  const handleReauthorize = async (mailAccountId: string) => {
+    setReauthorizingAccountId(mailAccountId)
+    try {
+      const { authorizationUrl } = await reauthorizeGoogle(mailAccountId)
+      window.location.assign(authorizationUrl)
+    } catch (error) {
+      toast.error(getErrorMessage(error, m.settings_mail_accounts_reauthorize_error()))
+      setReauthorizingAccountId(null)
+    }
   }
 
   return (
@@ -244,7 +260,25 @@ function SettingsAccountPage() {
                     </div>
                   </TableCell>
                   <TableCell className="text-center">
-                    <div className="flex justify-center">
+                    <div className="flex items-center justify-center gap-1">
+                      {mailAccount.reauthorizationRequired && (
+                        <Tooltip>
+                          <TooltipTrigger
+                            render={
+                              <Button
+                                variant="ghost"
+                                size="icon-sm"
+                                onClick={() => handleReauthorize(mailAccount.id)}
+                                disabled={reauthorizingAccountId === mailAccount.id}
+                                aria-label={m.settings_mail_accounts_reauthorize_required()}
+                              />
+                            }
+                          >
+                            <AlertTriangle className="text-amber-500" />
+                          </TooltipTrigger>
+                          <TooltipContent>{m.settings_mail_accounts_reauthorize_required()}</TooltipContent>
+                        </Tooltip>
+                      )}
                       <Switch
                         checked={mailAccount.isActive}
                         disabled={pendingAccountId === mailAccount.id}
