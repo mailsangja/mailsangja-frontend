@@ -6,7 +6,7 @@ export interface RouterContext {
   queryClient: QueryClient
 }
 
-declare module "@tanstack/history" {
+declare module "@tanstack/react-router" {
   interface HistoryState {
     replyDraftSuggestion?: ReplyDraftSuggestion | null
   }
