@@ -3,17 +3,20 @@ import { useRef, useState } from "react"
 import { toast } from "sonner"
 
 import { ComposeEmail, type ComposeEmailHandle } from "@/components/compose/compose-email"
-import { ComposeReferenceThreadPanel } from "@/components/compose/compose-reference-thread-panel"
+import { ComposeReferenceContent } from "@/components/compose/compose-reference-thread-panel"
 import { ComposeReviewPanel } from "@/components/compose/compose-review-panel"
+import { ComposeSearchPanelContent } from "@/components/compose/compose-search-panel"
 import { Separator } from "@/components/ui/separator"
 import { Sheet, SheetContent } from "@/components/ui/sheet"
+import { useDebounce } from "@/hooks/use-debounce"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { getHttpStatus } from "@/lib/http-error"
 import { formatMailAddressList } from "@/lib/mail-address"
+import { cn } from "@/lib/utils"
 import { useReviewMail } from "@/mutations/emails"
 import { m } from "@/paraglide/messages"
 import { emailQueries } from "@/queries/emails"
-import { mailAccountQueries } from "@/queries/mail-accounts"
+import { mailAccountQueries, useMailAccounts } from "@/queries/mail-accounts"
 import type { MailReviewRequest } from "@/types/email"
 
 interface ComposeRouteSearch {
@@ -67,6 +70,76 @@ export const Route = createFileRoute("/_authenticated/_app/compose")({
   component: ComposePage,
 })
 
+type LeftPanelTab = "reference" | "search"
+
+interface TabButtonProps {
+  active: boolean
+  onClick: () => void
+  children: React.ReactNode
+}
+
+function TabButton({ active, onClick, children }: TabButtonProps) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "relative border-b-2 pb-3 text-sm transition-colors",
+        active
+          ? "border-foreground font-medium text-foreground"
+          : "border-transparent text-muted-foreground hover:text-foreground"
+      )}
+    >
+      {children}
+    </button>
+  )
+}
+
+interface ComposeLeftPanelProps {
+  threadId: string | null
+  messageId?: string | null
+  searchQuery: string
+  fromAddress: string | null
+}
+
+function ComposeLeftPanel({ threadId, messageId, searchQuery, fromAddress }: ComposeLeftPanelProps) {
+  const [tab, setTab] = useState<LeftPanelTab>("reference")
+  const { data: accounts } = useMailAccounts()
+  const mailAccountId = fromAddress ? accounts?.find((a) => a.emailAddress === fromAddress)?.id : undefined
+  const hasThread = threadId != null
+
+  if (!hasThread) {
+    return (
+      <div className="flex h-full w-full min-w-0 flex-1 flex-col overflow-hidden">
+        <div className="flex h-11 shrink-0 items-center border-b px-4">
+          <h1 className="text-sm font-medium">관련 메일</h1>
+        </div>
+        <ComposeSearchPanelContent query={searchQuery} mailAccountId={mailAccountId} />
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex h-full w-full min-w-0 flex-1 flex-col overflow-hidden">
+      <div className="flex h-11 shrink-0 items-stretch gap-4 border-b px-4">
+        <TabButton active={tab === "reference"} onClick={() => setTab("reference")}>
+          {m.compose_reference_title()}
+        </TabButton>
+        <TabButton active={tab === "search"} onClick={() => setTab("search")}>
+          관련 메일
+        </TabButton>
+      </div>
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        {tab === "reference" ? (
+          <ComposeReferenceContent threadId={threadId} messageId={messageId ?? null} />
+        ) : (
+          <ComposeSearchPanelContent query={searchQuery} mailAccountId={mailAccountId} />
+        )}
+      </div>
+    </div>
+  )
+}
+
 function ComposePage() {
   const isMobile = useIsMobile()
   const { from, thread, message } = Route.useSearch()
@@ -77,8 +150,10 @@ function ComposePage() {
   const navigate = Route.useNavigate()
   const reviewMutation = useReviewMail()
   const [isReviewPanelOpen, setIsReviewPanelOpen] = useState(false)
+  const [bodyText, setBodyText] = useState("")
   const composeEmailRef = useRef<ComposeEmailHandle>(null)
   const forceReviewRef = useRef(false)
+  const debouncedBodyText = useDebounce(bodyText, 500)
 
   const handleFromAddressChange = (nextFrom: string | null) => {
     navigate({
@@ -136,6 +211,7 @@ function ComposePage() {
           initialBody={initialBody}
           onReview={handleReview}
           isReviewing={reviewMutation.isPending}
+          onBodyTextChange={setBodyText}
           ref={composeEmailRef}
         />
         <Sheet
@@ -169,7 +245,12 @@ function ComposePage() {
             onClose={handleCloseReviewPanel}
           />
         ) : (
-          <ComposeReferenceThreadPanel threadId={thread ?? null} messageId={message ?? null} />
+          <ComposeLeftPanel
+            threadId={thread ?? null}
+            messageId={message ?? null}
+            searchQuery={debouncedBodyText}
+            fromAddress={fromAddress}
+          />
         )}
       </div>
       <Separator orientation="vertical" />
@@ -184,6 +265,7 @@ function ComposePage() {
           initialBody={initialBody}
           onReview={handleReview}
           isReviewing={reviewMutation.isPending}
+          onBodyTextChange={setBodyText}
           ref={composeEmailRef}
         />
       </div>

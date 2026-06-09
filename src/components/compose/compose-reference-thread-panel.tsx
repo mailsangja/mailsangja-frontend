@@ -67,12 +67,12 @@ function LoadingState() {
   )
 }
 
-interface ComposeReferenceThreadPanelProps {
+export interface ComposeReferenceThreadPanelProps {
   threadId: string | null
   messageId?: string | null
 }
 
-export function ComposeReferenceThreadPanel({ threadId, messageId = null }: ComposeReferenceThreadPanelProps) {
+export function ComposeReferenceContent({ threadId, messageId = null }: ComposeReferenceThreadPanelProps) {
   const { data: thread, isLoading, isError, error, refetch } = useThread(threadId)
   const { data: accounts } = useMailAccounts()
   const { expandedIds, toggleExpanded } = useThreadMessageExpansion({
@@ -84,28 +84,42 @@ export function ComposeReferenceThreadPanel({ threadId, messageId = null }: Comp
   const errorCopy = isError ? getThreadDetailErrorCopy(error) : null
   const account = thread ? accounts?.find((item) => item.id === thread.accountId) : undefined
 
+  if (!threadId || (!isLoading && !thread && !isError)) {
+    return <ReferenceEmptyState />
+  }
+
+  if (isLoading) {
+    return <LoadingState />
+  }
+
+  if (isError && errorCopy) {
+    return <MailErrorState title={errorCopy.title} description={errorCopy.description} onRetry={() => void refetch()} />
+  }
+
+  if (thread) {
+    return (
+      <>
+        <ThreadHeader thread={thread} account={account} className="pt-4" />
+        <ThreadMessageList
+          messages={thread.messages}
+          expandedIds={expandedIds}
+          onToggle={toggleExpanded}
+          accountEmail={account?.emailAddress}
+        />
+      </>
+    )
+  }
+
+  return null
+}
+
+export function ComposeReferenceThreadPanel({ threadId, messageId = null }: ComposeReferenceThreadPanelProps) {
   return (
     <div className="flex h-full w-full min-w-0 flex-1 flex-col overflow-hidden">
       <div className="flex h-11 shrink-0 items-center border-b px-4">
         <h1 className="text-sm font-medium">{m.compose_reference_title()}</h1>
       </div>
-      {!threadId || (!isLoading && !thread && !isError) ? (
-        <ReferenceEmptyState />
-      ) : isLoading ? (
-        <LoadingState />
-      ) : isError && errorCopy ? (
-        <MailErrorState title={errorCopy.title} description={errorCopy.description} onRetry={() => void refetch()} />
-      ) : thread ? (
-        <>
-          <ThreadHeader thread={thread} account={account} className="pt-4" />
-          <ThreadMessageList
-            messages={thread.messages}
-            expandedIds={expandedIds}
-            onToggle={toggleExpanded}
-            accountEmail={account?.emailAddress}
-          />
-        </>
-      ) : null}
+      <ComposeReferenceContent threadId={threadId} messageId={messageId} />
     </div>
   )
 }
