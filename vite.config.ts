@@ -3,7 +3,7 @@ import tailwindcss from "@tailwindcss/vite"
 import react from "@vitejs/plugin-react"
 import { paraglideVitePlugin } from "@inlang/paraglide-js"
 import { defineConfig } from "vite"
-import { tanstackRouter } from "@tanstack/router-plugin/vite"
+import { tanstackStart } from "@tanstack/react-start/plugin/vite"
 import { VitePWA } from "vite-plugin-pwa"
 
 // https://vite.dev/config/
@@ -32,9 +32,36 @@ export default defineConfig({
     },
   },
   plugins: [
-    tanstackRouter({
-      target: "react",
-      autoCodeSplitting: true,
+    tanstackStart({
+      spa: {
+        enabled: true,
+      },
+      prerender: {
+        enabled: true,
+        autoStaticPathsDiscovery: false,
+        crawlLinks: false,
+        failOnError: true,
+      },
+      pages: [
+        {
+          path: "/",
+          prerender: {
+            enabled: true,
+          },
+        },
+        {
+          path: "/terms",
+          prerender: {
+            enabled: true,
+          },
+        },
+        {
+          path: "/privacy",
+          prerender: {
+            enabled: true,
+          },
+        },
+      ],
     }),
     react(),
     paraglideVitePlugin({
