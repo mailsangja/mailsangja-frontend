@@ -9,6 +9,10 @@ import { userQueries } from "@/queries/user"
 
 export const Route = createFileRoute("/")({
   beforeLoad: async ({ context }) => {
+    if (typeof window === "undefined") {
+      return
+    }
+
     const user = await context.queryClient.ensureQueryData(userQueries.me())
     if (user) {
       throw redirect({ to: "/mail/$mailbox", params: { mailbox: "inbox" } })
