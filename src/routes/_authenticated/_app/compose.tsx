@@ -1,4 +1,5 @@
 import { createFileRoute, useLocation } from "@tanstack/react-router"
+import { SlidersHorizontal } from "lucide-react"
 import { useRef, useState } from "react"
 import { toast } from "sonner"
 
@@ -104,6 +105,7 @@ interface ComposeLeftPanelProps {
 
 function ComposeLeftPanel({ threadId, messageId, searchQuery, fromAddress }: ComposeLeftPanelProps) {
   const [tab, setTab] = useState<LeftPanelTab>("reference")
+  const [showFilters, setShowFilters] = useState(false)
   const { data: accounts } = useMailAccounts()
   const mailAccountId = fromAddress ? accounts?.find((a) => a.emailAddress === fromAddress)?.id : undefined
   const hasThread = threadId != null
@@ -111,10 +113,23 @@ function ComposeLeftPanel({ threadId, messageId, searchQuery, fromAddress }: Com
   if (!hasThread) {
     return (
       <div className="flex h-full w-full min-w-0 flex-1 flex-col overflow-hidden">
-        <div className="flex h-11 shrink-0 items-center border-b px-4">
+        <div className="flex h-11 shrink-0 items-center justify-between border-b px-4">
           <h1 className="text-sm font-medium">관련 메일</h1>
+          <button
+            type="button"
+            onClick={() => setShowFilters((v) => !v)}
+            className={cn(
+              "flex items-center gap-1 rounded-md px-2 py-1 text-xs transition-colors",
+              showFilters
+                ? "bg-foreground text-background"
+                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+            )}
+          >
+            <SlidersHorizontal className="size-3" />
+            필터
+          </button>
         </div>
-        <ComposeSearchPanelContent query={searchQuery} mailAccountId={mailAccountId} />
+        <ComposeSearchPanelContent query={searchQuery} mailAccountId={mailAccountId} showFilters={showFilters} />
       </div>
     )
   }
@@ -128,12 +143,27 @@ function ComposeLeftPanel({ threadId, messageId, searchQuery, fromAddress }: Com
         <TabButton active={tab === "search"} onClick={() => setTab("search")}>
           관련 메일
         </TabButton>
+        {tab === "search" && (
+          <button
+            type="button"
+            onClick={() => setShowFilters((v) => !v)}
+            className={cn(
+              "ml-auto flex items-center gap-1 rounded-md px-2 py-1 text-xs transition-colors",
+              showFilters
+                ? "bg-foreground text-background"
+                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+            )}
+          >
+            <SlidersHorizontal className="size-3" />
+            필터
+          </button>
+        )}
       </div>
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         {tab === "reference" ? (
           <ComposeReferenceContent threadId={threadId} messageId={messageId ?? null} />
         ) : (
-          <ComposeSearchPanelContent query={searchQuery} mailAccountId={mailAccountId} />
+          <ComposeSearchPanelContent query={searchQuery} mailAccountId={mailAccountId} showFilters={showFilters} />
         )}
       </div>
     </div>
