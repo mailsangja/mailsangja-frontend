@@ -1,7 +1,15 @@
 import { createFileRoute, Link } from "@tanstack/react-router"
 import { Mail } from "lucide-react"
 
+import { metaDescription, pageTitle } from "@/lib/site-meta"
+
 export const Route = createFileRoute("/privacy")({
+  head: () => ({
+    meta: [
+      { title: pageTitle("개인정보처리방침") },
+      metaDescription("메일상자가 개인정보와 Google 사용자 데이터를 수집, 이용, 보관, 삭제하는 기준을 안내합니다."),
+    ],
+  }),
   component: PrivacyPage,
 })
 

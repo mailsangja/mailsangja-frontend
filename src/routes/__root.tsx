@@ -6,6 +6,7 @@ import { RootNotFoundComponent } from "@/components/layout/not-found-page"
 import { ThemeProvider } from "@/components/theme-provider"
 import { Toaster } from "@/components/ui/sonner"
 import { queryClient } from "@/lib/query-client"
+import { SITE_DESCRIPTION, SITE_NAME, metaDescription } from "@/lib/site-meta"
 import type { RouterContext } from "@/types/router"
 
 import appCss from "@/index.css?url"
@@ -33,7 +34,8 @@ export const Route = createRootRouteWithContext<RouterContext>()({
       { name: "theme-color", content: "#faf9f5", media: "(prefers-color-scheme: light)" },
       { name: "theme-color", content: "#262624", media: "(prefers-color-scheme: dark)" },
       { name: "color-scheme", content: "light dark" },
-      { title: "메일상자" },
+      metaDescription(SITE_DESCRIPTION),
+      { title: SITE_NAME },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
