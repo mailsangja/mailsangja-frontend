@@ -53,13 +53,15 @@ jobs:
           VITE_PORTONE_KAKAOPAY_CHANNEL_KEY: ${{ vars.VITE_PORTONE_KAKAOPAY_CHANNEL_KEY }}
         run: npm run build
 
-      - name: Prepare SPA fallback
-        run: cp dist/index.html dist/404.html
+      - name: Verify Pages artifact
+        run: |
+          test -f dist/client/index.html
+          test -f dist/client/404.html
 
       - name: Upload Pages artifact
-        uses: actions/upload-pages-artifact@v4
+        uses: actions/upload-pages-artifact@v7
         with:
-          path: ./dist
+          path: ./dist/client
 
   deploy:
     if: github.event_name != 'pull_request'
@@ -75,4 +77,4 @@ jobs:
     steps:
       - name: Deploy to GitHub Pages
         id: deployment
-        uses: actions/deploy-pages@v4
+        uses: actions/deploy-pages@v5

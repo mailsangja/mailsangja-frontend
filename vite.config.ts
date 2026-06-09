@@ -35,6 +35,11 @@ export default defineConfig({
     tanstackStart({
       spa: {
         enabled: true,
+        // GitHub Pages serves 404.html as the SPA fallback.
+        maskPath: "/404",
+        prerender: {
+          outputPath: "/404",
+        },
       },
       prerender: {
         enabled: true,
