@@ -2,6 +2,7 @@ import { useQueryClient } from "@tanstack/react-query"
 import { createFileRoute, redirect } from "@tanstack/react-router"
 import { toast } from "sonner"
 
+import { OnboardingModal } from "@/components/onboarding-modal"
 import { ThreadDetail } from "@/components/thread/detail"
 import { ThreadList } from "@/components/thread/list"
 import { TrashThreadDetail } from "@/components/trash/thread-detail"
@@ -95,7 +96,12 @@ function MailboxPage() {
     return <TrashMailboxView />
   }
 
-  return <MailboxView mailbox={mailbox} />
+  return (
+    <>
+      {mailbox === "inbox" && <OnboardingModal />}
+      <MailboxView mailbox={mailbox} />
+    </>
+  )
 }
 
 function MailboxView({ mailbox }: { mailbox: PrimaryMailboxId }) {
