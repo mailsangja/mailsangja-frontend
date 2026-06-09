@@ -405,10 +405,7 @@ function RouteComponent() {
             <Sparkles className="ai-sparkle-icon size-3.5 text-primary" />
             {m.landing_hero_badge()}
           </div>
-          <h1
-            className="mt-8 animate-in text-4xl leading-tight font-bold tracking-tight duration-700 fill-mode-both fade-in slide-in-from-bottom-4 sm:text-5xl md:text-6xl"
-            style={{ animationDelay: "150ms" }}
-          >
+          <h1 className="mt-8 text-4xl leading-tight font-bold tracking-tight sm:text-5xl md:text-6xl">
             {m.landing_hero_title_prefix()}
             <br />
             <span className="bg-linear-to-r from-primary to-sky-400 bg-clip-text text-transparent">
