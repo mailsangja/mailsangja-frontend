@@ -20,9 +20,22 @@ const STEP_META = [
   { title: "준비 완료!", description: "계정을 연동하면 바로 메일상자를 사용할 수 있어요" },
 ]
 
+const SLIDE_KEYFRAMES = `
+  @keyframes slideInRight {
+    from { opacity: 0; transform: translateX(14px); }
+    to   { opacity: 1; transform: translateX(0);    }
+  }
+  @keyframes slideInLeft {
+    from { opacity: 0; transform: translateX(-14px); }
+    to   { opacity: 1; transform: translateX(0);     }
+  }
+`
+
 export function OnboardingModal() {
   const [open, setOpen] = useState(() => !localStorage.getItem(ONBOARDING_COMPLETED_KEY))
   const [step, setStep] = useState<1 | 2 | 3 | 4 | 5 | 6 | 7>(1)
+  const [animKey, setAnimKey] = useState(0)
+  const [direction, setDirection] = useState<"forward" | "backward">("forward")
 
   const navigate = useNavigate()
 
@@ -36,16 +49,30 @@ export function OnboardingModal() {
     await navigate({ to: "/settings/account" })
   }
 
-  const handlePrev = () => setStep((s) => (s - 1) as 1 | 2 | 3 | 4 | 5 | 6 | 7)
-  const handleNext = () => setStep((s) => (s + 1) as 1 | 2 | 3 | 4 | 5 | 6 | 7)
+  const handlePrev = () => {
+    setDirection("backward")
+    setAnimKey((k) => k + 1)
+    setStep((s) => (s - 1) as 1 | 2 | 3 | 4 | 5 | 6 | 7)
+  }
+
+  const handleNext = () => {
+    setDirection("forward")
+    setAnimKey((k) => k + 1)
+    setStep((s) => (s + 1) as 1 | 2 | 3 | 4 | 5 | 6 | 7)
+  }
 
   const meta = STEP_META[step - 1]
 
   return (
     <Dialog open={open} onOpenChange={() => {}}>
+      <style>{SLIDE_KEYFRAMES}</style>
       <DialogContent showCloseButton={false} className="flex h-100 flex-col gap-0 overflow-hidden p-0 sm:max-w-125">
         {/* 콘텐츠 */}
-        <div className="flex flex-1 flex-col gap-5 overflow-hidden px-6 pt-8 pb-0">
+        <div
+          key={animKey}
+          className="flex flex-1 flex-col gap-5 overflow-hidden px-6 pt-8 pb-0"
+          style={{ animation: `${direction === "forward" ? "slideInRight" : "slideInLeft"} 0.22s ease-out` }}
+        >
           {/* 비주얼 미리보기 */}
           {step === 1 && <Step1GmailConnect />}
           {step === 2 && <Step2Notifications />}
@@ -80,7 +107,7 @@ export function OnboardingModal() {
                 key={i}
                 className={cn(
                   "size-1.5 rounded-full transition-all duration-300",
-                  step === i + 1 ? "bg-primary" : "bg-muted-foreground/25"
+                  step === i + 1 ? "w-3.5 bg-primary" : "bg-muted-foreground/25"
                 )}
               />
             ))}
