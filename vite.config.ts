@@ -8,6 +8,10 @@ import { VitePWA } from "vite-plugin-pwa"
 
 const siteUrl = "https://mail.ajou.app"
 
+function includesNodeModule(id: string, modules: string[]) {
+  return modules.some((module) => id.includes(`node_modules/${module}`))
+}
+
 // https://vite.dev/config/
 export default defineConfig({
   build: {
@@ -18,15 +22,35 @@ export default defineConfig({
             return
           }
 
-          if (id.includes("node_modules/@react-email/editor")) {
+          if (includesNodeModule(id, ["react/", "react-dom/"])) {
+            return "react-vendor"
+          }
+
+          if (includesNodeModule(id, ["@base-ui/", "@floating-ui/", "@tanstack/react-store", "@tanstack/store"])) {
+            return "ui-vendor"
+          }
+
+          if (includesNodeModule(id, ["@tanstack/"])) {
+            return "app-vendor"
+          }
+
+          if (includesNodeModule(id, ["@amplitude/"])) {
+            return "analytics-vendor"
+          }
+
+          if (includesNodeModule(id, ["firebase/"])) {
+            return "firebase-vendor"
+          }
+
+          if (includesNodeModule(id, ["@react-email/editor/"])) {
             return "react-email-editor"
           }
 
-          if (id.includes("node_modules/@tiptap")) {
+          if (includesNodeModule(id, ["@tiptap/", "prosemirror-"])) {
             return "tiptap-editor"
           }
 
-          if (id.includes("node_modules/@react-email")) {
+          if (includesNodeModule(id, ["@react-email/"])) {
             return "react-email-renderer"
           }
         },
