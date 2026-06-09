@@ -4,7 +4,7 @@ import { useEffect, useRef, useState } from "react"
 
 import { LanguageSelect } from "@/components/language-select"
 import { buttonVariants } from "@/components/ui/button"
-import { metaDescription, pageTitle } from "@/lib/site-meta"
+import { canonicalLink, metaDescription, pageTitle } from "@/lib/site-meta"
 import { m } from "@/paraglide/messages"
 import { userQueries } from "@/queries/user"
 
@@ -24,6 +24,7 @@ export const Route = createFileRoute("/")({
       { title: pageTitle() },
       metaDescription("AI가 이메일을 분류하고 답장 초안을 제안해 여러 계정의 인박스를 더 빠르게 정리하도록 돕습니다."),
     ],
+    links: [canonicalLink()],
   }),
   component: RouteComponent,
 })

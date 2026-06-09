@@ -6,6 +6,8 @@ import { defineConfig } from "vite"
 import { tanstackStart } from "@tanstack/react-start/plugin/vite"
 import { VitePWA } from "vite-plugin-pwa"
 
+const siteUrl = "https://mail.ajou.app"
+
 // https://vite.dev/config/
 export default defineConfig({
   build: {
@@ -46,6 +48,9 @@ export default defineConfig({
         autoStaticPathsDiscovery: false,
         crawlLinks: false,
         failOnError: true,
+      },
+      sitemap: {
+        host: siteUrl,
       },
       pages: [
         {

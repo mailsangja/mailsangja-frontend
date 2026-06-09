@@ -1,7 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router"
 import { Mail } from "lucide-react"
 
-import { metaDescription, pageTitle } from "@/lib/site-meta"
+import { canonicalLink, metaDescription, pageTitle } from "@/lib/site-meta"
 
 export const Route = createFileRoute("/terms")({
   head: () => ({
@@ -9,6 +9,7 @@ export const Route = createFileRoute("/terms")({
       { title: pageTitle("서비스 이용약관") },
       metaDescription("메일상자 서비스 이용 조건, 회원의 권리와 의무, 서비스 제공 및 제한 사항을 안내합니다."),
     ],
+    links: [canonicalLink("/terms")],
   }),
   component: TermsPage,
 })
