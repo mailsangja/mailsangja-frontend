@@ -38,6 +38,13 @@ export const Route = createRootRouteWithContext<RouterContext>()({
       { title: SITE_NAME },
     ],
     links: [
+      {
+        rel: "preload",
+        href: "/fonts/PretendardVariable.woff2",
+        as: "font",
+        type: "font/woff2",
+        crossOrigin: "anonymous",
+      },
       { rel: "stylesheet", href: appCss },
       { rel: "apple-touch-icon", sizes: "180x180", href: "/apple-touch-icon.png" },
       { rel: "icon", type: "image/png", sizes: "32x32", href: "/favicon-32x32.png" },
