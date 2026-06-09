@@ -4,6 +4,8 @@ import { normalizeSnippetText } from "@/lib/html-entities"
 import { m } from "@/paraglide/messages"
 import type {
   ComposeEmailData,
+  HybridMailSearchParams,
+  HybridMailSearchResponse,
   InboxMessage,
   InboxThreadDetail,
   InboxThreadSummary,
@@ -370,4 +372,17 @@ export async function sendMail(data: ComposeEmailData): Promise<void> {
 
 export async function reviewMail(request: MailReviewRequest): Promise<MailReviewResult> {
   return apiClient.post<MailReviewResult>("/api/v1/mail/reviews", request)
+}
+
+export async function searchMailHybrid(params: HybridMailSearchParams): Promise<HybridMailSearchResponse> {
+  const response = await apiClient.get<HybridMailSearchResponse>("/api/v1/mail/search/hybrid", {
+    params: { ...params },
+  })
+
+  return {
+    content: response.content.map((item) => ({
+      ...item,
+      snippet: normalizeSnippetText(item.snippet),
+    })),
+  }
 }

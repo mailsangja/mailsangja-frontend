@@ -233,3 +233,35 @@ export interface MailReviewResult {
   hasIssues: boolean
   issues: MailReviewIssue[]
 }
+
+export type HybridMailSearchScope = "ALL" | "INBOX" | "SENT"
+export type HybridMailSearchMatchedBy = "VECTOR" | "LEXICAL"
+
+export interface HybridMailSearchParams {
+  q: string
+  scope?: HybridMailSearchScope
+  mailAccountId?: string
+  labelId?: string[]
+  read?: boolean
+  size?: number
+}
+
+export interface HybridMailSearchItem {
+  messageId: string
+  threadId: string
+  mailAccountId: string
+  direction: "INBOUND" | "OUTBOUND"
+  subject: string
+  from: MailAddress
+  to: MailAddress[]
+  snippet: string
+  read: boolean
+  star: boolean
+  sentAt: string
+  matchedBy: HybridMailSearchMatchedBy[]
+  score: number
+}
+
+export interface HybridMailSearchResponse {
+  content: HybridMailSearchItem[]
+}
