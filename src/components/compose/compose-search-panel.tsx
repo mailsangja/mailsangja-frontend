@@ -1,10 +1,9 @@
-import { ArrowLeft, Search } from "lucide-react"
+import { Search } from "lucide-react"
 import { useRef, useState } from "react"
 
 import { MailErrorState } from "@/components/mail-error-state"
 import { ThreadHeader } from "@/components/thread/header"
 import { ThreadMessageList } from "@/components/thread/message-list"
-import { Button } from "@/components/ui/button"
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Separator } from "@/components/ui/separator"
 import { Skeleton } from "@/components/ui/skeleton"
@@ -45,10 +44,9 @@ function SearchResultItem({ item, onClick }: SearchResultItemProps) {
 
 interface ThreadDetailViewProps {
   threadId: string
-  onBack: () => void
 }
 
-function ThreadDetailView({ threadId, onBack }: ThreadDetailViewProps) {
+function ThreadDetailView({ threadId }: ThreadDetailViewProps) {
   const { data: thread, isLoading, isError, error, refetch } = useThread(threadId)
   const { data: accounts } = useMailAccounts()
   const { expandedIds, toggleExpanded } = useThreadMessageExpansion({
@@ -60,12 +58,6 @@ function ThreadDetailView({ threadId, onBack }: ThreadDetailViewProps) {
 
   return (
     <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
-      <div className="flex h-11 shrink-0 items-center gap-1 border-b px-2">
-        <Button variant="ghost" size="icon-sm" onClick={onBack} aria-label="검색 결과로 돌아가기">
-          <ArrowLeft className="size-4" />
-        </Button>
-        <span className="min-w-0 flex-1 truncate text-sm font-medium">{thread?.latestSubject ?? ""}</span>
-      </div>
       {isLoading ? (
         <div className="flex flex-col gap-4 p-6">
           <Skeleton className="h-7 w-3/4" />
@@ -87,7 +79,7 @@ function ThreadDetailView({ threadId, onBack }: ThreadDetailViewProps) {
         />
       ) : thread ? (
         <>
-          <ThreadHeader thread={thread} account={account} className="pt-4" />
+          <ThreadHeader thread={thread} account={account} className="pt-3" />
           <ThreadMessageList
             messages={thread.messages}
             expandedIds={expandedIds}
@@ -113,7 +105,7 @@ function SearchResultList({ items, onSelect }: SearchResultListProps) {
           <Search className="size-7 text-muted-foreground/60" />
         </div>
         <div>
-          <p className="font-medium text-muted-foreground">관련 메일이 없어요</p>
+          <p className="font-medium text-muted-foreground">연관 메일이 없어요</p>
           <p className="mt-1 text-sm text-muted-foreground">작성 중인 내용과 유사한 메일을 찾지 못했어요.</p>
         </div>
       </div>
@@ -260,10 +252,16 @@ export interface ComposeSearchPanelContentProps {
   query: string
   mailAccountId?: string
   showFilters: boolean
+  selectedThreadId: string | null
+  onSelectedThreadIdChange: (id: string | null) => void
 }
 
-export function ComposeSearchPanelContent({ query, showFilters }: ComposeSearchPanelContentProps) {
-  const [selectedThreadId, setSelectedThreadId] = useState<string | null>(null)
+export function ComposeSearchPanelContent({
+  query,
+  showFilters,
+  selectedThreadId,
+  onSelectedThreadIdChange,
+}: ComposeSearchPanelContentProps) {
   const [scope, setScope] = useState<HybridMailSearchScope>("ALL")
   const [selectedAccountId, setSelectedAccountId] = useState<string | undefined>(undefined)
   const [selectedLabelIds, setSelectedLabelIds] = useState<string[]>([])
@@ -286,7 +284,7 @@ export function ComposeSearchPanelContent({ query, showFilters }: ComposeSearchP
   )
 
   if (selectedThreadId) {
-    return <ThreadDetailView threadId={selectedThreadId} onBack={() => setSelectedThreadId(null)} />
+    return <ThreadDetailView threadId={selectedThreadId} />
   }
 
   const renderContent = () => {
@@ -297,7 +295,7 @@ export function ComposeSearchPanelContent({ query, showFilters }: ComposeSearchP
             <Search className="size-7 text-muted-foreground/60" />
           </div>
           <div>
-            <p className="font-medium text-muted-foreground">관련 메일</p>
+            <p className="font-medium text-muted-foreground">연관 메일</p>
             <p className="mt-1 text-sm text-muted-foreground">본문을 10자 이상 입력하면 유사한 메일을 찾아드려요.</p>
           </div>
         </div>
@@ -306,12 +304,18 @@ export function ComposeSearchPanelContent({ query, showFilters }: ComposeSearchP
 
     if (isLoading) {
       return (
-        <div className="flex flex-col gap-3 p-4">
+        <div className="divide-y">
           {Array.from({ length: 4 }).map((_, i) => (
-            <div key={i} className="flex flex-col gap-2 rounded-lg border p-3">
-              <Skeleton className="h-4 w-3/4" />
-              <Skeleton className="h-3 w-1/2" />
-              <Skeleton className="h-3 w-full" />
+            <div key={i} className="flex flex-col gap-1 px-4 py-3">
+              <div className="flex items-start justify-between gap-2">
+                <Skeleton className="h-4 w-3/4" />
+                <Skeleton className="h-3 w-10 shrink-0" />
+              </div>
+              <Skeleton className="h-3 w-1/3" />
+              <div className="flex flex-col gap-1">
+                <Skeleton className="h-3 w-full" />
+                <Skeleton className="h-3 w-2/3" />
+              </div>
             </div>
           ))}
         </div>
@@ -328,7 +332,7 @@ export function ComposeSearchPanelContent({ query, showFilters }: ComposeSearchP
       )
     }
 
-    return <SearchResultList items={data?.content ?? []} onSelect={setSelectedThreadId} />
+    return <SearchResultList items={data?.content ?? []} onSelect={onSelectedThreadIdChange} />
   }
 
   return (

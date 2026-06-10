@@ -1,5 +1,5 @@
 import { createFileRoute, useLocation } from "@tanstack/react-router"
-import { SlidersHorizontal } from "lucide-react"
+import { ArrowLeft, SlidersHorizontal } from "lucide-react"
 import { useRef, useState } from "react"
 import { toast } from "sonner"
 
@@ -7,6 +7,7 @@ import { ComposeEmail, type ComposeEmailHandle } from "@/components/compose/comp
 import { ComposeReferenceContent } from "@/components/compose/compose-reference-thread-panel"
 import { ComposeReviewPanel } from "@/components/compose/compose-review-panel"
 import { ComposeSearchPanelContent } from "@/components/compose/compose-search-panel"
+import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { Sheet, SheetContent } from "@/components/ui/sheet"
 import { useDebounce } from "@/hooks/use-debounce"
@@ -85,7 +86,7 @@ function TabButton({ active, onClick, children }: TabButtonProps) {
       type="button"
       onClick={onClick}
       className={cn(
-        "relative border-b-2 pb-3 text-sm transition-colors",
+        "relative border-b-2 text-sm transition-colors",
         active
           ? "border-foreground font-medium text-foreground"
           : "border-transparent text-muted-foreground hover:text-foreground"
@@ -106,30 +107,55 @@ interface ComposeLeftPanelProps {
 function ComposeLeftPanel({ threadId, messageId, searchQuery, fromAddress }: ComposeLeftPanelProps) {
   const [tab, setTab] = useState<LeftPanelTab>("reference")
   const [showFilters, setShowFilters] = useState(false)
+  const [searchSelectedThreadId, setSearchSelectedThreadId] = useState<string | null>(null)
   const { data: accounts } = useMailAccounts()
   const mailAccountId = fromAddress ? accounts?.find((a) => a.emailAddress === fromAddress)?.id : undefined
   const hasThread = threadId != null
+
+  const handleTabChange = (newTab: LeftPanelTab) => {
+    setTab(newTab)
+    setSearchSelectedThreadId(null)
+  }
 
   if (!hasThread) {
     return (
       <div className="flex h-full w-full min-w-0 flex-1 flex-col overflow-hidden">
         <div className="flex h-11 shrink-0 items-center justify-between border-b px-4">
-          <h1 className="text-sm font-medium">관련 메일</h1>
-          <button
-            type="button"
-            onClick={() => setShowFilters((v) => !v)}
-            className={cn(
-              "flex items-center gap-1 rounded-md px-2 py-1 text-xs transition-colors",
-              showFilters
-                ? "bg-foreground text-background"
-                : "text-muted-foreground hover:bg-muted hover:text-foreground"
-            )}
-          >
-            <SlidersHorizontal className="size-3" />
-            필터
-          </button>
+          {searchSelectedThreadId ? (
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={() => setSearchSelectedThreadId(null)}
+              aria-label="검색 결과로 돌아가기"
+            >
+              <ArrowLeft className="size-4" />
+            </Button>
+          ) : (
+            <>
+              <h1 className="text-sm font-medium">연관 메일</h1>
+              <button
+                type="button"
+                onClick={() => setShowFilters((v) => !v)}
+                className={cn(
+                  "flex items-center gap-1 rounded-md px-2 py-1 text-xs transition-colors",
+                  showFilters
+                    ? "bg-foreground text-background"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                )}
+              >
+                <SlidersHorizontal className="size-3" />
+                필터
+              </button>
+            </>
+          )}
         </div>
-        <ComposeSearchPanelContent query={searchQuery} mailAccountId={mailAccountId} showFilters={showFilters} />
+        <ComposeSearchPanelContent
+          query={searchQuery}
+          mailAccountId={mailAccountId}
+          showFilters={showFilters && !searchSelectedThreadId}
+          selectedThreadId={searchSelectedThreadId}
+          onSelectedThreadIdChange={setSearchSelectedThreadId}
+        />
       </div>
     )
   }
@@ -137,33 +163,52 @@ function ComposeLeftPanel({ threadId, messageId, searchQuery, fromAddress }: Com
   return (
     <div className="flex h-full w-full min-w-0 flex-1 flex-col overflow-hidden">
       <div className="flex h-11 shrink-0 items-stretch gap-4 border-b px-4">
-        <TabButton active={tab === "reference"} onClick={() => setTab("reference")}>
-          {m.compose_reference_title()}
-        </TabButton>
-        <TabButton active={tab === "search"} onClick={() => setTab("search")}>
-          관련 메일
-        </TabButton>
-        {tab === "search" && (
-          <button
-            type="button"
-            onClick={() => setShowFilters((v) => !v)}
-            className={cn(
-              "ml-auto flex items-center gap-1 rounded-md px-2 py-1 text-xs transition-colors",
-              showFilters
-                ? "bg-foreground text-background"
-                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+        {searchSelectedThreadId && tab === "search" ? (
+          <div className="flex items-center">
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={() => setSearchSelectedThreadId(null)}
+              aria-label="검색 결과로 돌아가기"
+            >
+              <ArrowLeft className="size-4" />
+            </Button>
+          </div>
+        ) : (
+          <>
+            <TabButton active={tab === "reference"} onClick={() => handleTabChange("reference")}>
+              {m.compose_reference_title()}
+            </TabButton>
+            <TabButton active={tab === "search"} onClick={() => handleTabChange("search")}>
+              연관 메일
+            </TabButton>
+            {tab === "search" && (
+              <button
+                type="button"
+                onClick={() => setShowFilters((v) => !v)}
+                className={cn(
+                  "ml-auto flex h-6 items-center gap-1 self-center rounded-md px-2 py-1 text-xs transition-colors",
+                  showFilters ? "bg-foreground text-background" : "text-muted-foreground"
+                )}
+              >
+                <SlidersHorizontal className="size-3" />
+                필터
+              </button>
             )}
-          >
-            <SlidersHorizontal className="size-3" />
-            필터
-          </button>
+          </>
         )}
       </div>
       <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
         {tab === "reference" ? (
           <ComposeReferenceContent threadId={threadId} messageId={messageId ?? null} />
         ) : (
-          <ComposeSearchPanelContent query={searchQuery} mailAccountId={mailAccountId} showFilters={showFilters} />
+          <ComposeSearchPanelContent
+            query={searchQuery}
+            mailAccountId={mailAccountId}
+            showFilters={showFilters && !searchSelectedThreadId}
+            selectedThreadId={searchSelectedThreadId}
+            onSelectedThreadIdChange={setSearchSelectedThreadId}
+          />
         )}
       </div>
     </div>

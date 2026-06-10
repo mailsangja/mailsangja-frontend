@@ -1,3 +1,5 @@
+import type React from "react"
+
 import { LabelChipList } from "@/components/label/label-chip"
 import { MailAccountIcon } from "@/components/mail-account-icon"
 import { Badge } from "@/components/ui/badge"
@@ -16,14 +18,16 @@ interface ThreadHeaderProps {
   account?: MailAccount
   labels?: ThreadLabel[]
   className?: string
+  leading?: React.ReactNode
 }
 
-export function ThreadHeader({ thread, account, labels, className }: ThreadHeaderProps) {
+export function ThreadHeader({ thread, account, labels, className, leading }: ThreadHeaderProps) {
   const messageCount = thread.messages.length
   const hasInbound = thread.messages.some((message) => message.direction === "INBOUND")
   const hasOutbound = thread.messages.some((message) => message.direction === "OUTBOUND")
   return (
     <div className={cn("shrink-0 border-b px-6 pb-5", className)}>
+      {leading}
       <h2 className="text-xl leading-snug font-semibold wrap-break-word">
         {thread.latestSubject || m.message_no_subject()}
       </h2>
