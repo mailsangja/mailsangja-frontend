@@ -263,12 +263,13 @@ export interface ComposeSearchPanelContentProps {
 
 export function ComposeSearchPanelContent({
   query,
+  mailAccountId,
   showFilters,
   selectedThreadId,
   onSelectedThreadIdChange,
 }: ComposeSearchPanelContentProps) {
   const [scope, setScope] = useState<HybridMailSearchScope>("ALL")
-  const [selectedAccountId, setSelectedAccountId] = useState<string | undefined>(undefined)
+  const [selectedAccountId, setSelectedAccountId] = useState<string | undefined>(mailAccountId)
   const [selectedLabelIds, setSelectedLabelIds] = useState<string[]>([])
   const isQueryReady = query.trim().length >= MIN_QUERY_LENGTH
 

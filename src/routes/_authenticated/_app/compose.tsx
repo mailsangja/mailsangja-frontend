@@ -150,6 +150,7 @@ function ComposeLeftPanel({ threadId, messageId, searchQuery, fromAddress }: Com
           )}
         </div>
         <ComposeSearchPanelContent
+          key={mailAccountId}
           query={searchQuery}
           mailAccountId={mailAccountId}
           showFilters={showFilters && !searchSelectedThreadId}
@@ -203,6 +204,7 @@ function ComposeLeftPanel({ threadId, messageId, searchQuery, fromAddress }: Com
           <ComposeReferenceContent threadId={threadId} messageId={messageId ?? null} />
         ) : (
           <ComposeSearchPanelContent
+            key={mailAccountId}
             query={searchQuery}
             mailAccountId={mailAccountId}
             showFilters={showFilters && !searchSelectedThreadId}
