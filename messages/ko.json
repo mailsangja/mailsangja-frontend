@@ -695,5 +695,14 @@
   "onboarding_step7_cta": "계정 연동하기",
   "settings_mail_accounts_reauthorize": "재인증",
   "settings_mail_accounts_reauthorize_required": "재인증 필요",
-  "settings_mail_accounts_reauthorize_error": "재인증 URL을 불러오지 못했습니다."
+  "settings_mail_accounts_reauthorize_error": "재인증 URL을 불러오지 못했습니다.",
+  "compose_related_mail_title": "연관 메일",
+  "compose_related_mail_empty_title": "연관 메일이 없어요",
+  "compose_related_mail_empty_description": "작성 중인 내용과 유사한 메일을 찾지 못했어요.",
+  "compose_related_mail_hint_description": "본문을 10자 이상 입력하면 유사한 메일을 찾아드려요.",
+  "compose_search_scope_all": "전체",
+  "compose_search_all_accounts": "전체 계정",
+  "compose_search_error_title": "검색에 실패했어요",
+  "compose_search_back_to_results": "검색 결과로 돌아가기",
+  "compose_filter": "필터"
 }

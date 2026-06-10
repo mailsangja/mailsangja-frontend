@@ -11,6 +11,7 @@ import { useThreadMessageExpansion } from "@/hooks/use-thread-message-expansion"
 import { formatRelativeDate } from "@/lib/date"
 import { getErrorMessage } from "@/lib/http-error"
 import { cn } from "@/lib/utils"
+import { m } from "@/paraglide/messages"
 import { useMailSearch, useThread } from "@/queries/emails"
 import { useLabels } from "@/queries/labels"
 import { useMailAccounts } from "@/queries/mail-accounts"
@@ -33,7 +34,9 @@ function SearchResultItem({ item, onClick }: SearchResultItemProps) {
       className="flex w-full flex-col gap-1 px-4 py-3 text-left transition-colors hover:bg-muted/50"
     >
       <div className="flex items-start justify-between gap-2">
-        <span className="min-w-0 flex-1 truncate text-sm leading-snug font-medium">{item.subject || "제목 없음"}</span>
+        <span className="min-w-0 flex-1 truncate text-sm leading-snug font-medium">
+          {item.subject || m.message_no_subject()}
+        </span>
         <time className="shrink-0 text-xs text-muted-foreground">{formatRelativeDate(item.sentAt)}</time>
       </div>
       <span className="truncate text-xs text-muted-foreground">{fromLabel}</span>
@@ -73,8 +76,8 @@ function ThreadDetailView({ threadId }: ThreadDetailViewProps) {
         </div>
       ) : isError ? (
         <MailErrorState
-          title="스레드를 불러오지 못했어요"
-          description={getErrorMessage(error, "잠시 후 다시 시도해 주세요.")}
+          title={m.thread_error_generic_title()}
+          description={getErrorMessage(error, m.common_try_again_later())}
           onRetry={() => void refetch()}
         />
       ) : thread ? (
@@ -105,8 +108,8 @@ function SearchResultList({ items, onSelect }: SearchResultListProps) {
           <Search className="size-7 text-muted-foreground/60" />
         </div>
         <div>
-          <p className="font-medium text-muted-foreground">연관 메일이 없어요</p>
-          <p className="mt-1 text-sm text-muted-foreground">작성 중인 내용과 유사한 메일을 찾지 못했어요.</p>
+          <p className="font-medium text-muted-foreground">{m.compose_related_mail_empty_title()}</p>
+          <p className="mt-1 text-sm text-muted-foreground">{m.compose_related_mail_empty_description()}</p>
         </div>
       </div>
     )
@@ -123,11 +126,13 @@ function SearchResultList({ items, onSelect }: SearchResultListProps) {
   )
 }
 
-const SCOPE_OPTIONS: { value: HybridMailSearchScope; label: string }[] = [
-  { value: "ALL", label: "전체" },
-  { value: "INBOX", label: "받은 메일함" },
-  { value: "SENT", label: "보낸 메일함" },
-]
+const SCOPE_VALUES: HybridMailSearchScope[] = ["ALL", "INBOX", "SENT"]
+
+function getScopeLabel(scope: HybridMailSearchScope): string {
+  if (scope === "ALL") return m.compose_search_scope_all()
+  if (scope === "INBOX") return m.mailbox_inbox()
+  return m.mailbox_sent()
+}
 
 interface FilterChipProps {
   active: boolean
@@ -158,9 +163,9 @@ interface ScopeFilterProps {
 function ScopeFilter({ value, onChange }: ScopeFilterProps) {
   return (
     <div className="flex shrink-0 items-center gap-1 border-b px-4 py-2">
-      {SCOPE_OPTIONS.map((option) => (
-        <FilterChip key={option.value} active={value === option.value} onClick={() => onChange(option.value)}>
-          {option.label}
+      {SCOPE_VALUES.map((scope) => (
+        <FilterChip key={scope} active={value === scope} onClick={() => onChange(scope)}>
+          {getScopeLabel(scope)}
         </FilterChip>
       ))}
     </div>
@@ -179,7 +184,7 @@ function AccountFilter({ accounts, selectedId, onChange }: AccountFilterProps) {
   return (
     <div className="flex shrink-0 scrollbar-none items-center gap-1 overflow-x-auto border-b px-4 py-2">
       <FilterChip active={selectedId === undefined} onClick={() => onChange(undefined)}>
-        전체 계정
+        {m.compose_search_all_accounts()}
       </FilterChip>
       {accounts.map((account) => (
         <FilterChip
@@ -295,8 +300,8 @@ export function ComposeSearchPanelContent({
             <Search className="size-7 text-muted-foreground/60" />
           </div>
           <div>
-            <p className="font-medium text-muted-foreground">연관 메일</p>
-            <p className="mt-1 text-sm text-muted-foreground">본문을 10자 이상 입력하면 유사한 메일을 찾아드려요.</p>
+            <p className="font-medium text-muted-foreground">{m.compose_related_mail_title()}</p>
+            <p className="mt-1 text-sm text-muted-foreground">{m.compose_related_mail_hint_description()}</p>
           </div>
         </div>
       )
@@ -325,8 +330,8 @@ export function ComposeSearchPanelContent({
     if (isError) {
       return (
         <MailErrorState
-          title="검색에 실패했어요"
-          description={getErrorMessage(error, "잠시 후 다시 시도해 주세요.")}
+          title={m.compose_search_error_title()}
+          description={getErrorMessage(error, m.common_try_again_later())}
           onRetry={() => void refetch()}
         />
       )

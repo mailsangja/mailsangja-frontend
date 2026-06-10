@@ -126,13 +126,13 @@ function ComposeLeftPanel({ threadId, messageId, searchQuery, fromAddress }: Com
               variant="ghost"
               size="icon-sm"
               onClick={() => setSearchSelectedThreadId(null)}
-              aria-label="검색 결과로 돌아가기"
+              aria-label={m.compose_search_back_to_results()}
             >
               <ArrowLeft className="size-4" />
             </Button>
           ) : (
             <>
-              <h1 className="text-sm font-medium">연관 메일</h1>
+              <h1 className="text-sm font-medium">{m.compose_related_mail_title()}</h1>
               <button
                 type="button"
                 onClick={() => setShowFilters((v) => !v)}
@@ -144,7 +144,7 @@ function ComposeLeftPanel({ threadId, messageId, searchQuery, fromAddress }: Com
                 )}
               >
                 <SlidersHorizontal className="size-3" />
-                필터
+                {m.compose_filter()}
               </button>
             </>
           )}
@@ -169,7 +169,7 @@ function ComposeLeftPanel({ threadId, messageId, searchQuery, fromAddress }: Com
               variant="ghost"
               size="icon-sm"
               onClick={() => setSearchSelectedThreadId(null)}
-              aria-label="검색 결과로 돌아가기"
+              aria-label={m.compose_search_back_to_results()}
             >
               <ArrowLeft className="size-4" />
             </Button>
@@ -180,7 +180,7 @@ function ComposeLeftPanel({ threadId, messageId, searchQuery, fromAddress }: Com
               {m.compose_reference_title()}
             </TabButton>
             <TabButton active={tab === "search"} onClick={() => handleTabChange("search")}>
-              연관 메일
+              {m.compose_related_mail_title()}
             </TabButton>
             {tab === "search" && (
               <button
@@ -192,7 +192,7 @@ function ComposeLeftPanel({ threadId, messageId, searchQuery, fromAddress }: Com
                 )}
               >
                 <SlidersHorizontal className="size-3" />
-                필터
+                {m.compose_filter()}
               </button>
             )}
           </>

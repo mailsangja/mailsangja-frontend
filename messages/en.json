@@ -695,5 +695,14 @@
   "onboarding_step7_cta": "Connect account",
   "settings_mail_accounts_reauthorize": "Re-authorize",
   "settings_mail_accounts_reauthorize_required": "Re-authorization required",
-  "settings_mail_accounts_reauthorize_error": "Failed to get re-authorization URL."
+  "settings_mail_accounts_reauthorize_error": "Failed to get re-authorization URL.",
+  "compose_related_mail_title": "Related mail",
+  "compose_related_mail_empty_title": "No related mail",
+  "compose_related_mail_empty_description": "No mail similar to your content was found.",
+  "compose_related_mail_hint_description": "Enter 10 or more characters in the body to find similar mail.",
+  "compose_search_scope_all": "All",
+  "compose_search_all_accounts": "All accounts",
+  "compose_search_error_title": "Search failed",
+  "compose_search_back_to_results": "Back to search results",
+  "compose_filter": "Filter"
 }
