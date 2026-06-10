@@ -3,8 +3,14 @@ import tailwindcss from "@tailwindcss/vite"
 import react from "@vitejs/plugin-react"
 import { paraglideVitePlugin } from "@inlang/paraglide-js"
 import { defineConfig } from "vite"
-import { tanstackRouter } from "@tanstack/router-plugin/vite"
+import { tanstackStart } from "@tanstack/react-start/plugin/vite"
 import { VitePWA } from "vite-plugin-pwa"
+
+const siteUrl = "https://mail.ajou.app"
+
+function includesNodeModule(id: string, modules: string[]) {
+  return modules.some((module) => id.includes(`node_modules/${module}`))
+}
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -16,15 +22,35 @@ export default defineConfig({
             return
           }
 
-          if (id.includes("node_modules/@react-email/editor")) {
+          if (includesNodeModule(id, ["react/", "react-dom/"])) {
+            return "react-vendor"
+          }
+
+          if (includesNodeModule(id, ["@base-ui/", "@floating-ui/", "@tanstack/react-store", "@tanstack/store"])) {
+            return "ui-vendor"
+          }
+
+          if (includesNodeModule(id, ["@tanstack/"])) {
+            return "app-vendor"
+          }
+
+          if (includesNodeModule(id, ["@amplitude/"])) {
+            return "analytics-vendor"
+          }
+
+          if (includesNodeModule(id, ["firebase/"])) {
+            return "firebase-vendor"
+          }
+
+          if (includesNodeModule(id, ["@react-email/editor/"])) {
             return "react-email-editor"
           }
 
-          if (id.includes("node_modules/@tiptap")) {
+          if (includesNodeModule(id, ["@tiptap/", "prosemirror-"])) {
             return "tiptap-editor"
           }
 
-          if (id.includes("node_modules/@react-email")) {
+          if (includesNodeModule(id, ["@react-email/"])) {
             return "react-email-renderer"
           }
         },
@@ -32,9 +58,44 @@ export default defineConfig({
     },
   },
   plugins: [
-    tanstackRouter({
-      target: "react",
-      autoCodeSplitting: true,
+    tanstackStart({
+      spa: {
+        enabled: true,
+        // GitHub Pages serves 404.html as the SPA fallback.
+        maskPath: "/404",
+        prerender: {
+          outputPath: "/404",
+        },
+      },
+      prerender: {
+        enabled: true,
+        autoStaticPathsDiscovery: false,
+        crawlLinks: false,
+        failOnError: true,
+      },
+      sitemap: {
+        host: siteUrl,
+      },
+      pages: [
+        {
+          path: "/",
+          prerender: {
+            enabled: true,
+          },
+        },
+        {
+          path: "/terms",
+          prerender: {
+            enabled: true,
+          },
+        },
+        {
+          path: "/privacy",
+          prerender: {
+            enabled: true,
+          },
+        },
+      ],
     }),
     react(),
     paraglideVitePlugin({

@@ -69,7 +69,7 @@ export function AppSidebar({
         </SidebarMenu>
       </SidebarHeader>
 
-      <SidebarContent>
+      <SidebarContent className="overflow-hidden">
         <div className="mb-2 flex gap-px px-2">
           <Link to="/compose" className={buttonVariants({ size: "lg", className: "flex-1 rounded-r-none" })}>
             <Pencil className="mr-1" />
@@ -112,20 +112,21 @@ export function AppSidebar({
         </div>
 
         <SidebarInboxSection mailbox={mailbox} onMailboxChange={onMailboxChange} />
-        <SidebarLabelGroupsSection
-          activeLabelGroupId={activeLabelGroupId}
-          onLabelGroupToggle={onLabelGroupToggle}
-          className="mt-2"
-        />
-        <SidebarLabelsSection activeLabelId={activeLabelId} onLabelToggle={onLabelToggle} className="mt-2" />
-        <SidebarAccountsSection
-          activeAccountId={activeAccountId}
-          onAccountToggle={onAccountToggle}
-          className="mt-auto"
-        />
+
+        <div className="no-scrollbar min-h-0 flex-1 overflow-x-hidden overflow-y-auto group-data-[collapsible=icon]:overflow-hidden">
+          <SidebarLabelGroupsSection
+            activeLabelGroupId={activeLabelGroupId}
+            onLabelGroupToggle={onLabelGroupToggle}
+            className="mt-2"
+          />
+          <SidebarLabelsSection activeLabelId={activeLabelId} onLabelToggle={onLabelToggle} className="mt-2" />
+        </div>
       </SidebarContent>
 
-      <SidebarFooter>
+      <SidebarFooter className="shrink-0">
+        <div className="-mx-2">
+          <SidebarAccountsSection activeAccountId={activeAccountId} onAccountToggle={onAccountToggle} />
+        </div>
         <PwaUpdateBanner />
         <SidebarUserMenu />
       </SidebarFooter>

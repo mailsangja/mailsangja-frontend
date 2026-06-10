@@ -4,6 +4,7 @@ import { LoadingLayout } from "@/components/layout/loading-layout"
 import { userQueries } from "@/queries/user"
 
 export const Route = createFileRoute("/_authenticated")({
+  ssr: false,
   beforeLoad: async ({ context }) => {
     const user = await context.queryClient.ensureQueryData(userQueries.me())
 
