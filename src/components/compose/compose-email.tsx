@@ -61,6 +61,7 @@ interface ComposeEmailProps {
   initialBody?: string
   onReview?: (request: MailReviewRequest) => void
   isReviewing?: boolean
+  onBodyTextChange?: (text: string) => void
   ref?: Ref<ComposeEmailHandle>
 }
 
@@ -346,6 +347,7 @@ export function ComposeEmail({
   initialBody,
   onReview,
   isReviewing = false,
+  onBodyTextChange,
   ref,
 }: ComposeEmailProps) {
   const navigate = useNavigate()
@@ -942,6 +944,7 @@ export function ComposeEmail({
             applyEditorTheme(ref.editor, content)
             setIsEditorEmpty(isEditorContentEmpty(content))
             pruneUnusedInlineImages(content)
+            onBodyTextChange?.(ref.editor?.getText() ?? "")
           }}
         />
         {isDraftStreaming && (

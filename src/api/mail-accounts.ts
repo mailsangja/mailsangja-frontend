@@ -37,3 +37,7 @@ export async function activateMailAccount(mailAccountId: string): Promise<void> 
 export async function deactivateMailAccount(mailAccountId: string): Promise<void> {
   await apiClient.patch<void>(`/api/v1/mail-accounts/${mailAccountId}/deactivate`)
 }
+
+export async function reauthorizeGoogle(mailAccountId: string): Promise<MailAccountAuthorizeResponse> {
+  return apiClient.get<MailAccountAuthorizeResponse>(`/api/v1/mail-accounts/${mailAccountId}/google/reauthorize`)
+}

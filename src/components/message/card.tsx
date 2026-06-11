@@ -118,17 +118,19 @@ export function MessageCard({
             {formatRelativeDate(message.sentAt)}
           </span>
           <div className="flex shrink-0 items-center">
-            <Button
-              variant="ghost"
-              size="icon-sm"
-              onClick={onToggleStar}
-              disabled={!onToggleStar || isTogglingStar}
-              title={message.star ? m.message_unstar() : m.message_star()}
-              aria-label={message.star ? m.message_unstar() : m.message_star()}
-              className={cn(message.star && "text-primary")}
-            >
-              <Star className={cn(message.star && "fill-primary")} />
-            </Button>
+            {onToggleStar !== undefined && (
+              <Button
+                variant="ghost"
+                size="icon-sm"
+                onClick={onToggleStar}
+                disabled={isTogglingStar}
+                title={message.star ? m.message_unstar() : m.message_star()}
+                aria-label={message.star ? m.message_unstar() : m.message_star()}
+                className={cn(message.star && "text-primary")}
+              >
+                <Star className={cn(message.star && "fill-primary")} />
+              </Button>
+            )}
             {menuActions ? (
               <DropdownMenu>
                 <DropdownMenuTrigger render={<Button variant="ghost" size="icon-sm" aria-label={m.message_more()} />}>

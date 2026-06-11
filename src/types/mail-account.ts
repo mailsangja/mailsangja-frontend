@@ -8,6 +8,7 @@ export interface MailAccount {
   alias: string
   color: string
   icon: string
+  reauthorizationRequired: boolean
 }
 
 export interface MailAccountAuthorizeResponse {

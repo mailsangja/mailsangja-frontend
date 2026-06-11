@@ -1,19 +1,24 @@
 import { createFileRoute, useLocation } from "@tanstack/react-router"
+import { ArrowLeft, SlidersHorizontal } from "lucide-react"
 import { useRef, useState } from "react"
 import { toast } from "sonner"
 
 import { ComposeEmail, type ComposeEmailHandle } from "@/components/compose/compose-email"
-import { ComposeReferenceThreadPanel } from "@/components/compose/compose-reference-thread-panel"
+import { ComposeReferenceContent } from "@/components/compose/compose-reference-thread-panel"
 import { ComposeReviewPanel } from "@/components/compose/compose-review-panel"
+import { ComposeSearchPanelContent } from "@/components/compose/compose-search-panel"
+import { Button } from "@/components/ui/button"
 import { Separator } from "@/components/ui/separator"
 import { Sheet, SheetContent } from "@/components/ui/sheet"
+import { useDebounce } from "@/hooks/use-debounce"
 import { useIsMobile } from "@/hooks/use-mobile"
 import { getHttpStatus } from "@/lib/http-error"
 import { formatMailAddressList } from "@/lib/mail-address"
+import { cn } from "@/lib/utils"
 import { useReviewMail } from "@/mutations/emails"
 import { m } from "@/paraglide/messages"
 import { emailQueries } from "@/queries/emails"
-import { mailAccountQueries } from "@/queries/mail-accounts"
+import { mailAccountQueries, useMailAccounts } from "@/queries/mail-accounts"
 import type { MailReviewRequest } from "@/types/email"
 
 interface ComposeRouteSearch {
@@ -67,6 +72,151 @@ export const Route = createFileRoute("/_authenticated/_app/compose")({
   component: ComposePage,
 })
 
+type LeftPanelTab = "reference" | "search"
+
+interface TabButtonProps {
+  active: boolean
+  onClick: () => void
+  children: React.ReactNode
+}
+
+function TabButton({ active, onClick, children }: TabButtonProps) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={cn(
+        "relative border-b-2 text-sm transition-colors",
+        active
+          ? "border-foreground font-medium text-foreground"
+          : "border-transparent text-muted-foreground hover:text-foreground"
+      )}
+    >
+      {children}
+    </button>
+  )
+}
+
+interface ComposeLeftPanelProps {
+  threadId: string | null
+  messageId?: string | null
+  searchQuery: string
+  fromAddress: string | null
+}
+
+function ComposeLeftPanel({ threadId, messageId, searchQuery, fromAddress }: ComposeLeftPanelProps) {
+  const [tab, setTab] = useState<LeftPanelTab>("reference")
+  const [showFilters, setShowFilters] = useState(false)
+  const [searchSelectedThreadId, setSearchSelectedThreadId] = useState<string | null>(null)
+  const { data: accounts } = useMailAccounts()
+  const mailAccountId = fromAddress ? accounts?.find((a) => a.emailAddress === fromAddress)?.id : undefined
+  const hasThread = threadId != null
+
+  const handleTabChange = (newTab: LeftPanelTab) => {
+    setTab(newTab)
+    setSearchSelectedThreadId(null)
+  }
+
+  if (!hasThread) {
+    return (
+      <div className="flex h-full w-full min-w-0 flex-1 flex-col overflow-hidden">
+        <div className="flex h-11 shrink-0 items-center justify-between border-b px-4">
+          {searchSelectedThreadId ? (
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={() => setSearchSelectedThreadId(null)}
+              aria-label={m.compose_search_back_to_results()}
+            >
+              <ArrowLeft className="size-4" />
+            </Button>
+          ) : (
+            <>
+              <h1 className="text-sm font-medium">{m.compose_related_mail_title()}</h1>
+              <button
+                type="button"
+                onClick={() => setShowFilters((v) => !v)}
+                className={cn(
+                  "flex items-center gap-1 rounded-md px-2 py-1 text-xs transition-colors",
+                  showFilters
+                    ? "bg-foreground text-background"
+                    : "text-muted-foreground hover:bg-muted hover:text-foreground"
+                )}
+              >
+                <SlidersHorizontal className="size-3" />
+                {m.compose_filter()}
+              </button>
+            </>
+          )}
+        </div>
+        <ComposeSearchPanelContent
+          key={mailAccountId}
+          query={searchQuery}
+          mailAccountId={mailAccountId}
+          showFilters={showFilters && !searchSelectedThreadId}
+          selectedThreadId={searchSelectedThreadId}
+          onSelectedThreadIdChange={setSearchSelectedThreadId}
+        />
+      </div>
+    )
+  }
+
+  return (
+    <div className="flex h-full w-full min-w-0 flex-1 flex-col overflow-hidden">
+      <div className="flex h-11 shrink-0 items-stretch gap-4 border-b px-4">
+        {searchSelectedThreadId && tab === "search" ? (
+          <div className="flex items-center">
+            <Button
+              variant="ghost"
+              size="icon-sm"
+              onClick={() => setSearchSelectedThreadId(null)}
+              aria-label={m.compose_search_back_to_results()}
+            >
+              <ArrowLeft className="size-4" />
+            </Button>
+          </div>
+        ) : (
+          <>
+            <TabButton active={tab === "reference"} onClick={() => handleTabChange("reference")}>
+              {m.compose_reference_title()}
+            </TabButton>
+            <TabButton active={tab === "search"} onClick={() => handleTabChange("search")}>
+              {m.compose_related_mail_title()}
+            </TabButton>
+            {tab === "search" && (
+              <button
+                type="button"
+                onClick={() => setShowFilters((v) => !v)}
+                className={cn(
+                  "ml-auto flex h-6 items-center gap-1 self-center rounded-md px-2 py-1 text-xs transition-colors",
+                  showFilters ? "bg-foreground text-background" : "text-muted-foreground"
+                )}
+              >
+                <SlidersHorizontal className="size-3" />
+                {m.compose_filter()}
+              </button>
+            )}
+          </>
+        )}
+      </div>
+      <div className="flex min-h-0 flex-1 flex-col overflow-hidden">
+        {tab === "reference" ? (
+          <ComposeReferenceContent threadId={threadId} messageId={messageId ?? null} />
+        ) : (
+          <ComposeSearchPanelContent
+            key={mailAccountId}
+            query={searchQuery}
+            mailAccountId={mailAccountId}
+            showFilters={showFilters && !searchSelectedThreadId}
+            selectedThreadId={searchSelectedThreadId}
+            onSelectedThreadIdChange={setSearchSelectedThreadId}
+          />
+        )}
+      </div>
+    </div>
+  )
+}
+
 function ComposePage() {
   const isMobile = useIsMobile()
   const { from, thread, message } = Route.useSearch()
@@ -77,8 +227,10 @@ function ComposePage() {
   const navigate = Route.useNavigate()
   const reviewMutation = useReviewMail()
   const [isReviewPanelOpen, setIsReviewPanelOpen] = useState(false)
+  const [bodyText, setBodyText] = useState("")
   const composeEmailRef = useRef<ComposeEmailHandle>(null)
   const forceReviewRef = useRef(false)
+  const debouncedBodyText = useDebounce(bodyText, 500)
 
   const handleFromAddressChange = (nextFrom: string | null) => {
     navigate({
@@ -136,6 +288,7 @@ function ComposePage() {
           initialBody={initialBody}
           onReview={handleReview}
           isReviewing={reviewMutation.isPending}
+          onBodyTextChange={setBodyText}
           ref={composeEmailRef}
         />
         <Sheet
@@ -169,7 +322,12 @@ function ComposePage() {
             onClose={handleCloseReviewPanel}
           />
         ) : (
-          <ComposeReferenceThreadPanel threadId={thread ?? null} messageId={message ?? null} />
+          <ComposeLeftPanel
+            threadId={thread ?? null}
+            messageId={message ?? null}
+            searchQuery={debouncedBodyText}
+            fromAddress={fromAddress}
+          />
         )}
       </div>
       <Separator orientation="vertical" />
@@ -184,6 +342,7 @@ function ComposePage() {
           initialBody={initialBody}
           onReview={handleReview}
           isReviewing={reviewMutation.isPending}
+          onBodyTextChange={setBodyText}
           ref={composeEmailRef}
         />
       </div>

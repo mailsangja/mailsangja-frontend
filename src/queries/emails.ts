@@ -1,7 +1,13 @@
 import { queryOptions, useInfiniteQuery, useQuery } from "@tanstack/react-query"
 
-import { getMailboxThreads, getReplyDraftSuggestions, getStarredThreads, getThreadDetail } from "@/api/emails"
-import type { ListThreadsParams, StarredThreadsParams, SupportedMailboxId } from "@/types/email"
+import {
+  getMailboxThreads,
+  getReplyDraftSuggestions,
+  getStarredThreads,
+  getThreadDetail,
+  searchMailHybrid,
+} from "@/api/emails"
+import type { HybridMailSearchParams, ListThreadsParams, StarredThreadsParams, SupportedMailboxId } from "@/types/email"
 
 export const emailKeys = {
   all: () => ["emails"] as const,
@@ -10,6 +16,7 @@ export const emailKeys = {
   starred: (params: Omit<StarredThreadsParams, "marker">) => [...emailKeys.all(), "starred", params] as const,
   thread: (id: string) => [...emailKeys.all(), "thread", id] as const,
   replyDraftSuggestions: (messageId: string) => [...emailKeys.all(), "reply-draft-suggestions", messageId] as const,
+  search: (params: HybridMailSearchParams) => [...emailKeys.all(), "search", params] as const,
 }
 
 export const emailQueries = {
@@ -83,5 +90,13 @@ export function useReplyDraftSuggestions(messageId: string | null, enabled?: boo
   return useQuery({
     ...emailQueries.replyDraftSuggestions(messageId ?? ""),
     enabled: (enabled ?? true) && messageId != null,
+  })
+}
+
+export function useMailSearch(params: HybridMailSearchParams, enabled = true) {
+  return useQuery({
+    queryKey: emailKeys.search(params),
+    queryFn: () => searchMailHybrid(params),
+    enabled: enabled && params.q.trim().length > 0,
   })
 }
