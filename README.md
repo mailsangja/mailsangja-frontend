@@ -22,16 +22,20 @@
 
 ### 1. 통합 인박스
 
-- 복수 메일 계정 연동
-- 계정별 메일 식별이 가능한 통합 메일 리스트
-- 읽음 처리, 삭제, 스레드 단위 조회, 실시간 알림
+- Gmail 계정 연동 및 복수 메일 계정 관리
+- 받은편지함, 보낸편지함, 별표, 휴지통 기반 메일함 탐색
+- 계정, 라벨, 라벨 그룹, 읽음 상태, 검색어 기반 메일 필터링
+- 스레드 단위 메일 조회, 읽음/안 읽음 처리, 별표 처리
+- 휴지통 이동, 메시지/스레드 복구, 첨부파일 다운로드
+- Firebase Cloud Messaging 기반 웹 푸시 알림
 
 ### 2. 메일 작성 및 발송
 
 - 발신 계정 선택 후 메일 작성 및 발송
-- 첨부파일, CC, BCC 지원
+- 첨부파일, 인라인 이미지, CC, BCC 지원
 - 주소록 기반 자동완성
-- 답장/전달 및 발송 내역 확인
+- 기존 스레드 맥락을 반영한 답장 작성
+- 관련 메일 검색 패널과 참조 스레드 패널 제공
 
 ### 3. AI 메일 보조
 
@@ -39,23 +43,65 @@
 - 중요 메일 우선 표시
 - 자동 라벨 및 규칙 추천
 - 사용자 정의 라벨/규칙 수정 지원
+- 답장 초안 추천 및 선택 지원
+- AI 사용량 조회
 
 ### 4. AI 작성 보조
 
-- 메일 목적 또는 제목 기반 초안 생성
+- 메일 목적, 제목, 수신자, 답장 맥락 기반 초안 생성
 - 대화 맥락 기반 답장 방향 추천
 - 발송 전 오탈자, 첨부 누락, 어조/문맥 점검
+
+### 5. 사용자 설정과 결제
+
+- 기본 발신 계정 설정
+- 메일 계정 별칭, 아이콘, 색상, 활성 상태 관리
+- 라벨 색상, 알림 정책, 자동 분류 규칙, 라벨 그룹 관리
+- 테마, 언어, 인박스 표시 방식, 첨부파일 표시 방식 설정
+- PortOne 기반 유료 플랜 결제 및 업그레이드 흐름
 
 ## 기술 스택
 
 - `React 19`
 - `TypeScript`
 - `Vite`
+- `TanStack Start`
 - `TanStack Router`
 - `TanStack React Query`
 - `Tailwind CSS v4`
 - `shadcn/ui`
+- `Base UI`
+- `Paraglide JS` / `inlang`
+- `Firebase Cloud Messaging`
+- `vite-plugin-pwa` / `Workbox`
+- `PortOne SDK`
+- `Amplitude` / `Google Analytics`
+- `React Email Editor`
+- `Tiptap`
 - `Fetch API`
+
+## 아키텍처
+
+- `TanStack Start`의 SPA 모드를 사용합니다.
+- 랜딩 페이지, 약관 페이지 등 정적 페이지는 정적 프리렌더링 대상으로 관리합니다.
+- 서버 상태는 TanStack React Query의 query/mutation 계층으로 분리합니다.
+- 라우팅은 파일 기반 TanStack Router 구조를 사용합니다.
+- 다국어 메시지는 paraglide 기반 i18n을 사용합니다.
+- PWA는 커스텀 서비스 워커를 빌드하며, Workbox precache와 FCM 백그라운드 알림을 함께 처리합니다.
+- 메일 작성기는 React Email Editor와 Tiptap 기반 에디터를 사용합니다.
+
+## CI/CD 및 배포 파이프라인
+
+GitHub Actions 워크플로우는 `.github/workflows/deploy-pages.yml`에서 관리합니다.
+
+- `main` 브랜치로 push되거나 `main` 대상 pull request가 생성되면 빌드 검증을 실행합니다.
+- `workflow_dispatch`를 통해 수동 실행할 수 있습니다.
+- 빌드 작업은 Node.js 24에서 실행되며, `npm run build`로 타입 검사와 프로덕션 빌드를 함께 수행합니다.
+- 빌드 시 필요한 환경변수 값은 GitHub Actions repository variables에서 주입합니다.
+- pull request에서는 빌드와 Pages artifact 생성까지만 수행하고, 실제 배포는 건너뜁니다.
+- `main` push 또는 수동 실행에서는 `dist/client`를 GitHub Pages artifact로 업로드한 뒤 GitHub Pages 환경에 배포합니다.
+
+배포 산출물은 `dist/client`이며, `public/CNAME`을 통해 커스텀 도메인 `mail.ajou.app`을 사용합니다. SPA fallback은 빌드 과정에서 생성되는 `404.html`이 담당합니다.
 
 ## 시작하기
 
@@ -87,9 +133,24 @@ npm run typecheck  # 타입 검사
 ## 디렉터리 구조
 
 ```text
-src/
-  components/   # 공통 UI 컴포넌트
-  lib/          # 유틸리티
-  routes/       # TanStack Router 기반 라우트
-public/         # 정적 에셋
+mailsangja-frontend/
+├── .env.example      # 로컬 환경변수 템플릿
+├── .github/          # GitHub 협업 관련 템플릿 및 GitHub Actions CI/CD 워크플로우
+├── components.json   # shadcn/ui 설정
+├── docs/             # API, 푸시 알림 등 개발 참고 문서
+├── messages/         # inlang 원본 다국어 메시지
+├── project.inlang/   # inlang 프로젝트 설정
+├── public/           # 정적 에셋, PWA 아이콘, CNAME, robots.txt
+└── src/
+    ├── api/            # 백엔드 API 호출 함수
+    ├── components/     # 화면/도메인/UI 컴포넌트
+    ├── hooks/          # 클라이언트 상태와 UI 보조 훅
+    ├── lib/            # 공통 유틸리티, API 클라이언트, PWA/FCM/분석 연동
+    ├── mutations/      # React Query mutation 훅
+    ├── paraglide/      # Paraglide 생성 산출물
+    ├── queries/        # React Query query 훅
+    ├── routes/         # TanStack Router 파일 기반 라우트
+    ├── service-worker/ # 서비스 워커 보조 모듈
+    ├── types/          # 도메인 타입 정의
+    └── sw.ts           # PWA/FCM 커스텀 서비스 워커
 ```
