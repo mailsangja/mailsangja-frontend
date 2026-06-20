@@ -1,4 +1,4 @@
-import { useState } from "react"
+import { useEffect, useRef, useState } from "react"
 import { ArrowLeft, ChevronsRight, Copy, Forward, MailOpen, Mail, Reply, Star, Trash2 } from "lucide-react"
 import { useNavigate } from "@tanstack/react-router"
 import { toast } from "sonner"
@@ -217,15 +217,9 @@ interface ThreadDetailProps {
 
 export function ThreadDetail({ threadId, messageId = null, onClose }: ThreadDetailProps) {
   const navigate = useNavigate()
+  const processedThreadIdsRef = useRef<Set<string>>(new Set())
   const [showSuggestions, setShowSuggestions] = useState(false)
-  const [prevThreadId, setPrevThreadId] = useState(threadId)
-  const [prevMessageId, setPrevMessageId] = useState(messageId)
 
-  if (prevThreadId !== threadId || prevMessageId !== messageId) {
-    setPrevThreadId(threadId)
-    setPrevMessageId(messageId)
-    setShowSuggestions(false)
-  }
   const { data: thread, isLoading, isError, error, refetch } = useThread(threadId)
   const { data: accounts } = useMailAccounts()
   const { mutate: deleteThread, isPending: isDeleting } = useDeleteThread()
@@ -247,6 +241,17 @@ export function ThreadDetail({ threadId, messageId = null, onClose }: ThreadDeta
     messages: thread?.messages ?? [],
     messageId,
   })
+
+  useEffect(() => {
+    if (!thread || processedThreadIdsRef.current.has(thread.threadId)) {
+      return
+    }
+
+    processedThreadIdsRef.current.add(thread.threadId)
+    if (!thread.isRead) {
+      markThreadRead(thread.threadId)
+    }
+  }, [markThreadRead, thread])
 
   const handleDeleteMessage = (message: InboxMessage, isLast: boolean) => {
     deleteMessage(message.id, {
