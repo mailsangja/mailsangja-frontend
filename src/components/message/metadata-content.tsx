@@ -18,14 +18,14 @@ function AddressList({ addresses }: { addresses: MailAddress[] }) {
   }
 
   return (
-    <ul className="flex min-w-0 flex-col gap-0.5">
+    <ul className="flex min-w-0 flex-col gap-0">
       {addresses.map((address, index) => (
-        <li key={`${address.email}-${index}`} className="flex min-h-6 min-w-0 items-center gap-1">
-          <span className="min-w-0 flex-1 wrap-break-word">{getMailAddressFullLabel(address)}</span>
+        <li key={`${address.email}-${index}`} className="flex min-h-5 min-w-0 items-start gap-1.5">
+          <span className="min-w-0 flex-1 leading-snug wrap-break-word">{getMailAddressFullLabel(address)}</span>
           <Button
             variant="ghost"
             size="icon-xs"
-            className="shrink-0"
+            className="-mt-0.5 size-5 shrink-0 rounded-md"
             aria-label={m.message_copy_email_aria({ email: address.email })}
             title={m.message_copy_address()}
             onClick={(event) => {
@@ -44,8 +44,10 @@ function AddressList({ addresses }: { addresses: MailAddress[] }) {
 function DetailRow({ label, children }: { label: string; children: React.ReactNode }) {
   return (
     <>
-      <dt className="flex min-h-6 items-center text-xs font-medium whitespace-nowrap text-muted-foreground">{label}</dt>
-      <dd className="flex min-h-6 min-w-0 items-center text-xs wrap-break-word">{children}</dd>
+      <dt className="flex min-h-5 items-start text-xs leading-snug font-medium whitespace-nowrap text-muted-foreground">
+        {label}
+      </dt>
+      <dd className="flex min-h-5 min-w-0 items-start text-xs leading-snug wrap-break-word">{children}</dd>
     </>
   )
 }
@@ -62,7 +64,7 @@ export function MessageMetadataContent({ message }: MessageMetadataContentProps)
       <PopoverHeader>
         <PopoverTitle>{m.message_details()}</PopoverTitle>
       </PopoverHeader>
-      <dl className="grid grid-cols-[max-content_minmax(0,1fr)] gap-x-4">
+      <dl className="grid grid-cols-[max-content_minmax(0,1fr)] gap-x-4 gap-y-2">
         <DetailRow label={m.message_detail_from()}>
           <AddressList addresses={[message.from]} />
         </DetailRow>

@@ -12,7 +12,6 @@ import { useIsMobile } from "@/hooks/use-mobile"
 import { getErrorMessage, getHttpStatus } from "@/lib/http-error"
 import { parseMailRouteSearch } from "@/lib/mail-routing"
 import { cn } from "@/lib/utils"
-import { useMarkThreadAsRead } from "@/mutations/emails"
 import { m } from "@/paraglide/messages"
 import { useMailAccounts, mailAccountQueries } from "@/queries/mail-accounts"
 import { emailKeys, useMailboxThreads, useStarredThreads } from "@/queries/emails"
@@ -120,7 +119,6 @@ function MailboxView({ mailbox }: { mailbox: PrimaryMailboxId }) {
   const { data: accounts } = useMailAccounts()
   const { data: labels } = useLabels()
   const { data: groups } = useLabelGroups()
-  const { mutate: markAsRead } = useMarkThreadAsRead()
   const supportedMailbox = isSupportedMailboxId(mailbox) ? mailbox : null
   const isStarredMailbox = mailbox === "starred"
   const isThreadListMailbox = supportedMailbox != null || isStarredMailbox
@@ -178,10 +176,8 @@ function MailboxView({ mailbox }: { mailbox: PrimaryMailboxId }) {
     })
   }
 
-  const visibleSelectedThreadId = threads.some((thread) => thread.threadId === selectedThreadId)
-    ? selectedThreadId
-    : null
-  const hasSelection = visibleSelectedThreadId != null
+  const listSelectedThreadId = threads.some((thread) => thread.threadId === selectedThreadId) ? selectedThreadId : null
+  const hasSelection = selectedThreadId != null
 
   let emptyTitle = m.mail_empty_title()
   let emptyDescription: string | undefined
@@ -217,7 +213,7 @@ function MailboxView({ mailbox }: { mailbox: PrimaryMailboxId }) {
       isFetchingNextPage={isFetchingNextPage}
       hasNextPage={!!hasNextPage}
       isRefreshing={isRefetching}
-      selectedThreadId={visibleSelectedThreadId}
+      selectedThreadId={listSelectedThreadId}
       filter={filter}
       onFilterChange={(nextFilter) => {
         void navigate({
@@ -229,11 +225,6 @@ function MailboxView({ mailbox }: { mailbox: PrimaryMailboxId }) {
         })
       }}
       onSelectThread={(threadId) => {
-        const thread = threads.find((t) => t.threadId === threadId)
-        if (thread && !thread.isRead) {
-          markAsRead(threadId)
-        }
-
         void navigate({
           search: (previous) => ({
             ...previous,
@@ -262,23 +253,27 @@ function MailboxView({ mailbox }: { mailbox: PrimaryMailboxId }) {
     />
   )
 
+  const closeThread = () => {
+    void navigate({
+      search: (previous) => ({
+        ...previous,
+        thread: undefined,
+        message: undefined,
+      }),
+      replace: true,
+    })
+  }
+  const threadDetailKey = selectedThreadId ?? ""
+
   if (isMobile) {
     return (
       <div className="flex min-h-0 w-full min-w-0 flex-1 overflow-hidden">
         {hasSelection ? (
           <ThreadDetail
-            threadId={visibleSelectedThreadId}
+            key={threadDetailKey}
+            threadId={selectedThreadId}
             messageId={selectedMessageId}
-            onClose={() => {
-              void navigate({
-                search: (previous) => ({
-                  ...previous,
-                  thread: undefined,
-                  message: undefined,
-                }),
-                replace: true,
-              })
-            }}
+            onClose={closeThread}
           />
         ) : (
           emailList
@@ -302,18 +297,10 @@ function MailboxView({ mailbox }: { mailbox: PrimaryMailboxId }) {
           <Separator orientation="vertical" />
           <div className="min-h-0 min-w-0 basis-2/3">
             <ThreadDetail
-              threadId={visibleSelectedThreadId}
+              key={threadDetailKey}
+              threadId={selectedThreadId}
               messageId={selectedMessageId}
-              onClose={() => {
-                void navigate({
-                  search: (previous) => ({
-                    ...previous,
-                    thread: undefined,
-                    message: undefined,
-                  }),
-                  replace: true,
-                })
-              }}
+              onClose={closeThread}
             />
           </div>
         </>
