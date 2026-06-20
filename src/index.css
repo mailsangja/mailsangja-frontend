@@ -122,7 +122,7 @@ This Font Software is licensed under the SIL Open Font License, Version 1.1.
 
   --background: var(--tds-white);
   --foreground: var(--tds-grey-opacity-800);
-  --card: var(--tds-grey-background);
+  --card: var(--tds-grey-50);
   --card-foreground: var(--tds-grey-opacity-800);
   --popover: var(--tds-white);
   --popover-foreground: var(--tds-grey-opacity-800);

@@ -434,7 +434,7 @@ export function ThreadListItem({
     "flex cursor-pointer border-b border-l-2 border-l-transparent px-3 py-2.5 transition-colors select-none hover:bg-accent",
     view === "double" ? "flex-col gap-1.5 md:flex-row md:items-start md:gap-3" : "flex-col gap-1",
     isSelected && "border-l-primary",
-    isUnread ? "font-semibold" : "bg-accent/70",
+    isUnread ? "font-semibold" : "bg-accent/50",
     isSelected && isUnread && "bg-accent",
     isChecked && !isSelected && "bg-accent/70"
   )
