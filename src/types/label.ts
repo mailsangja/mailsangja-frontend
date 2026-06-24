@@ -117,6 +117,7 @@ export function getLabelAttachmentValueLabel(value: string): string | undefined 
 
 export interface LabelListItem extends Label {
   order: number
+  notificationPolicy: NotificationPolicy
   isSensitive: boolean
   unreadThreadCount: number
 }
