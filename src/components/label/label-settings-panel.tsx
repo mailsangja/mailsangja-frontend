@@ -1,5 +1,5 @@
 import { useState } from "react"
-import { ChevronDown, Pencil, Plus, X } from "lucide-react"
+import { ChevronDown, Pencil, Plus, Trash2, X } from "lucide-react"
 import { toast } from "sonner"
 
 import { Button } from "@/components/ui/button"
@@ -355,7 +355,13 @@ function LabelSettingsContent({
             <p className="text-xs text-muted-foreground">{m.label_sensitive_description()}</p>
           </div>
         </div>
-        <Button variant="destructive" size="sm" onClick={() => setDeleteDialogOpen(true)}>
+        <Button
+          variant="ghost"
+          size="sm"
+          className="text-muted-foreground hover:bg-destructive/10 hover:text-destructive focus-visible:text-destructive"
+          onClick={() => setDeleteDialogOpen(true)}
+        >
+          <Trash2 data-icon="inline-start" />
           {m.label_delete_title()}
         </Button>
       </section>
