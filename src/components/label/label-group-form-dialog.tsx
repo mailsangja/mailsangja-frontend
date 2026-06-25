@@ -70,7 +70,7 @@ function LabelGroupFormDialog({
         <DialogHeader>
           <DialogTitle>{title}</DialogTitle>
         </DialogHeader>
-        <div className="flex flex-col gap-4 py-2">
+        <div className="flex flex-col gap-4">
           <Input
             placeholder={m.label_group_name_placeholder()}
             value={name}

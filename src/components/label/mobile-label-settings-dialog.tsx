@@ -86,8 +86,8 @@ function MobileLabelRuleEditContent({ labelId, onClose }: { labelId: string; onC
 
   if (isPending) {
     return (
-      <ScrollArea className="min-h-0 flex-1">
-        <div className="flex flex-col gap-4 px-3 py-2">
+      <ScrollArea className="-m-1 min-h-0 flex-1">
+        <div className="flex flex-col gap-4 p-1">
           <div className="h-16 w-full rounded-md bg-muted" />
           <div className="h-16 w-full rounded-md bg-muted" />
           <div className="h-9 w-40 self-end rounded-md bg-muted" />
@@ -97,12 +97,12 @@ function MobileLabelRuleEditContent({ labelId, onClose }: { labelId: string; onC
   }
 
   if (isError || !label) {
-    return <p className="px-3 py-2 text-sm text-destructive">{m.label_list_error()}</p>
+    return <p className="text-sm text-destructive">{m.label_list_error()}</p>
   }
 
   return (
-    <ScrollArea className="min-h-0 flex-1">
-      <div className="px-3 py-2">
+    <ScrollArea className="-m-1 min-h-0 flex-1">
+      <div className="p-1">
         <LabelRuleEditor labelId={labelId} label={label} onCancel={onClose} onSaved={onClose} />
       </div>
     </ScrollArea>
@@ -122,8 +122,8 @@ function MobileLabelSettingsContent({
 
   if (isPending) {
     return (
-      <ScrollArea className="min-h-0 flex-1">
-        <div className="flex flex-col gap-4 px-3 py-2">
+      <ScrollArea className="-m-1 min-h-0 flex-1">
+        <div className="flex flex-col gap-4 p-1">
           <div className="h-9 w-full rounded-md bg-muted" />
           <div className="h-14 w-full rounded-md bg-muted" />
           <div className="h-20 w-full rounded-md bg-muted" />
@@ -133,7 +133,7 @@ function MobileLabelSettingsContent({
   }
 
   if (isError || !label) {
-    return <p className="px-3 py-2 text-sm text-destructive">{m.label_list_error()}</p>
+    return <p className="text-sm text-destructive">{m.label_list_error()}</p>
   }
 
   return (
@@ -222,8 +222,8 @@ function MobileLabelSettingsForm({
 
   return (
     <>
-      <ScrollArea className="min-h-0 flex-1">
-        <div className="flex flex-col gap-4 px-3 py-2">
+      <ScrollArea className="-m-1 min-h-0 flex-1">
+        <div className="flex flex-col gap-4 p-1">
           <Input
             value={name}
             onChange={(e) => setName(e.target.value)}
