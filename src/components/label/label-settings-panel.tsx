@@ -107,10 +107,10 @@ function LabelSettingsContent({
       { labelId, data: { groups } },
       {
         onSuccess: () => {
-          toast.success("규칙이 저장되었습니다.")
+          toast.success(m.label_rule_save_success())
           setIsEditingRules(false)
         },
-        onError: (e) => toast.error(getErrorMessage(e, "규칙 저장에 실패했습니다.")),
+        onError: (e) => toast.error(getErrorMessage(e, m.label_rule_save_error())),
       }
     )
   }
@@ -159,7 +159,7 @@ function LabelSettingsContent({
     updateLabel.mutate(
       { labelId, data: { isSensitive } },
       {
-        onError: (e) => toast.error(getErrorMessage(e, "AI 민감 라벨 설정 변경에 실패했습니다.")),
+        onError: (e) => toast.error(getErrorMessage(e, m.label_sensitive_update_error())),
       }
     )
   }
@@ -170,11 +170,11 @@ function LabelSettingsContent({
     <div className="flex flex-col gap-5 px-6 py-4">
       <section className="flex flex-col gap-3">
         <div className="flex items-center justify-between gap-3">
-          <h3 className="text-sm font-semibold">라벨 규칙</h3>
+          <h3 className="text-sm font-semibold">{m.label_rules_title()}</h3>
           {!isEditingRules && (
             <Button variant="outline" size="sm" onClick={() => setIsEditingRules(true)}>
               <Pencil data-icon="inline-start" />
-              규칙 수정
+              {m.label_rule_edit()}
             </Button>
           )}
         </div>
@@ -196,7 +196,7 @@ function LabelSettingsContent({
                                 {entry.field ? (
                                   getLabelConditionFieldLabel(entry.field)
                                 ) : (
-                                  <span className="text-muted-foreground">필드 선택</span>
+                                  <span className="text-muted-foreground">{m.label_rule_field_placeholder()}</span>
                                 )}
                               </span>
                               <ChevronDown className="size-3.5 shrink-0 opacity-50" />
@@ -222,7 +222,7 @@ function LabelSettingsContent({
                                   {entry.value ? (
                                     (getLabelAttachmentValueLabel(entry.value) ?? entry.value)
                                   ) : (
-                                    <span className="text-muted-foreground">선택</span>
+                                    <span className="text-muted-foreground">{m.label_rule_select_placeholder()}</span>
                                   )}
                                 </span>
                                 <ChevronDown className="size-3.5 shrink-0 opacity-50" />
@@ -251,7 +251,9 @@ function LabelSettingsContent({
                                     {entry.operator ? (
                                       getLabelConditionOperatorLabel(entry.operator as ConditionOperator)
                                     ) : (
-                                      <span className="text-muted-foreground">연산자</span>
+                                      <span className="text-muted-foreground">
+                                        {m.label_rule_operator_placeholder()}
+                                      </span>
                                     )}
                                   </span>
                                   <ChevronDown className="size-3.5 shrink-0 opacity-50" />
@@ -277,7 +279,7 @@ function LabelSettingsContent({
                                 value={entry.value}
                                 onChange={(e) => updateCondition(groupIndex, condIndex, { value: e.target.value })}
                                 className="h-8 min-w-48 flex-1"
-                                placeholder="값 입력..."
+                                placeholder={m.label_rule_value_placeholder()}
                                 disabled={!entry.field}
                               />
                             </>
@@ -287,7 +289,7 @@ function LabelSettingsContent({
                             variant="ghost"
                             size="icon-sm"
                             onClick={() => removeCondition(groupIndex, condIndex)}
-                            aria-label="조건 삭제"
+                            aria-label={m.label_condition_delete()}
                             className="-mr-2 -ml-1"
                           >
                             <X />
@@ -302,7 +304,7 @@ function LabelSettingsContent({
                       className="mt-1 flex w-fit items-center gap-1.5 text-xs text-muted-foreground transition-colors hover:text-foreground"
                     >
                       <Plus className="size-3.5" />
-                      조건 추가
+                      {m.label_condition_add()}
                     </button>
                   </div>
                 </div>
@@ -312,7 +314,7 @@ function LabelSettingsContent({
             <div className="flex flex-wrap items-center justify-end gap-2 pt-3">
               <Button variant="outline" size="sm" onClick={addGroup}>
                 <Plus data-icon="inline-start" />
-                규칙 추가
+                {m.label_rule_add()}
               </Button>
               <Button variant="outline" size="sm" onClick={handleCancelRules}>
                 {m.common_cancel()}
@@ -331,7 +333,7 @@ function LabelSettingsContent({
             {groups.length > 0 ? (
               <LabelRuleGroupList groups={groups} groupClassName="shadow-none" />
             ) : (
-              <p className="text-sm text-muted-foreground">설정된 규칙이 없습니다.</p>
+              <p className="text-sm text-muted-foreground">{m.label_rule_empty()}</p>
             )}
           </>
         )}
@@ -354,7 +356,7 @@ function LabelSettingsContent({
           </div>
         </div>
         <Button variant="destructive" size="sm" onClick={() => setDeleteDialogOpen(true)}>
-          라벨 삭제
+          {m.label_delete_title()}
         </Button>
       </section>
 

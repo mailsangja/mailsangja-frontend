@@ -157,7 +157,7 @@ function LabelColorPicker({ label }: { label: LabelListItem }) {
     updateLabel.mutate(
       { labelId: label.id, data: { colorCode } },
       {
-        onError: (e) => toast.error(getErrorMessage(e, "라벨 색상 변경에 실패했습니다.")),
+        onError: (e) => toast.error(getErrorMessage(e, m.label_color_update_error())),
       }
     )
   }
@@ -220,7 +220,7 @@ function EditableLabelName({ label }: { label: LabelListItem }) {
         onSuccess: () => setEditing(false),
         onError: (e) => {
           setName(label.name)
-          toast.error(getErrorMessage(e, "라벨 이름 변경에 실패했습니다."))
+          toast.error(getErrorMessage(e, m.label_name_update_error()))
         },
       }
     )
@@ -283,7 +283,7 @@ function LabelNotificationControl({ labelId }: { labelId: string }) {
       { labelId, data: { notificationPolicy } },
       {
         onSuccess: () => setExpanded(false),
-        onError: (e) => toast.error(getErrorMessage(e, "알림 설정 변경에 실패했습니다.")),
+        onError: (e) => toast.error(getErrorMessage(e, m.label_notification_update_error())),
       }
     )
   }
