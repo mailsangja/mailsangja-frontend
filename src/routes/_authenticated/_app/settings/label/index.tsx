@@ -1,12 +1,15 @@
-import { useState, useRef, useEffect } from "react"
-import { createFileRoute, Link, useLocation } from "@tanstack/react-router"
+import { useState, useRef, useEffect, type ElementType, type KeyboardEvent } from "react"
+import { createFileRoute, useLocation, useNavigate } from "@tanstack/react-router"
 import { DndContext, closestCenter } from "@dnd-kit/core"
 import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-kit/sortable"
-import { ChevronRight, GripVertical, MoreVertical, Pencil, Plus, Trash2 } from "lucide-react"
+import { Bell, BellOff, BellRing, ChevronDown, GripVertical, MoreVertical, Pencil, Plus, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 
+import { MobileLabelSettingsDialog } from "@/components/label/mobile-label-settings-dialog"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible"
 import { Dialog, DialogContent, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog"
 import {
   DropdownMenu,
@@ -15,17 +18,37 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu"
+import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { useIsMobile } from "@/hooks/use-mobile"
+import { LABEL_COLORS } from "@/lib/label-colors"
 import { getErrorMessage } from "@/lib/http-error"
-import { useCreateLabel, useDeleteLabelGroup } from "@/mutations/labels"
+import { useCreateLabel, useDeleteLabelGroup, useUpdateLabel } from "@/mutations/labels"
 import { useLabels, useLabelGroups } from "@/queries/labels"
 import { useLabelOrder } from "@/hooks/use-label-order"
+import { cn } from "@/lib/utils"
 import { LabelFormDialog, type LabelFormData } from "@/components/label/label-form-dialog"
 import { CreateLabelGroupDialog, EditLabelGroupDialog } from "@/components/label/label-group-form-dialog"
+import { LabelSettingsPanel } from "@/components/label/label-settings-panel"
 import { m } from "@/paraglide/messages"
-import type { LabelGroupItem, LabelListItem } from "@/types/label"
+import {
+  getNotificationPolicyLabel,
+  type LabelGroupItem,
+  type LabelListItem,
+  type NotificationPolicy,
+} from "@/types/label"
+
+const NOTIFICATION_OPTIONS: { value: NotificationPolicy; icon: ElementType }[] = [
+  { value: "URGENT", icon: BellRing },
+  { value: "INHERIT", icon: Bell },
+  { value: "SILENT", icon: BellOff },
+]
 
 export const Route = createFileRoute("/_authenticated/_app/settings/label/")({
+  validateSearch: (search: Record<string, unknown>): { labelId?: string } => {
+    const labelId = typeof search.labelId === "string" ? search.labelId.trim() : ""
+    return labelId ? { labelId } : {}
+  },
   component: SettingsLabelPage,
 })
 
@@ -127,52 +150,320 @@ function LabelGroupTableRow({ group, allLabels }: { group: LabelGroupItem; allLa
   )
 }
 
-function SortableLabelRow({ label }: { label: LabelListItem }) {
-  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: label.id })
+function LabelColorPicker({ label }: { label: LabelListItem }) {
+  const updateLabel = useUpdateLabel()
+  const [open, setOpen] = useState(false)
+
+  function handleColorChange(colorCode: string) {
+    setOpen(false)
+    if (colorCode === label.colorCode || updateLabel.isPending) return
+    updateLabel.mutate(
+      { labelId: label.id, data: { colorCode } },
+      {
+        onError: (e) => toast.error(getErrorMessage(e, m.label_color_update_error())),
+      }
+    )
+  }
 
   return (
-    <TableRow
+    <DropdownMenu open={open} onOpenChange={setOpen}>
+      <DropdownMenuTrigger
+        render={
+          <button
+            type="button"
+            onClick={(e) => e.stopPropagation()}
+            className="size-4 shrink-0 rounded-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none disabled:opacity-50"
+            style={{ backgroundColor: label.colorCode }}
+            aria-label={m.label_color_select()}
+            disabled={updateLabel.isPending}
+          />
+        }
+      />
+      <DropdownMenuContent className="w-auto p-2">
+        <div className="grid grid-cols-5 gap-1.5">
+          {LABEL_COLORS.map((color) => (
+            <button
+              key={color}
+              type="button"
+              className="size-6 cursor-pointer rounded-full transition-transform hover:scale-110 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+              style={{
+                backgroundColor: color,
+                boxShadow: label.colorCode === color ? `0 0 0 2px white, 0 0 0 4px ${color}` : undefined,
+              }}
+              onClick={() => handleColorChange(color)}
+              aria-label={color}
+              aria-pressed={label.colorCode === color}
+            />
+          ))}
+        </div>
+      </DropdownMenuContent>
+    </DropdownMenu>
+  )
+}
+
+function EditableLabelName({ label }: { label: LabelListItem }) {
+  const updateLabel = useUpdateLabel()
+  const [editing, setEditing] = useState(false)
+  const [name, setName] = useState(label.name)
+
+  function commit() {
+    const trimmed = name.trim()
+    if (!trimmed) {
+      setName(label.name)
+      setEditing(false)
+      return
+    }
+    if (trimmed === label.name) {
+      setEditing(false)
+      return
+    }
+    updateLabel.mutate(
+      { labelId: label.id, data: { name: trimmed } },
+      {
+        onSuccess: () => setEditing(false),
+        onError: (e) => {
+          setName(label.name)
+          toast.error(getErrorMessage(e, m.label_name_update_error()))
+        },
+      }
+    )
+  }
+
+  function handleKeyDown(e: KeyboardEvent<HTMLInputElement>) {
+    if (e.key === "Enter") {
+      e.currentTarget.blur()
+    }
+    if (e.key === "Escape") {
+      setName(label.name)
+      setEditing(false)
+    }
+  }
+
+  if (editing) {
+    return (
+      <Input
+        value={name}
+        onChange={(e) => setName(e.target.value)}
+        onBlur={commit}
+        onKeyDown={handleKeyDown}
+        onClick={(e) => e.stopPropagation()}
+        className="h-8 w-48 max-w-72 px-2 text-sm font-medium"
+        autoFocus
+        disabled={updateLabel.isPending}
+      />
+    )
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={(e) => {
+        e.stopPropagation()
+        setName(label.name)
+        setEditing(true)
+      }}
+      className="max-w-72 truncate rounded-sm py-1 text-left text-sm font-medium hover:underline focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+    >
+      {label.name}
+    </button>
+  )
+}
+
+function LabelNotificationControl({ label }: { label: LabelListItem }) {
+  const updateLabel = useUpdateLabel()
+  const [expanded, setExpanded] = useState(false)
+  const currentPolicy = label.notificationPolicy
+  const currentOption = NOTIFICATION_OPTIONS.find((option) => option.value === currentPolicy) ?? NOTIFICATION_OPTIONS[1]
+  const CurrentIcon = currentOption.icon
+
+  function handleSelect(notificationPolicy: NotificationPolicy) {
+    if (notificationPolicy === currentPolicy || updateLabel.isPending) {
+      setExpanded(false)
+      return
+    }
+    updateLabel.mutate(
+      { labelId: label.id, data: { notificationPolicy } },
+      {
+        onSuccess: () => setExpanded(false),
+        onError: (e) => toast.error(getErrorMessage(e, m.label_notification_update_error())),
+      }
+    )
+  }
+
+  if (expanded) {
+    return (
+      <div
+        className="ml-auto flex h-7 shrink-0 overflow-hidden rounded-[min(var(--radius-md),12px)] border"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {NOTIFICATION_OPTIONS.map(({ value, icon: Icon }) => (
+          <button
+            key={value}
+            type="button"
+            onClick={() => handleSelect(value)}
+            disabled={updateLabel.isPending}
+            className={cn(
+              "flex h-7 items-center gap-1 border-r px-2.5 text-[0.8rem] font-medium transition-colors last:border-r-0 disabled:opacity-50",
+              currentPolicy === value
+                ? "bg-primary/10 font-medium text-primary"
+                : "text-muted-foreground hover:bg-muted hover:text-foreground"
+            )}
+          >
+            <Icon className="size-3.5" />
+            {getNotificationPolicyLabel(value)}
+          </button>
+        ))}
+      </div>
+    )
+  }
+
+  return (
+    <Button
+      variant="outline"
+      size="sm"
+      className="ml-auto shrink-0"
+      onClick={(e) => {
+        e.stopPropagation()
+        setExpanded(true)
+      }}
+      disabled={updateLabel.isPending}
+    >
+      <CurrentIcon data-icon="inline-start" />
+      {getNotificationPolicyLabel(currentPolicy)}
+    </Button>
+  )
+}
+
+function SortableLabelItem({
+  label,
+  open,
+  onOpenChange,
+  isMobile,
+}: {
+  label: LabelListItem
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  isMobile: boolean
+}) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: label.id })
+
+  if (isMobile) {
+    const currentOption =
+      NOTIFICATION_OPTIONS.find((option) => option.value === label.notificationPolicy) ?? NOTIFICATION_OPTIONS[1]
+    const CurrentIcon = currentOption.icon
+
+    return (
+      <div
+        ref={setNodeRef}
+        style={{
+          transform: transform ? `translateY(${transform.y}px)` : undefined,
+          transition,
+        }}
+      >
+        <div
+          className={cn(
+            "flex min-h-13 cursor-pointer items-center gap-3 px-4 transition-opacity",
+            isDragging && "opacity-40"
+          )}
+          onClick={() => onOpenChange(true)}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault()
+              onOpenChange(true)
+            }
+          }}
+        >
+          <button
+            type="button"
+            onClick={(e) => e.stopPropagation()}
+            className="flex cursor-grab touch-none items-center text-muted-foreground/30 hover:text-muted-foreground active:cursor-grabbing"
+            aria-label={m.label_reorder()}
+            {...attributes}
+            {...listeners}
+          >
+            <GripVertical className="size-4" />
+          </button>
+          <span className="size-4 shrink-0 rounded-sm" style={{ backgroundColor: label.colorCode }} />
+          <span className="min-w-0 flex-1 truncate text-sm font-medium">{label.name}</span>
+          {label.isSensitive && (
+            <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+              {m.label_sensitive_badge()}
+            </span>
+          )}
+          <Badge variant="secondary" className="shrink-0">
+            <CurrentIcon data-icon="inline-start" />
+            {getNotificationPolicyLabel(label.notificationPolicy)}
+          </Badge>
+        </div>
+        <MobileLabelSettingsDialog label={label} open={open} onOpenChange={onOpenChange} />
+      </div>
+    )
+  }
+
+  return (
+    <div
       ref={setNodeRef}
       style={{
         transform: transform ? `translateY(${transform.y}px)` : undefined,
         transition,
-        opacity: isDragging ? 0.4 : undefined,
       }}
     >
-      <TableCell className="w-8 px-2">
-        <button
-          type="button"
-          className="flex cursor-grab touch-none items-center text-muted-foreground/30 hover:text-muted-foreground active:cursor-grabbing"
-          aria-label={m.label_reorder()}
-          {...attributes}
-          {...listeners}
-        >
-          <GripVertical className="size-4" />
-        </button>
-      </TableCell>
-      <TableCell className="text-center">
-        <span className="inline-block size-4 rounded-sm" style={{ backgroundColor: label.colorCode }} />
-      </TableCell>
-      <TableCell className="font-medium">{label.name}</TableCell>
-      <TableCell className="pr-6 text-right">
-        <Button
-          variant="ghost"
-          size="icon-sm"
-          aria-label={m.label_settings()}
-          render={<Link to="/settings/label/$labelId" params={{ labelId: String(label.id) }} />}
-        >
-          <ChevronRight className="size-4" />
-        </Button>
-      </TableCell>
-    </TableRow>
+      <Collapsible
+        open={open}
+        onOpenChange={onOpenChange}
+        className={cn("transition-opacity", isDragging && "opacity-40")}
+      >
+        <div className="flex min-h-13 cursor-pointer items-center gap-3 px-4" onClick={() => onOpenChange(!open)}>
+          <button
+            type="button"
+            onClick={(e) => e.stopPropagation()}
+            className="flex cursor-grab touch-none items-center text-muted-foreground/30 hover:text-muted-foreground active:cursor-grabbing"
+            aria-label={m.label_reorder()}
+            {...attributes}
+            {...listeners}
+          >
+            <GripVertical className="size-4" />
+          </button>
+          <LabelColorPicker label={label} />
+          <EditableLabelName label={label} />
+          {label.isSensitive && (
+            <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+              {m.label_sensitive_badge()}
+            </span>
+          )}
+          <div className="min-w-0 flex-1" />
+          <LabelNotificationControl label={label} />
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation()
+              onOpenChange(!open)
+            }}
+            className="flex shrink-0 items-center rounded-sm p-1 text-muted-foreground hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+            aria-label={m.label_settings()}
+          >
+            <ChevronDown className={cn("shrink-0 transition-transform", open && "rotate-180")} />
+          </button>
+        </div>
+        <CollapsibleContent className="border-t">
+          <LabelSettingsPanel labelId={label.id} onDeleted={() => onOpenChange(false)} />
+        </CollapsibleContent>
+      </Collapsible>
+    </div>
   )
 }
 
 function SettingsLabelPage() {
   const { data: serverLabels = [], isPending, isError } = useLabels()
   const { orderedLabels, sensors, handleDragEnd } = useLabelOrder(serverLabels)
+  const isMobile = useIsMobile()
+  const { labelId: activeLabelId } = Route.useSearch()
+  const navigate = useNavigate()
   const location = useLocation()
   const createFilterRef = useRef<HTMLDivElement>(null)
+  const activeLabelRef = useRef<HTMLDivElement>(null)
   const [createOpen, setCreateOpen] = useState(false)
   const [createGroupOpen, setCreateGroupOpen] = useState(false)
   const createLabel = useCreateLabel()
@@ -198,55 +489,51 @@ function SettingsLabelPage() {
     }
   }, [location.hash])
 
+  useEffect(() => {
+    if (!activeLabelId) return
+    activeLabelRef.current?.scrollIntoView({ behavior: "smooth", block: "center" })
+  }, [activeLabelId])
+
+  function setActiveLabel(labelId: string | undefined) {
+    void navigate({
+      to: "/settings/label",
+      search: labelId ? { labelId } : {},
+      replace: true,
+    })
+  }
+
   return (
     <>
       <div className="flex flex-col gap-3">
         <p className="text-md px-1 font-semibold text-muted-foreground">{m.settings_label()}</p>
-        <Card>
+        <Card className="pb-0">
           <CardHeader>
             <CardTitle>{m.label_management_title()}</CardTitle>
             <CardDescription>{m.label_management_description()}</CardDescription>
           </CardHeader>
           <CardContent className="px-0">
             <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleDragEnd}>
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead className="w-8" />
-                    <TableHead className="w-10 text-center">{m.label_color_column()}</TableHead>
-                    <TableHead className="w-full">{m.common_name()}</TableHead>
-                    <TableHead className="w-16 pr-6 text-right">{m.label_actions_column()}</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {isPending && (
-                    <TableRow>
-                      <TableCell colSpan={4} className="text-center text-sm text-muted-foreground">
-                        {m.label_list_loading()}
-                      </TableCell>
-                    </TableRow>
-                  )}
-                  {isError && (
-                    <TableRow>
-                      <TableCell colSpan={4} className="text-center text-sm text-destructive">
-                        {m.label_list_error()}
-                      </TableCell>
-                    </TableRow>
-                  )}
-                  {!isPending && !isError && orderedLabels.length === 0 && (
-                    <TableRow>
-                      <TableCell colSpan={4} className="text-center text-sm text-muted-foreground">
-                        {m.label_list_empty()}
-                      </TableCell>
-                    </TableRow>
-                  )}
-                  <SortableContext items={orderedLabels.map((l) => l.id)} strategy={verticalListSortingStrategy}>
-                    {orderedLabels.map((label) => (
-                      <SortableLabelRow key={label.id} label={label} />
-                    ))}
-                  </SortableContext>
-                </TableBody>
-              </Table>
+              <div className="divide-y border-t">
+                {isPending && (
+                  <p className="py-3 text-center text-sm text-muted-foreground">{m.label_list_loading()}</p>
+                )}
+                {isError && <p className="py-3 text-center text-sm text-destructive">{m.label_list_error()}</p>}
+                {!isPending && !isError && orderedLabels.length === 0 && (
+                  <p className="py-3 text-center text-sm text-muted-foreground">{m.label_list_empty()}</p>
+                )}
+                <SortableContext items={orderedLabels.map((l) => l.id)} strategy={verticalListSortingStrategy}>
+                  {orderedLabels.map((label) => (
+                    <div key={label.id} ref={activeLabelId === label.id ? activeLabelRef : undefined}>
+                      <SortableLabelItem
+                        label={label}
+                        open={activeLabelId === label.id}
+                        onOpenChange={(open) => setActiveLabel(open ? label.id : undefined)}
+                        isMobile={isMobile}
+                      />
+                    </div>
+                  ))}
+                </SortableContext>
+              </div>
             </DndContext>
           </CardContent>
         </Card>
@@ -277,7 +564,7 @@ function SettingsLabelPage() {
 
       <div className="flex flex-col gap-3">
         <p className="text-md px-1 font-semibold text-muted-foreground">{m.sidebar_label_groups()}</p>
-        <Card>
+        <Card className="pb-0">
           <CardHeader>
             <CardTitle>{m.label_group_management_title()}</CardTitle>
             <CardDescription>{m.label_group_management_description()}</CardDescription>

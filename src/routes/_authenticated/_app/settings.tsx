@@ -1,4 +1,4 @@
-import { createFileRoute, Link, Outlet, useLocation, useMatch, useNavigate } from "@tanstack/react-router"
+import { createFileRoute, Link, Outlet, useLocation, useNavigate } from "@tanstack/react-router"
 import { Settings, Tag, User } from "lucide-react"
 
 import {
@@ -12,7 +12,6 @@ import {
 import { ScrollArea } from "@/components/ui/scroll-area"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { m } from "@/paraglide/messages"
-import { useLabels } from "@/queries/labels"
 
 export const Route = createFileRoute("/_authenticated/_app/settings")({
   component: SettingsLayout,
@@ -33,14 +32,7 @@ function SettingsLayout() {
       ? "label"
       : "general"
 
-  const labelDetailMatch = useMatch({ from: "/_authenticated/_app/settings/label/$labelId", shouldThrow: false })
-  const labelId = labelDetailMatch?.params.labelId
-
-  const { data: labels } = useLabels()
-  const labelName = labelId ? (labels?.find((l) => String(l.id) === labelId)?.name ?? labelId) : undefined
-
   const isNested = activeTab !== "general"
-  const isLabelDetail = !!labelId
 
   return (
     <div className="flex min-h-0 flex-1 flex-col p-0">
@@ -59,11 +51,7 @@ function SettingsLayout() {
                 <>
                   <BreadcrumbSeparator />
                   <BreadcrumbItem>
-                    {isLabelDetail ? (
-                      <BreadcrumbLink render={<Link to="/settings/label" />}>{m.settings_label()}</BreadcrumbLink>
-                    ) : (
-                      <BreadcrumbPage className="font-semibold">{m.settings_label()}</BreadcrumbPage>
-                    )}
+                    <BreadcrumbPage className="font-semibold">{m.settings_label()}</BreadcrumbPage>
                   </BreadcrumbItem>
                 </>
               )}
@@ -72,14 +60,6 @@ function SettingsLayout() {
                   <BreadcrumbSeparator />
                   <BreadcrumbItem>
                     <BreadcrumbPage className="font-semibold">{m.settings_mail_account()}</BreadcrumbPage>
-                  </BreadcrumbItem>
-                </>
-              )}
-              {isLabelDetail && (
-                <>
-                  <BreadcrumbSeparator />
-                  <BreadcrumbItem>
-                    <BreadcrumbPage className="font-semibold">{labelName}</BreadcrumbPage>
                   </BreadcrumbItem>
                 </>
               )}

@@ -27,7 +27,6 @@ import { Route as AuthenticatedAppMailIndexRouteImport } from './routes/_authent
 import { Route as AuthenticatedAppSettingsAccountRouteImport } from './routes/_authenticated/_app/settings/account'
 import { Route as AuthenticatedAppMailMailboxRouteImport } from './routes/_authenticated/_app/mail/$mailbox'
 import { Route as AuthenticatedAppSettingsLabelIndexRouteImport } from './routes/_authenticated/_app/settings/label/index'
-import { Route as AuthenticatedAppSettingsLabelLabelIdRouteImport } from './routes/_authenticated/_app/settings/label/$labelId'
 
 const TermsRoute = TermsRouteImport.update({
   id: '/terms',
@@ -122,12 +121,6 @@ const AuthenticatedAppSettingsLabelIndexRoute =
     path: '/label/',
     getParentRoute: () => AuthenticatedAppSettingsRoute,
   } as any)
-const AuthenticatedAppSettingsLabelLabelIdRoute =
-  AuthenticatedAppSettingsLabelLabelIdRouteImport.update({
-    id: '/label/$labelId',
-    path: '/label/$labelId',
-    getParentRoute: () => AuthenticatedAppSettingsRoute,
-  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -144,7 +137,6 @@ export interface FileRoutesByFullPath {
   '/settings/account': typeof AuthenticatedAppSettingsAccountRoute
   '/mail/': typeof AuthenticatedAppMailIndexRoute
   '/settings/': typeof AuthenticatedAppSettingsIndexRoute
-  '/settings/label/$labelId': typeof AuthenticatedAppSettingsLabelLabelIdRoute
   '/settings/label/': typeof AuthenticatedAppSettingsLabelIndexRoute
 }
 export interface FileRoutesByTo {
@@ -160,7 +152,6 @@ export interface FileRoutesByTo {
   '/settings/account': typeof AuthenticatedAppSettingsAccountRoute
   '/mail': typeof AuthenticatedAppMailIndexRoute
   '/settings': typeof AuthenticatedAppSettingsIndexRoute
-  '/settings/label/$labelId': typeof AuthenticatedAppSettingsLabelLabelIdRoute
   '/settings/label': typeof AuthenticatedAppSettingsLabelIndexRoute
 }
 export interface FileRoutesById {
@@ -182,7 +173,6 @@ export interface FileRoutesById {
   '/_authenticated/_app/settings/account': typeof AuthenticatedAppSettingsAccountRoute
   '/_authenticated/_app/mail/': typeof AuthenticatedAppMailIndexRoute
   '/_authenticated/_app/settings/': typeof AuthenticatedAppSettingsIndexRoute
-  '/_authenticated/_app/settings/label/$labelId': typeof AuthenticatedAppSettingsLabelLabelIdRoute
   '/_authenticated/_app/settings/label/': typeof AuthenticatedAppSettingsLabelIndexRoute
 }
 export interface FileRouteTypes {
@@ -202,7 +192,6 @@ export interface FileRouteTypes {
     | '/settings/account'
     | '/mail/'
     | '/settings/'
-    | '/settings/label/$labelId'
     | '/settings/label/'
   fileRoutesByTo: FileRoutesByTo
   to:
@@ -218,7 +207,6 @@ export interface FileRouteTypes {
     | '/settings/account'
     | '/mail'
     | '/settings'
-    | '/settings/label/$labelId'
     | '/settings/label'
   id:
     | '__root__'
@@ -239,7 +227,6 @@ export interface FileRouteTypes {
     | '/_authenticated/_app/settings/account'
     | '/_authenticated/_app/mail/'
     | '/_authenticated/_app/settings/'
-    | '/_authenticated/_app/settings/label/$labelId'
     | '/_authenticated/_app/settings/label/'
   fileRoutesById: FileRoutesById
 }
@@ -380,13 +367,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof AuthenticatedAppSettingsLabelIndexRouteImport
       parentRoute: typeof AuthenticatedAppSettingsRoute
     }
-    '/_authenticated/_app/settings/label/$labelId': {
-      id: '/_authenticated/_app/settings/label/$labelId'
-      path: '/label/$labelId'
-      fullPath: '/settings/label/$labelId'
-      preLoaderRoute: typeof AuthenticatedAppSettingsLabelLabelIdRouteImport
-      parentRoute: typeof AuthenticatedAppSettingsRoute
-    }
   }
 }
 
@@ -406,7 +386,6 @@ const AuthenticatedAppMailRouteWithChildren =
 interface AuthenticatedAppSettingsRouteChildren {
   AuthenticatedAppSettingsAccountRoute: typeof AuthenticatedAppSettingsAccountRoute
   AuthenticatedAppSettingsIndexRoute: typeof AuthenticatedAppSettingsIndexRoute
-  AuthenticatedAppSettingsLabelLabelIdRoute: typeof AuthenticatedAppSettingsLabelLabelIdRoute
   AuthenticatedAppSettingsLabelIndexRoute: typeof AuthenticatedAppSettingsLabelIndexRoute
 }
 
@@ -414,8 +393,6 @@ const AuthenticatedAppSettingsRouteChildren: AuthenticatedAppSettingsRouteChildr
   {
     AuthenticatedAppSettingsAccountRoute: AuthenticatedAppSettingsAccountRoute,
     AuthenticatedAppSettingsIndexRoute: AuthenticatedAppSettingsIndexRoute,
-    AuthenticatedAppSettingsLabelLabelIdRoute:
-      AuthenticatedAppSettingsLabelLabelIdRoute,
     AuthenticatedAppSettingsLabelIndexRoute:
       AuthenticatedAppSettingsLabelIndexRoute,
   }

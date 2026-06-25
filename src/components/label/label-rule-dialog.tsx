@@ -122,8 +122,8 @@ export function LabelRuleDialog({ open, onOpenChange, labelId }: LabelRuleDialog
           <DialogDescription>{m.label_rule_create_description()}</DialogDescription>
         </DialogHeader>
 
-        <ScrollArea className="max-h-[40vh]">
-          <div className="flex min-h-12 flex-col gap-3 py-0.5 pr-3 pl-0.5">
+        <ScrollArea className="-m-1 max-h-[40vh]">
+          <div className="flex min-h-12 flex-col gap-3 p-1">
             {entries.map((entry, index) => (
               <div key={index} className="flex flex-wrap items-center gap-2">
                 <DropdownMenu>
