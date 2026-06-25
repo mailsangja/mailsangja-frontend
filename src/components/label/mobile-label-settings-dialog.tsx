@@ -136,14 +136,7 @@ function MobileLabelSettingsContent({
     return <p className="text-sm text-destructive">{m.label_list_error()}</p>
   }
 
-  return (
-    <MobileLabelSettingsForm
-      key={`${label.id}-${label.name}-${label.colorCode}-${label.notificationPolicy}`}
-      label={label}
-      onDeleted={onDeleted}
-      onEditRules={onEditRules}
-    />
-  )
+  return <MobileLabelSettingsForm key={label.id} label={label} onDeleted={onDeleted} onEditRules={onEditRules} />
 }
 
 function MobileLabelSettingsForm({
