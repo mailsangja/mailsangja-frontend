@@ -5,6 +5,8 @@ import { SortableContext, useSortable, verticalListSortingStrategy } from "@dnd-
 import { Bell, BellOff, BellRing, ChevronDown, GripVertical, MoreVertical, Pencil, Plus, Trash2 } from "lucide-react"
 import { toast } from "sonner"
 
+import { MobileLabelSettingsDialog } from "@/components/label/mobile-label-settings-dialog"
+import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Collapsible, CollapsibleContent } from "@/components/ui/collapsible"
@@ -18,6 +20,7 @@ import {
 } from "@/components/ui/dropdown-menu"
 import { Input } from "@/components/ui/input"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { useIsMobile } from "@/hooks/use-mobile"
 import { LABEL_COLORS } from "@/lib/label-colors"
 import { getErrorMessage } from "@/lib/http-error"
 import { useCreateLabel, useDeleteLabelGroup, useUpdateLabel } from "@/mutations/labels"
@@ -336,12 +339,69 @@ function SortableLabelItem({
   label,
   open,
   onOpenChange,
+  isMobile,
 }: {
   label: LabelListItem
   open: boolean
   onOpenChange: (open: boolean) => void
+  isMobile: boolean
 }) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: label.id })
+
+  if (isMobile) {
+    const currentOption =
+      NOTIFICATION_OPTIONS.find((option) => option.value === label.notificationPolicy) ?? NOTIFICATION_OPTIONS[1]
+    const CurrentIcon = currentOption.icon
+
+    return (
+      <div
+        ref={setNodeRef}
+        style={{
+          transform: transform ? `translateY(${transform.y}px)` : undefined,
+          transition,
+        }}
+      >
+        <div
+          className={cn(
+            "flex min-h-13 cursor-pointer items-center gap-3 px-4 transition-opacity",
+            isDragging && "opacity-40"
+          )}
+          onClick={() => onOpenChange(true)}
+          role="button"
+          tabIndex={0}
+          onKeyDown={(e) => {
+            if (e.key === "Enter" || e.key === " ") {
+              e.preventDefault()
+              onOpenChange(true)
+            }
+          }}
+        >
+          <button
+            type="button"
+            onClick={(e) => e.stopPropagation()}
+            className="flex cursor-grab touch-none items-center text-muted-foreground/30 hover:text-muted-foreground active:cursor-grabbing"
+            aria-label={m.label_reorder()}
+            {...attributes}
+            {...listeners}
+          >
+            <GripVertical className="size-4" />
+          </button>
+          <span className="size-4 shrink-0 rounded-sm" style={{ backgroundColor: label.colorCode }} />
+          <span className="min-w-0 flex-1 truncate text-sm font-medium">{label.name}</span>
+          {label.isSensitive && (
+            <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+              {m.label_sensitive_badge()}
+            </span>
+          )}
+          <Badge variant="secondary" className="shrink-0">
+            <CurrentIcon data-icon="inline-start" />
+            {getNotificationPolicyLabel(label.notificationPolicy)}
+          </Badge>
+        </div>
+        <MobileLabelSettingsDialog label={label} open={open} onOpenChange={onOpenChange} />
+      </div>
+    )
+  }
 
   return (
     <div
@@ -399,6 +459,7 @@ function SortableLabelItem({
 function SettingsLabelPage() {
   const { data: serverLabels = [], isPending, isError } = useLabels()
   const { orderedLabels, sensors, handleDragEnd } = useLabelOrder(serverLabels)
+  const isMobile = useIsMobile()
   const { labelId: activeLabelId } = Route.useSearch()
   const navigate = useNavigate()
   const location = useLocation()
@@ -468,6 +529,7 @@ function SettingsLabelPage() {
                         label={label}
                         open={activeLabelId === label.id}
                         onOpenChange={(open) => setActiveLabel(open ? label.id : undefined)}
+                        isMobile={isMobile}
                       />
                     </div>
                   ))}
