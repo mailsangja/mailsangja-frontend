@@ -24,7 +24,7 @@ import { useIsMobile } from "@/hooks/use-mobile"
 import { LABEL_COLORS } from "@/lib/label-colors"
 import { getErrorMessage } from "@/lib/http-error"
 import { useCreateLabel, useDeleteLabelGroup, useUpdateLabel } from "@/mutations/labels"
-import { useLabelDetail, useLabels, useLabelGroups } from "@/queries/labels"
+import { useLabels, useLabelGroups } from "@/queries/labels"
 import { useLabelOrder } from "@/hooks/use-label-order"
 import { cn } from "@/lib/utils"
 import { LabelFormDialog, type LabelFormData } from "@/components/label/label-form-dialog"
@@ -269,11 +269,10 @@ function EditableLabelName({ label }: { label: LabelListItem }) {
   )
 }
 
-function LabelNotificationControl({ labelId }: { labelId: string }) {
-  const { data: label } = useLabelDetail(labelId)
+function LabelNotificationControl({ label }: { label: LabelListItem }) {
   const updateLabel = useUpdateLabel()
   const [expanded, setExpanded] = useState(false)
-  const currentPolicy = label?.notificationPolicy ?? "INHERIT"
+  const currentPolicy = label.notificationPolicy
   const currentOption = NOTIFICATION_OPTIONS.find((option) => option.value === currentPolicy) ?? NOTIFICATION_OPTIONS[1]
   const CurrentIcon = currentOption.icon
 
@@ -283,7 +282,7 @@ function LabelNotificationControl({ labelId }: { labelId: string }) {
       return
     }
     updateLabel.mutate(
-      { labelId, data: { notificationPolicy } },
+      { labelId: label.id, data: { notificationPolicy } },
       {
         onSuccess: () => setExpanded(false),
         onError: (e) => toast.error(getErrorMessage(e, m.label_notification_update_error())),
@@ -327,7 +326,7 @@ function LabelNotificationControl({ labelId }: { labelId: string }) {
         e.stopPropagation()
         setExpanded(true)
       }}
-      disabled={!label || updateLabel.isPending}
+      disabled={updateLabel.isPending}
     >
       <CurrentIcon data-icon="inline-start" />
       {getNotificationPolicyLabel(currentPolicy)}
@@ -435,7 +434,7 @@ function SortableLabelItem({
             </span>
           )}
           <div className="min-w-0 flex-1" />
-          <LabelNotificationControl labelId={label.id} />
+          <LabelNotificationControl label={label} />
           <button
             type="button"
             onClick={(e) => {
