@@ -204,7 +204,7 @@ export function LabelItem({ label, isActive, onLabelToggle }: LabelItemProps) {
             <Pencil />
             {m.label_name_edit_menu()}
           </DropdownMenuItem>
-          <DropdownMenuItem render={<Link to="/settings/label/$labelId" params={{ labelId: String(label.id) }} />}>
+          <DropdownMenuItem render={<Link to="/settings/label" search={{ labelId: String(label.id) }} />}>
             <SlidersHorizontal />
             {m.label_rule_edit_menu()}
           </DropdownMenuItem>

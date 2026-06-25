@@ -48,7 +48,7 @@ export function LabelSuggestionItem({ suggestion }: LabelSuggestionItemProps) {
           })
           setApproveOpen(false)
           toast.success(m.label_suggestion_approve_success({ name }))
-          void navigate({ to: "/settings/label/$labelId", params: { labelId: label.id } })
+          void navigate({ to: "/settings/label", search: { labelId: label.id } })
         },
         onError: (e) => {
           if (getHttpStatus(e) === 409) {
